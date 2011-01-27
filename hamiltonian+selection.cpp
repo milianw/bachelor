@@ -7,6 +7,7 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 #include <gsl/gsl_eigen.h>
+#include <gsl/gsl_sort_vector.h>
 
 
 using namespace std;
@@ -36,6 +37,7 @@ void hamiltonian(const double B);
 void printMatrix(const gsl_matrix_complex*, const string, const int);
 void printMatrix(const gsl_matrix*, const string , const int);
 void printVector(const gsl_vector_complex *vector, const string name, const int dim);
+void printVector(const gsl_vector *vector, const string name, const int dim);
 
 
 
@@ -383,6 +385,7 @@ void hamiltonian(const double B)
   gsl_vector* eigenvalues = gsl_vector_alloc(dim);
   gsl_matrix_complex* eigenvectors = gsl_matrix_complex_alloc(dim,dim);
   gsl_eigen_hermv(Ham, eigenvalues, eigenvectors,  w);
+//   gsl_sort_vector(eigenvalues);
   
   //int ntransitions = (dim*(dim-1))/2;   //pairwise energy differences
   //gsl_vector* transitions = gsl_vector_alloc(ntransitions);  //vector to store transition frequencies
@@ -515,7 +518,8 @@ void hamiltonian(const double B)
 	}
     }
   gsl_matrix_scale(transition_frequencies, 1.0/h/1.0E9);
-  //printMatrix(transition_frequencies, "frequencies", dim);
+//   printMatrix(transition_frequencies, "frequencies", dim);
+  printVector(eigenvalues, "eigenvalues", dim);
 
   
 
@@ -650,3 +654,14 @@ void printVector(const gsl_vector_complex *vector, const string name, const int 
   
 }
 
+void printVector(const gsl_vector *vector, const string name, const int dim)
+{
+  cout << "\n\n----------------------------------------------------\n";
+  cout << name << ": \n";
+  for(int i=0; i<dim; i++) {
+    cout << scientific << gsl_vector_get(vector, i) << '\t';
+  }
+  cout << endl;
+  cout << "----------------------------------------------------\n";
+  
+}
