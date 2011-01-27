@@ -81,7 +81,7 @@ int main(int argc, char* argv[])
   //{
 
 //   hamiltonian(0.362562);
-  hamiltonian(0.33126);
+  hamiltonian(0.3417757);
   //}
 
   
