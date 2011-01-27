@@ -56,7 +56,7 @@ static inline Matrix3cd gTensor()
 static inline Vector3cd staticBField(const double B)
 {
   const double B0_norm = B; //0.2839; //field in Tesla
-  double B0[3] = {0, 1, 1}; //field direction
+  double B0[3] = {0, 0, 1}; //field direction
   const double B_temp = sqrt( B0[0]*B0[0] + B0[1]*B0[1] + B0[2]*B0[2] );
 
   for (int i = 0; i<3; i++) {
