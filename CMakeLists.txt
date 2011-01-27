@@ -31,11 +31,3 @@ ENDMACRO(BUILD_HS)
 BUILD_HS(2)
 BUILD_HS(5)
 BUILD_HS(7)
-
-add_executable(test_gsl test_gsl.cpp)
-OptimizeForArchitecture(test_gsl)
-target_link_libraries(test_gsl ${GSL_LIBRARIES})
-
-add_executable(test_eigen test_eigen.cpp)
-OptimizeForArchitecture(hs_eigen)
-target_link_libraries(hs_eigen)
