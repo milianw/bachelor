@@ -11,9 +11,6 @@
 #include <QtCore/QStringList>
 
 using namespace Eigen;
-
-
-
 using namespace std;
 
 //Physical constants, all in MKS units
@@ -328,7 +325,6 @@ MatrixXcd SpinHamiltonian::magneticMoments() const
 //       cout << i << '\t' << j << '\t' << "FINAL:" << '\t' << moments(i, j) << endl;
     }
   }
-//   exit(1);
   return moments;
 }
 
@@ -343,37 +339,9 @@ void SpinHamiltonian::calculate() const
   //  cout << i+1 << '\t' << m_states[i] << endl;
   //}
 
-  //Debug: Output the states===================================================
-  /*
-  ///TODO: this is the same as above? intentional?
-  cout << "\nProduct spin states: \n";
-  cout << "======================\n";
-  for(int i=0;i<dim;i++)
-    cout << '\t' << states[i];
-  cout << endl;
-  for(int i=0;i<dim;i++)
-    cout << "----------";
-  cout << endl;
-  */
-   
-  
-  //cout << "!!!!!!!!!!!!!!!!!!!!\n";
-  //for (int i =0; i<nprotons+1;i++)
-  //cout << states[6][i] << endl;
-  //cout << "!!!!!!!!!!!!!!!!!!!!\n";
-
   const MatrixXcd Hamiltonian = nuclearZeeman() + hyperFine() + electronZeeman();
   //cout << endl << endl << "~~~~~~~~~~~~~ Hamiltonian:" << endl;
   //cout << Hamiltonian << endl << "~~~~~~~~~~~~~" << endl;
-
-  // have to check if g tensor is correct or transposed??
-  // same for a tensor!!
-
-  //check why with two atoms orientation makes a difference
-  //compare the values in the hyperfine matrix, if they do not change with orientation then the probelm is somewhere in the 
-  //                               zeeman matrices, or in numerical accuracy
-
-  //gsl_matrix_complex* quadrupolar = gsl_matrix_complex_calloc(dim,dim);
 
   //Diagonalize the total Hamiltonian matrix===================================
   SelfAdjointEigenSolver<MatrixXcd> eigenSolver(Hamiltonian);
@@ -382,55 +350,9 @@ void SpinHamiltonian::calculate() const
   //cout << "eigenvectors:\n" << eigenVectors << endl;
   //cout << "\neigenvalues:\n" << eigenValues << endl;
 
-  /*
-  //int ntransitions = (dim*(dim-1))/2;   //pairwise energy differences
-  //gsl_vector* transitions = gsl_vector_alloc(ntransitions);  //vector to store transition frequencies
-  //double swap;
-  //short int sortflag;
-  //cout.precision(5);
-  printMatrix(eigenvectors, "eigen", dim);
-  */
-
-  //Compute Transition moments=================================================
-  // gsl_complex product = gsl_complex_rect(0,0);
-  // for(int i =0; i<dim; i++)
-  //   {
-  //     product = gsl_complex_add(product,gsl_complex_mul
-  //                (gsl_complex_conjugate(gsl_matrix_complex_get(eigenvectors,0,i))
-  //                 ,gsl_matrix_complex_get(eigenvectors,1,i)));
-  //   }
-
-  // cout << GSL_REAL(product) << endl;
-  // cout << GSL_IMAG(product) << endl;
-  // cout << gsl_complex_abs(product) << endl;
-
-  //  gsl_vector_complex* Bperturb = gsl_vector_complex_calloc(3);
-  //  {
-  // double B1[3]={1,0,0}; //field direction
-  // for(int i=0;i<3; i++)
-  //  gsl_vector_complex_set(Bstatic, i, gsl_complex_rect(B1[i],0));
-  // }
-
-  const MatrixXcd moments = magneticMoments();
-  //cout.precision(5);
-  //Debug: output moments=====================================================
-  //cout << "moments:" << endl << moments << endl;
-
-  MatrixXd moments_sq = moments.cwiseAbs2();
+  MatrixXd moments_sq = magneticMoments().cwiseAbs2();
   moments_sq /= moments_sq.maxCoeff();
   //cout << "moments_sq" << endl << moments_sq << endl;
-
-  ///TODO: only calculate on demand for valid transitions
-  //cout << "\nTransition Frequencies (GHz): " << endl;
-  //cout << "================================\n";
-  //cout.precision(5);
-  MatrixXd transitionFrequencies(dimension, dimension);
-  for (int i = 0; i < dimension; ++i) {
-    for (int j = 0; j < dimension; ++j) {
-      transitionFrequencies(i, j) = 1.0/h/1.0E9 * abs(eigenValues(i) - eigenValues(j));
-    }
-  }
-  //cout << "frequencies" << endl << transitionFrequencies << endl;
 
   cout << "\n\nAllowed Transitions: \t\t\tB= " << fixed << m_B << endl;
   cout << "-------------------- " << endl;
@@ -442,7 +364,8 @@ void SpinHamiltonian::calculate() const
       if (moments_sq(i, j) > 1.0E-6) {
           cout << fixed << i+1 << " -> " << j+1 << "\t\t";
           cout.precision(5);cout.width(10);
-          cout << right << transitionFrequencies(i, j) << "\t\t";
+          // transition frequency:
+          cout << right << (1.0/h/1.0E9 * abs(eigenValues(i) - eigenValues(j))) << "\t\t";
           cout.precision(8);
           cout << moments_sq(i, j) << endl;
 
