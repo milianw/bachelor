@@ -295,7 +295,6 @@ MatrixXcd SpinHamiltonian::electronZeeman() const
 MatrixXcd SpinHamiltonian::magneticMoments() const
 {
   MatrixXcd moments(dimension, dimension);
-  moments.setZero();
 
   for (int i = 0; i < dimension; ++i) {
     for (int j = 0; j < dimension; ++j) {
@@ -305,6 +304,8 @@ MatrixXcd SpinHamiltonian::magneticMoments() const
 //       cout << i << '\t' << j << '\t' << "FINAL:" << '\t' << moments(i, j) << endl;
     }
   }
+
+  //cout << moments << endl;
   return moments;
 }
 
@@ -344,7 +345,7 @@ inline c_double SpinHamiltonian::magneticMoment(const int i, const int j) const
 
 MatrixXd SpinHamiltonian::probabilityMatrix(const MatrixXcd& eigenVectors) const {
   const MatrixXcd moments = magneticMoments();
-  //cout << moments << endl;
+  ///TODO: take direction of B0 and B1 into account, integrate over plane
   MatrixXd probabilities(dimension, dimension);
   for(int i = 0; i < dimension; ++i) {
     for(int j = 0; j < dimension; ++j) {
