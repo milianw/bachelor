@@ -136,6 +136,11 @@ class SpinHamiltonian {
 
     inline c_double magneticMoment(const int i, const int j) const;
 
+    /// probability matrix with coefficients (i, j) = |< psi_j | M | psi_i>|^2
+    /// psi_i being the i-th eigen vector
+    /// M being the magnetic moment matrix
+    MatrixXd probabilityMatrix(const MatrixXcd& eigenVectors) const;
+
     const double m_B;
     Matrix3cd m_gTensor;
     Matrix3cd m_aTensor;
@@ -337,6 +342,21 @@ inline c_double SpinHamiltonian::magneticMoment(const int i, const int j) const
   return ret;
 }
 
+MatrixXd SpinHamiltonian::probabilityMatrix(const MatrixXcd& eigenVectors) const {
+  const MatrixXcd moments = magneticMoments();
+  //cout << moments << endl;
+  MatrixXd probabilities(dimension, dimension);
+  for(int i = 0; i < dimension; ++i) {
+    for(int j = 0; j < dimension; ++j) {
+      if (i != j) {
+        probabilities(i, j) = ((eigenVectors.col(j).adjoint() * (moments * eigenVectors.col(i)))).norm();
+      } else {
+        probabilities(i, j) = 0;
+      }
+    }
+  }
+  return probabilities /= probabilities.maxCoeff();
+}
 
 void SpinHamiltonian::calculate() const
 {
@@ -360,19 +380,8 @@ void SpinHamiltonian::calculate() const
   //cout << "eigenvectors:\n" << eigenVectors << endl;
   //cout << "\neigenvalues:\n" << eigenValues << endl;
 
-  //save some ram, don't store the whole probability matrix, only the max value
-  //and then each value as required below
-  double maxProbability;
-  for(int i = 0; i < dimension; ++i) {
-    for(int j = 0; j < dimension; ++j) {
-      const double probability = norm(magneticMoment(i, j));
-      if (i == 0 && j == 0) {
-        maxProbability = probability;
-      } else if (probability > maxProbability) {
-        maxProbability = probability;
-      }
-    }
-  }
+  const MatrixXd probabilities = probabilityMatrix(eigenVectors);
+  //cout << probabilities << endl;
 
   cout << "\n\nAllowed Transitions: \t\t\tB= " << fixed << m_B << endl;
   cout << "-------------------- " << endl;
@@ -381,7 +390,7 @@ void SpinHamiltonian::calculate() const
   int transitions = 0;
   for (int i = 0;i < dimension; ++i) {
     for (int j = i + 1; j < dimension; ++j) {
-      const double probability = norm(magneticMoment(i, j)) / maxProbability;
+      const double probability = probabilities(i, j);
       if (probability > 1.0E-6) {
           cout << fixed << i+1 << " -> " << j+1 << "\t\t";
           cout.precision(5);cout.width(10);
@@ -441,7 +450,9 @@ int main(int argc, char* argv[])
   //{
 
 //     SpinHamiltonian h(0.362562);
-    SpinHamiltonian h(0.3417757);
+//     const double B = 0.3;
+    const double B = 0.3417757;
+    SpinHamiltonian h(B);
     h.calculate();
   //}
 
