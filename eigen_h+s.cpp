@@ -387,19 +387,19 @@ void SpinHamiltonian::calculate() const
   cout << "-------------------- " << endl;
   cout << "Transition\tFrequency (GHz)\t\tProbability" << endl;
   cout << "---------------------------------------------------\n";
-  int transitions = 0;
+  int transitions = 1;
   for (int i = 0;i < dimension; ++i) {
     for (int j = i + 1; j < dimension; ++j) {
       const double probability = probabilities(i, j);
       if (probability > 1.0E-6) {
-          cout << fixed << i+1 << " -> " << j+1 << "\t\t";
-          cout.precision(5);cout.width(10);
+          cout << transitions++;
+          cout.precision(5);
+          cout.width(10);
           // transition frequency:
           cout << right << (1.0/h/1.0E9 * abs(eigenValues(i) - eigenValues(j))) << "\t\t";
           cout.precision(8);
           cout << probability << endl;
 
-          ++transitions;
         }
     }
   }
