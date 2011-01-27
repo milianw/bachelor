@@ -134,6 +134,8 @@ class SpinHamiltonian {
     /// TODO: better document
     MatrixXcd magneticMoments() const;
 
+    inline c_double magneticMoment(const int i, const int j) const;
+
     const double m_B;
     Matrix3cd m_gTensor;
     Matrix3cd m_aTensor;
@@ -293,40 +295,48 @@ MatrixXcd SpinHamiltonian::magneticMoments() const
   for (int i = 0; i < dimension; ++i) {
     for (int j = 0; j < dimension; ++j) {
       //nprotons is always the index of the electronic spin state
-      for (int k = 0; k < nprotons+1; ++k) {
-        bool contributes = true;
-        for (int l = 0; l < nprotons+1; ++l) {
-          if (l==k) {
-            continue;
-          }
-          if (m_states[i][l] != m_states[j][l]) {
-            contributes = false;
-            break;
-          }
-        }
-        if (!contributes) {
-          continue;
-        }
-
-        const int a = m_states[i][k];  //spin state of state k in row i
-        const int b = m_states[j][k];  //spin state of state k in column j
-        c_double xMoment = pauliX(a, b);
-
-        if (k != nprotons) {
-          xMoment *= -1.0 * g_1H * NUC_MAGNETON;
-        } else {
-          xMoment *= 2.023 * Bohrm;
-        }
-
-//         cout << i << '\t' << j << '\t' << k << '\t' << xMoment << endl;
-        moments(i, j) += xMoment;
-      }
+      moments(i, j) = magneticMoment(i, j);
 
 //       cout << i << '\t' << j << '\t' << "FINAL:" << '\t' << moments(i, j) << endl;
     }
   }
   return moments;
 }
+
+inline c_double SpinHamiltonian::magneticMoment(const int i, const int j) const
+{
+  c_double ret = 0;
+  for (int k = 0; k < nprotons+1; ++k) {
+    bool contributes = true;
+    for (int l = 0; l < nprotons+1; ++l) {
+      if (l==k) {
+        continue;
+      }
+      if (m_states[i][l] != m_states[j][l]) {
+        contributes = false;
+        break;
+      }
+    }
+    if (!contributes) {
+      continue;
+    }
+
+    const int a = m_states[i][k];  //spin state of state k in row i
+    const int b = m_states[j][k];  //spin state of state k in column j
+    c_double xMoment = pauliX(a, b);
+
+    if (k != nprotons) {
+      xMoment *= -1.0 * g_1H * NUC_MAGNETON;
+    } else {
+      xMoment *= 2.023 * Bohrm;
+    }
+
+//         cout << i << '\t' << j << '\t' << k << '\t' << xMoment << endl;
+    ret += xMoment;
+  }
+  return ret;
+}
+
 
 void SpinHamiltonian::calculate() const
 {
@@ -350,9 +360,19 @@ void SpinHamiltonian::calculate() const
   //cout << "eigenvectors:\n" << eigenVectors << endl;
   //cout << "\neigenvalues:\n" << eigenValues << endl;
 
-  MatrixXd moments_sq = magneticMoments().cwiseAbs2();
-  moments_sq /= moments_sq.maxCoeff();
-  //cout << "moments_sq" << endl << moments_sq << endl;
+  //save some ram, don't store the whole probability matrix, only the max value
+  //and then each value as required below
+  double maxProbability;
+  for(int i = 0; i < dimension; ++i) {
+    for(int j = 0; j < dimension; ++j) {
+      const double probability = norm(magneticMoment(i, j));
+      if (i == 0 && j == 0) {
+        maxProbability = probability;
+      } else if (probability > maxProbability) {
+        maxProbability = probability;
+      }
+    }
+  }
 
   cout << "\n\nAllowed Transitions: \t\t\tB= " << fixed << m_B << endl;
   cout << "-------------------- " << endl;
@@ -361,13 +381,14 @@ void SpinHamiltonian::calculate() const
   int transitions = 0;
   for (int i = 0;i < dimension; ++i) {
     for (int j = i + 1; j < dimension; ++j) {
-      if (moments_sq(i, j) > 1.0E-6) {
+      const double probability = norm(magneticMoment(i, j)) / maxProbability;
+      if (probability > 1.0E-6) {
           cout << fixed << i+1 << " -> " << j+1 << "\t\t";
           cout.precision(5);cout.width(10);
           // transition frequency:
           cout << right << (1.0/h/1.0E9 * abs(eigenValues(i) - eigenValues(j))) << "\t\t";
           cout.precision(8);
-          cout << moments_sq(i, j) << endl;
+          cout << probability << endl;
 
           ++transitions;
         }
