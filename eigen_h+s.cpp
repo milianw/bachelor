@@ -237,10 +237,9 @@ MatrixXcd SpinHamiltonian::hyperFine() const
           continue;
         }
 
-        //skip this for now, all nuclei assigned the free proton isotropic coupling
         //multiply atensor by I
         //multiply s by atensor_I
-        ///TODO: a.dot(b) or a.conjugate().dot(s)
+        ///TODO: difference to S.dot(m_aTensor * I)
         hyperfine(i, j) += (aTensorTransposed * spinVector(i, j, k)).conjugate().dot(s);
       }
     }
