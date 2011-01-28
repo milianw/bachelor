@@ -343,7 +343,7 @@ void SpinHamiltonian::calculateIntensity(const double mwFreq) const
   const VectorXd eigenValues = eigenSolver.eigenvalues();
   const MatrixXcd eigenVectors = eigenSolver.eigenvectors();
 
-  const MatrixXd intensities = intensityMatrix(eigenVectors);
+  const MatrixXcd moments = magneticMoments();
 
   double intensity = 0;
   for (int i = 0;i < dimension; ++i) {
@@ -354,7 +354,7 @@ void SpinHamiltonian::calculateIntensity(const double mwFreq) const
       if (abs(mwFreq/freq - 1.0) > 5.0E-4) {
         continue;
       }
-      intensity += intensities(i, j);
+      intensity += (eigenVectors.col(j).adjoint() * moments * eigenVectors.col(i)).norm();
     }
   }
   cout << scientific << m_B << '\t' << (intensity * 2.0 * M_PI * (Bohrm / hbar) * (Bohrm / hbar)) << endl;
