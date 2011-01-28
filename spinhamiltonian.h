@@ -227,8 +227,9 @@ MatrixXcd SpinHamiltonian::hyperFine() const
 
         //multiply atensor by I
         //multiply s by atensor_I
-        ///TODO: difference to S.dot(m_aTensor * I)
-        hyperfine(i, j) += (aTensorTransposed * spinVector(i, j, k)).conjugate().dot(s);
+        hyperfine(i, j) += s.dot(m_aTensor * spinVector(i, j, k));
+        ///TODO: before: it was this, BUT only conjugate because of zdotu instead of zdotc in original - OR?
+        ///hyperfine(i, j) += (m_aTensor.transpose() * spinVector(i, j, k)).conjugate().dot(s);
       }
     }
   }
