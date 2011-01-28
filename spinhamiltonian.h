@@ -244,26 +244,19 @@ MatrixXcd SpinHamiltonian::electronZeeman() const
 {
   //Compute eZeeman============================================================  
   MatrixXcd eZeeman(dimension, dimension);
-  //first multiply the g tensor by the field
-  const Vector3cd BstaticgTransposed = (m_gTensor.transpose() * m_staticBField).transpose();
+  //first multiply the g tensor with the static magnetic field hamiltonian
+  const Vector3cd gDotH_B = m_gTensor * m_staticBField;
 
-  //depending on the convention, i might have to tranpose the gtensor here 
-  //cout << "Bstaticg: \n";
-  //for(int i=0; i<3; i++)
-  //cout << GSL_REAL(gsl_vector_complex_get(Bstaticg, i)) << '\t';
-  //cout << endl;
+  //depending on the convention, i might have to tranpose the gtensor here
   for (int i = 0; i < dimension; ++i) {
-    //cout << m_states[i] << " |";
     for (int j = 0; j < dimension; ++j) {
       //nprotons is always the index of the electron spin
-      //cout << '\t' << a << b;
       if (!stateContributes(i, j, nprotons)) {
         continue;
       }
 
-      eZeeman(i,j) = BstaticgTransposed.dot(spinVector(i, j, nprotons));
+      eZeeman(i,j) = gDotH_B.dot(spinVector(i, j, nprotons));
     }
-    //cout << endl;
   }
   eZeeman *= Bohrm;
 
