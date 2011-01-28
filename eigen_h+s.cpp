@@ -108,6 +108,7 @@ class SpinHamiltonian {
     void calculate() const;
 
   private:
+    MatrixXcd hamiltonian() const;
     /// nuclear Zeeman Hamiltonian component
     MatrixXcd nuclearZeeman() const;
     /// hyper fine Hamiltonian component
@@ -181,6 +182,10 @@ inline bool SpinHamiltonian::stateContributes(const int i, const int j, const in
   return true;
 }
 
+MatrixXcd SpinHamiltonian::hamiltonian() const
+{
+  return nuclearZeeman() + hyperFine() + electronZeeman();
+}
 
 MatrixXcd SpinHamiltonian::nuclearZeeman() const
 {
@@ -367,12 +372,8 @@ void SpinHamiltonian::calculate() const
   //  cout << i+1 << '\t' << m_states[i] << endl;
   //}
 
-  const MatrixXcd Hamiltonian = nuclearZeeman() + hyperFine() + electronZeeman();
-  //cout << endl << endl << "~~~~~~~~~~~~~ Hamiltonian:" << endl;
-  //cout << Hamiltonian << endl << "~~~~~~~~~~~~~" << endl;
-
   //Diagonalize the total Hamiltonian matrix===================================
-  SelfAdjointEigenSolver<MatrixXcd> eigenSolver(Hamiltonian);
+  SelfAdjointEigenSolver<MatrixXcd> eigenSolver(hamiltonian());
   const VectorXd eigenValues = eigenSolver.eigenvalues();
   const MatrixXcd eigenVectors = eigenSolver.eigenvectors();
   //cout << "eigenvectors:\n" << eigenVectors << endl;
