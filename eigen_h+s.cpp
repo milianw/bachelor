@@ -7,9 +7,6 @@
 #include <complex>
 #include <Eigen/Dense>
 
-#include <QtCore/QCoreApplication>
-#include <QtCore/QStringList>
-
 using namespace Eigen;
 using namespace std;
 

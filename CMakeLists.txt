@@ -11,9 +11,6 @@ find_package(GSL REQUIRED)
 find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
-find_package(Qt4 REQUIRED)
-include_directories(${QT_INCLUDE_DIR})
-
 add_executable(hs_hossam hamiltonian+selection.cpp)
 OptimizeForArchitecture(hs_hossam)
 target_link_libraries(hs_hossam ${GSL_LIBRARIES})
@@ -24,7 +21,7 @@ set(HS_NAME hs-${PROTONS})
 add_executable(${HS_NAME} eigen_h+s.cpp)
 set_target_properties(${HS_NAME} PROPERTIES COMPILE_FLAGS -DPROTONS=${PROTONS})
 OptimizeForArchitecture(${HS_NAME})
-target_link_libraries(${HS_NAME} ${QT_QTCORE_LIBRARY})
+target_link_libraries(${HS_NAME})
 # remove_definitions(-DPROTONS=${PROTONS})
 ENDMACRO(BUILD_HS)
 
