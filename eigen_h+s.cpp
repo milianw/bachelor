@@ -103,11 +103,18 @@ static inline Matrix3cd aTensor()
 class SpinHamiltonian {
   public:
     /// @p B magnetic field in Tesla
+    /// @p mwFreq micro wave frequency in GHz
     SpinHamiltonian(const double B);
+    ~SpinHamiltonian();
 
-    void calculate() const;
+    /// list all possible transitions with their frequency for the given B field
+    void calculateTransitions() const;
+    /// calculate total intensity of all transitions that are valid for the
+    /// incoming microwave frequency
+    void calculateIntensity(const double mwFreq) const;
 
   private:
+    /// the complete hamiltonian
     MatrixXcd hamiltonian() const;
     /// nuclear Zeeman Hamiltonian component
     MatrixXcd nuclearZeeman() const;
@@ -134,10 +141,10 @@ class SpinHamiltonian {
 
     inline c_double magneticMoment(const int i, const int j) const;
 
-    /// probability matrix with coefficients (i, j) = |< psi_j | M | psi_i>|^2
+    /// intensitiy matrix with coefficients (i, j) = |< psi_j | M | psi_i>|^2
     /// psi_i being the i-th eigen vector
     /// M being the magnetic moment matrix
-    MatrixXd probabilityMatrix(const MatrixXcd& eigenVectors) const;
+    MatrixXd intensityMatrix(const MatrixXcd& eigenVectors) const;
 
     const double m_B;
     Matrix3cd m_gTensor;
@@ -159,6 +166,11 @@ SpinHamiltonian::SpinHamiltonian(const double B)
     //for each bit: 0=+0.5, 1=-0.5
     m_states[i] = i;
   }
+}
+
+SpinHamiltonian::~SpinHamiltonian()
+{
+  delete m_states;
 }
 
 inline Vector3cd SpinHamiltonian::spinVector(int i, int j, int k) const
@@ -344,68 +356,84 @@ inline c_double SpinHamiltonian::magneticMoment(const int i, const int j) const
   return ret;
 }
 
-MatrixXd SpinHamiltonian::probabilityMatrix(const MatrixXcd& eigenVectors) const {
+MatrixXd SpinHamiltonian::intensityMatrix(const MatrixXcd& eigenVectors) const {
   const MatrixXcd moments = magneticMoments();
   ///TODO: take direction of B0 and B1 into account, integrate over plane
-  MatrixXd probabilities(dimension, dimension);
+  MatrixXd intensities(dimension, dimension);
   for(int i = 0; i < dimension; ++i) {
     /// right part: M | Psi_i >
     const MatrixXcd mTimesPsiI = moments * eigenVectors.col(i);
     for(int j = 0; j < dimension; ++j) {
       if (i != j) {
-        /// left part: < Psi_j | M | Psi_i >
-        probabilities(i, j) = (eigenVectors.col(j).adjoint() * mTimesPsiI).norm();
+        /// left part with < Psi_j | and abs squared: |< Psi_j | M | Psi_i >|^2
+        intensities(i, j) = (eigenVectors.col(j).adjoint() * mTimesPsiI).norm();
+        ///TODO: eq 3-24, p 52 says: |< j|M|i | dot H_1>|^2
+        ///meaning: what about H_1?
       } else {
-        probabilities(i, j) = 0;
+        intensities(i, j) = 0;
       }
     }
   }
-  return probabilities /= probabilities.maxCoeff();
+  return intensities;
 }
 
-void SpinHamiltonian::calculate() const
+void SpinHamiltonian::calculateIntensity(const double mwFreq) const
 {
-  //cout << "g = " << m_aTensor << endl;
-  //cout << "B = " << m_staticBField << endl;
-  //cout << "A = " << m_aTensor << endl;
-  //cout << "Pauli Matrices:" << endl << pauliX << endl << pauliY << endl << pauliZ << endl;
-  //cout << "Spin states: \n";
-  //for(int i = 0; i < dimension; ++i) {
-  //  cout << i+1 << '\t' << m_states[i] << endl;
-  //}
-
   //Diagonalize the total Hamiltonian matrix===================================
   SelfAdjointEigenSolver<MatrixXcd> eigenSolver(hamiltonian());
   const VectorXd eigenValues = eigenSolver.eigenvalues();
   const MatrixXcd eigenVectors = eigenSolver.eigenvectors();
-  //cout << "eigenvectors:\n" << eigenVectors << endl;
-  //cout << "\neigenvalues:\n" << eigenValues << endl;
 
-  const MatrixXd probabilities = probabilityMatrix(eigenVectors);
-  //cout << probabilities << endl;
+  const MatrixXd intensities = intensityMatrix(eigenVectors);
 
-  cout << "\n\nAllowed Transitions: \t\t\tB= " << fixed << m_B << endl;
-  cout << "-------------------- " << endl;
-  cout << "Transition\tFrequency (GHz)\t\tProbability" << endl;
-  cout << "---------------------------------------------------\n";
+  double intensity = 0;
+  for (int i = 0;i < dimension; ++i) {
+    for (int j = i + 1; j < dimension; ++j) {
+        // transition frequency:
+      const double freq = (1.0/h/1.0E9 * abs(eigenValues(i) - eigenValues(j)));
+      // assume it's only seen when energy is below frequency threshold
+      if (abs(mwFreq/freq - 1.0) > 5.0E-4) {
+        continue;
+      }
+      intensity += intensities(i, j);
+    }
+  }
+  cout << scientific << m_B << '\t' << (intensity * 2.0 * M_PI * (Bohrm / hbar) * (Bohrm / hbar)) << endl;
+}
+
+void SpinHamiltonian::calculateTransitions() const
+{
+  //Diagonalize the total Hamiltonian matrix===================================
+  SelfAdjointEigenSolver<MatrixXcd> eigenSolver(hamiltonian());
+  const VectorXd eigenValues = eigenSolver.eigenvalues();
+  const MatrixXcd eigenVectors = eigenSolver.eigenvectors();
+
+  MatrixXd probabilities = intensityMatrix(eigenVectors);
+  probabilities /= probabilities.maxCoeff();
+  
+//   cout << "\n\nAllowed Transitions: \t\t\tB= " << fixed << m_B << endl;
+//   cout << "-------------------- " << endl;
+//   cout << "Transition\tFrequency (GHz)\t\tProbability" << endl;
+//   cout << "---------------------------------------------------\n";
+//   int transitions = 1;
   int transitions = 1;
   for (int i = 0;i < dimension; ++i) {
     for (int j = i + 1; j < dimension; ++j) {
       const double probability = probabilities(i, j);
       if (probability > 1.0E-6) {
-          cout << transitions++;
-          cout.precision(5);
-          cout.width(10);
-          // transition frequency:
-          cout << right << (1.0/h/1.0E9 * abs(eigenValues(i) - eigenValues(j))) << "\t\t";
-          cout.precision(8);
-          cout << probability << endl;
-
-        }
+        cout << transitions++;
+        cout.precision(5);
+        cout.width(10);
+        // transition frequency:
+        cout << right << (1.0/h/1.0E9 * abs(eigenValues(i) - eigenValues(j))) << "\t\t";
+        cout.precision(8);
+        cout << probability << endl;
+      }
     }
   }
   cout << transitions << " transitions in total" << endl;
 }
+
 
 //END SpinHamiltonian
 
@@ -446,16 +474,26 @@ int main(int argc, char* argv[])
   //     return(1);
   //   }
 
+  /*
+  {
+      const double B = 0.362562;
+      const double B = 0.3;
+      const double B = 0.3417757;
+      SpinHamiltonian h(B);
+      h.calculateTransitions();
+  }
+  */
 
-  //  for(int i=0;i<100;i++)
-  //{
-
-//     SpinHamiltonian h(0.362562);
-//     const double B = 0.3;
-    const double B = 0.3417757;
-    SpinHamiltonian h(B);
-    h.calculate();
-  //}
+  const int steps = 1024;
+  const double B_min = 0.280;
+  const double B_max = 0.400;
+  const double mwFreq = 9.5; // in GHz
+  const double B_stepSize = (B_max - B_min) / steps;
+  double B = B_min;
+  for(int i = 0; i < steps; ++i) {
+    SpinHamiltonian(B).calculateIntensity(mwFreq);
+    B += B_stepSize;
+  }
 
   return 0;
 }
