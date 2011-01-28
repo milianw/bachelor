@@ -191,10 +191,8 @@ MatrixXcd SpinHamiltonian::nuclearZeeman() const
           continue;
         }
 
-        // set cell to dot product of I and B
-        ///TODO: .dot() or .conjugate().dot()
-//         nZeeman(i, j) += m_staticBField.dot(spinVector(i, j, k));
-        nZeeman(i, j) += m_staticBField.conjugate().dot(spinVector(i, j, k));
+        // set cell to dot product of H_B and I
+        nZeeman(i, j) += m_staticBField.dot(spinVector(i, j, k));
       }
     }
   }
