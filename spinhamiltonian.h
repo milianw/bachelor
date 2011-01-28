@@ -1,8 +1,31 @@
+/*
+ * This file is part of my bachelor thesis.
+ *
+ * Copyright 2011 Milian Wolff <mail@milianw.de>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Library General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public
+ * License along with this program; if not, write to the
+ * Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
+
+#ifndef MW_BACHELOR_SPINHAMILTONIAN_H
+#define MW_BACHELOR_SPINHAMILTONIAN_H
+
 #include <iostream>
 #include <string>
 #include <cmath>
 #include <bitset>
-#include <gsl/gsl_const_mksa.h>
 
 #include <complex>
 #include <Eigen/Dense>
@@ -10,72 +33,20 @@
 using namespace Eigen;
 using namespace std;
 
-//Physical constants, all in MKS units
-const double hbar = GSL_CONST_MKSA_PLANCKS_CONSTANT_HBAR;
-const double h = GSL_CONST_MKSA_PLANCKS_CONSTANT_H;
-const double NUC_MAGNETON = GSL_CONST_MKSA_NUCLEAR_MAGNETON; // (J/T)
-const double g_1H = 5.585694701 ;            // proton g factor
-const double g_14N = 0.403761;               // N14 g factor
-const double GAMMA_1H = 267.513E6 ;          // (rad/s.T)
-const double GAMMA_14N =  19.331E6 ;         // (rad/s.T)
-const double Bohrm = 9.27400949E-24;         // Bohr magneton in J/T
-// Reminder: GAMMA_1H * hbar =  NUC_MAGNETON * g_1H
-//const double B = 1;                          // Static magnetic field (T)
-//const double B2 = ;                        // RF field
-//const double LARMOR_1H = B * GAMMA_1H /2/M_PI / 1.0E6;
+#include "constants.h"
+#include "experiment.h"
+
+using namespace Constants;
+using namespace Experiment;
+
+typedef complex<double> c_double;
 
 // Pauli Matrices
-typedef complex<double> c_double;
-const Matrix2cd pauliX = (Matrix2cd() << 0, 0.5,
-                                         0.5, 0).finished();
-const Matrix2cd pauliY = (Matrix2cd() << 0, c_double(0, -0.5),
-                                         c_double(0, 0.5), 0).finished();
-const Matrix2cd pauliZ = (Matrix2cd() << 0.5, 0,
-                                         0, -0.5).finished();
-
-#ifndef PROTONS
-const int nprotons = 7;
-#else
-const int nprotons = PROTONS;
-#endif
-
-const int dimension = pow(2, nprotons + 1);
-
-namespace input {
-
-//gtensor=============================
-static inline Matrix3cd gTensor()
-{
-  return Matrix3cd::Identity() * 2.0022838;
+namespace PauliMatrix {
+const Matrix2cd X = (Matrix2cd() << 0, 0.5, 0.5, 0).finished();
+const Matrix2cd Y = (Matrix2cd() << 0, c_double(0, -0.5), c_double(0, 0.5), 0).finished();
+const Matrix2cd Z = (Matrix2cd() << 0.5, 0, 0, -0.5).finished();
 }
-
-//static field========================
-static inline Vector3cd staticBField(const double B)
-{
-  const double B0_norm = B; //0.2839; //field in Tesla
-  double B0[3] = {0, 0, 1}; //field direction
-  const double B_temp = sqrt( B0[0]*B0[0] + B0[1]*B0[1] + B0[2]*B0[2] );
-
-  for (int i = 0; i<3; i++) {
-    B0[i] = B0[i]*B0_norm/B_temp;
-  }
-
-  //cout << endl << "B0:" << " " << B0[0] << '\t' << B0[1] << '\t' << B0[2] << endl;
-  //cout.precision(5);
-  //cout << "\nStatic Field (T): " << sqrt(B0[0]*B0[0]+B0[1]*B0[1]+B0[2]*B0[2]) << endl;
-
-  return Vector3cd(B0[0], B0[1], B0[2]);
-}
-
-//arbitrary A-tensor==================
-static inline Matrix3cd aTensor()
-{
-  return Matrix3cd::Identity() * 1420;  //proton hyperfine coupling in T
-}
-
-} // namespace input
-
-//BEGIN SpinHamiltonian
 
 /**
  * TODO: check whether inlining some parts is noticeable
@@ -155,9 +126,9 @@ class SpinHamiltonian {
 
 SpinHamiltonian::SpinHamiltonian(const double B)
 : m_B(B)
-, m_gTensor(input::gTensor())
-, m_aTensor(input::aTensor())
-, m_staticBField(input::staticBField(B))
+, m_gTensor(Experiment::gTensor())
+, m_aTensor(Experiment::aTensor())
+, m_staticBField(Experiment::staticBField(B))
 , m_states(new bitset<(nprotons+1)>[dimension])
 {
   //This includes all spin half species (protons+1 electron)
@@ -177,7 +148,7 @@ inline Vector3cd SpinHamiltonian::spinVector(int i, int j, int k) const
 {
   const int a = m_states[i][k]; //spin state of state k in row i
   const int b = m_states[j][k];  //spin state of state k in column j
-  return (Vector3cd() << pauliX(a, b), pauliY(a, b), pauliZ(a, b)).finished();
+  return (Vector3cd() << PauliMatrix::X(a, b), PauliMatrix::Y(a, b), PauliMatrix::Z(a, b)).finished();
 }
 
 inline bool SpinHamiltonian::stateContributes(const int i, const int j, const int k) const
@@ -342,7 +313,7 @@ inline c_double SpinHamiltonian::magneticMoment(const int i, const int j) const
 
     const int a = m_states[i][k];  //spin state of state k in row i
     const int b = m_states[j][k];  //spin state of state k in column j
-    c_double xMoment = pauliX(a, b);
+    c_double xMoment = PauliMatrix::X(a, b);
 
     if (k != nprotons) {
       xMoment *= -1.0 * g_1H * NUC_MAGNETON;
@@ -434,66 +405,4 @@ void SpinHamiltonian::calculateTransitions() const
   cout << transitions << " transitions in total" << endl;
 }
 
-
-//END SpinHamiltonian
-
-int main(int argc, char* argv[])
-{
-  //cout << 2.023 * Bohrm << endl;
-  //cout << NUC_MAGNETON << endl;
-  //cout << g_1H * NUC_MAGNETON << endl;
-  //cout << GAMMA_1H * hbar << endl;
-
-  /////////////////////////////////////////////////////////////////////////
-  // The input file should be structured as follows:                 //
-  // natoms n                     (number of coupled nuclei)         //
-  // field x y z                  (The static field direction)       //
-  // g                            (g tensor)                         //
-  //   xx xy xz                              //
-  //   yx yy yz                              //
-  //   zx zy zz                              //
-  // N                            (A tensor)                 //
-  //   xx xy xz                              //
-  //   yx yy yz                              //
-  //   zx zy zz                              //
-  // H                            (A tensor)                 //
-  //   .........                             //
-  //   .........                             //
-  //   .........                             //
-  // And so on...                                //
-  /////////////////////////////////////////////////////////////////////////
-  
-
-  //Parsing input file
-  //ifstream inputfile;
-  //inputfile.open(argv[1]);
-  // if(!inputfile)
-  //   {
-  //     cerr << "This program expects a single input file\n";
-  //     cerr << "Check the comments in the source code for details\n"
-  //     return(1);
-  //   }
-
-  /*
-  {
-      const double B = 0.362562;
-      const double B = 0.3;
-      const double B = 0.3417757;
-      SpinHamiltonian h(B);
-      h.calculateTransitions();
-  }
-  */
-
-  const int steps = 1024;
-  const double B_min = 0.280;
-  const double B_max = 0.400;
-  const double mwFreq = 9.5; // in GHz
-  const double B_stepSize = (B_max - B_min) / steps;
-  double B = B_min;
-  for(int i = 0; i < steps; ++i) {
-    SpinHamiltonian(B).calculateIntensity(mwFreq);
-    B += B_stepSize;
-  }
-
-  return 0;
-}
+#endif // MW_BACHELOR_SPINHAMILTONIAN_H
