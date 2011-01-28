@@ -314,6 +314,7 @@ inline c_double SpinHamiltonian::magneticMoment(const int i, const int j) const
   return ret;
 }
 
+///TODO: optimize!
 MatrixXd SpinHamiltonian::intensityMatrix(const MatrixXcd& eigenVectors) const {
   const MatrixXcd moments = magneticMoments();
   ///TODO: take direction of B0 and B1 into account, integrate over plane
@@ -325,7 +326,7 @@ MatrixXd SpinHamiltonian::intensityMatrix(const MatrixXcd& eigenVectors) const {
       if (i != j) {
         /// left part with < Psi_j | and abs squared: |< Psi_j | M | Psi_i >|^2
         intensities(i, j) = (eigenVectors.col(j).adjoint() * mTimesPsiI).norm();
-        ///TODO: eq 3-24, p 52 says: |< j|M|i | dot H_1>|^2
+        ///TODO: eq 3-24, p 52 says: |< j|M|i > dot H_1|^2
         ///meaning: what about H_1?
       } else {
         intensities(i, j) = 0;
