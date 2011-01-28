@@ -244,9 +244,8 @@ MatrixXcd SpinHamiltonian::electronZeeman() const
 {
   //Compute eZeeman============================================================  
   MatrixXcd eZeeman(dimension, dimension);
-  eZeeman.setZero();
   //first multiply the g tensor by the field
-  const Vector3cd Bstaticg = m_gTensor.transpose() * m_staticBField;
+  const Vector3cd BstaticgTransposed = (m_gTensor.transpose() * m_staticBField).transpose();
 
   //depending on the convention, i might have to tranpose the gtensor here 
   //cout << "Bstaticg: \n";
@@ -257,14 +256,12 @@ MatrixXcd SpinHamiltonian::electronZeeman() const
     //cout << m_states[i] << " |";
     for (int j = 0; j < dimension; ++j) {
       //nprotons is always the index of the electron spin
-      const int a = m_states[i][nprotons];
-      const int b = m_states[j][nprotons];
       //cout << '\t' << a << b;
       if (!stateContributes(i, j, nprotons)) {
         continue;
       }
 
-      eZeeman(i,j) += Bstaticg.transpose().dot(spinVector(i, j, nprotons));
+      eZeeman(i,j) = BstaticgTransposed.dot(spinVector(i, j, nprotons));
     }
     //cout << endl;
   }
