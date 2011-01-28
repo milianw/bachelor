@@ -349,9 +349,11 @@ MatrixXd SpinHamiltonian::probabilityMatrix(const MatrixXcd& eigenVectors) const
   ///TODO: take direction of B0 and B1 into account, integrate over plane
   MatrixXd probabilities(dimension, dimension);
   for(int i = 0; i < dimension; ++i) {
+    /// right part: M | Psi_i >
     const MatrixXcd mTimesPsiI = moments * eigenVectors.col(i);
     for(int j = 0; j < dimension; ++j) {
       if (i != j) {
+        /// left part: < Psi_j | M | Psi_i >
         probabilities(i, j) = (eigenVectors.col(j).adjoint() * mTimesPsiI).norm();
       } else {
         probabilities(i, j) = 0;
