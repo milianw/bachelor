@@ -60,11 +60,12 @@ int main(int argc, char* argv[])
 
   /*
   {
-      const double B = 0.362562;
-      const double B = 0.3;
+//       const double B = 0.362562;
+//       const double B = 0.3;
       const double B = 0.3417757;
       SpinHamiltonian h(B);
       h.calculateTransitions();
+      return 0;
   }
   */
 

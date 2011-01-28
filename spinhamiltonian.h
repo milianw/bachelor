@@ -382,19 +382,19 @@ void SpinHamiltonian::calculateTransitions() const
   MatrixXd probabilities = intensityMatrix(eigenVectors);
   probabilities /= probabilities.maxCoeff();
   
-//   cout << "\n\nAllowed Transitions: \t\t\tB= " << fixed << m_B << endl;
-//   cout << "-------------------- " << endl;
-//   cout << "Transition\tFrequency (GHz)\t\tProbability" << endl;
-//   cout << "---------------------------------------------------\n";
-//   int transitions = 1;
+  cout << "\n\nAllowed Transitions: \t\t\tB= " << fixed << m_B << endl;
+  cout << "---------------------------------------------------\n";
+  cout << "Transition\tFrequency (GHz)\t\tProbability" << endl;
+  cout << "---------------------------------------------------\n";
   int transitions = 1;
   for (int i = 0;i < dimension; ++i) {
     for (int j = i + 1; j < dimension; ++j) {
       const double probability = probabilities(i, j);
       if (probability > 1.0E-6) {
-        cout << transitions++;
-        cout.precision(5);
         cout.width(10);
+        cout << right << transitions++ << '\t';
+        cout.width(14);
+        cout.precision(5);
         // transition frequency:
         cout << right << (1.0/h/1.0E9 * abs(eigenValues(i) - eigenValues(j))) << "\t\t";
         cout.precision(8);
@@ -402,6 +402,7 @@ void SpinHamiltonian::calculateTransitions() const
       }
     }
   }
+  cout << "---------------------------------------------------\n";
   cout << transitions << " transitions in total" << endl;
 }
 
