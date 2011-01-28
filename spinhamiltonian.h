@@ -212,8 +212,6 @@ MatrixXcd SpinHamiltonian::hyperFine() const
   //Compute Hyperfine couplings matrix=========================================
   MatrixXcd hyperfine(dimension, dimension);
   hyperfine.setZero();
-  ///NOTE: why transpose?
-  const MatrixXcd aTensorTransposed = m_aTensor.transpose();
 
   for (int i = 0; i < dimension; ++i) {
     for (int j = 0; j < dimension; ++j) {
