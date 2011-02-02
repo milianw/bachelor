@@ -23,19 +23,20 @@ bool contributesBit(int i, int j, int k)
 
 bool contributes(int i, int j, int k)
 {
-  // 2^nprotons
-  static const int max = (1 << nprotons);
+  // states are equal if: all bits except for k-bit are equal
   // k-bit == 2^k = 0001000
   //                   ^k = 4
-  const int kPow = (1 << k);
-  // states are equal if: all bits except for k-bit are equal
-  // also ignore anything bigger then, max, hence:
-  // i % max, or - faster since max == 2^x: i & (max - 1)
-  // then simply add k-bit to both, i and j via binary OR
-  // and compare equality
-  int i_ = (i & (max - 1)) | kPow;
-  int j_ = (j & (max - 1)) | kPow;
-  return i_ == j_;
+  int kBit = (1 << k);
+  if (true) {
+    // ignore electron bit
+    // electronBit == 2^nprotons == 100000...
+    int electronBit = (1 << nprotons);
+    // essentially a fast variant of:
+    // i % electronBit
+    i &= electronBit - 1;
+    j &= electronBit - 1;
+  }
+  return (i | kBit) == (j | kBit);
 }
 
 bool state(int i, int k)

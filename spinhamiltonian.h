@@ -94,6 +94,9 @@ class SpinHamiltonian {
     /// electron Zeeman Hamiltonian component
     MatrixXcd electronZeeman() const;
 
+    /// interprets @p i as binary number and returns the k-th bit of it
+    inline bool spinState(int i, int k) const;
+
     /// return spin vector from pauli matrices
     inline Vector3cd spinVector(int i, int j, int k) const;
 
@@ -104,7 +107,11 @@ class SpinHamiltonian {
     ///    ^=k     ^=k
     /// <10100|H|10001> = <1|H|0><1|1><0|0><0|0><0|1>
     ///    ^=k     ^=k                            ^=0 => can be skipped
-    inline bool stateContributes(const int i, const int j, const int k) const;
+    enum {
+      IncludeElectron = 0,
+      IgnoreElectron = 1
+    };
+    inline bool stateContributes(int i, int j, int k, bool ignoreElectron = IgnoreElectron) const;
 
     /// moments
     /// TODO: better document
@@ -121,7 +128,6 @@ class SpinHamiltonian {
     Matrix3cd m_gTensor;
     Matrix3cd m_aTensor;
     Vector3cd m_staticBField;
-    bitset<(nprotons+1)>* m_states;
 };
 
 SpinHamiltonian::SpinHamiltonian(const double B)
@@ -129,40 +135,44 @@ SpinHamiltonian::SpinHamiltonian(const double B)
 , m_gTensor(Experiment::gTensor())
 , m_aTensor(Experiment::aTensor())
 , m_staticBField(Experiment::staticBField(B))
-, m_states(new bitset<(nprotons+1)>[dimension])
 {
-  //This includes all spin half species (protons+1 electron)
-  for (int i = 0; i < dimension; ++i) {
-    ///TODO: what does this comment mean?
-    //for each bit: 0=+0.5, 1=-0.5
-    m_states[i] = i;
-  }
 }
 
 SpinHamiltonian::~SpinHamiltonian()
 {
-  delete m_states;
 }
 
 inline Vector3cd SpinHamiltonian::spinVector(int i, int j, int k) const
 {
-  const int a = m_states[i][k]; //spin state of state k in row i
-  const int b = m_states[j][k];  //spin state of state k in column j
+  const int a = spinState(i, k); //spin state of state k in row i
+  const int b = spinState(j, k); //spin state of state k in column j
   return (Vector3cd() << PauliMatrix::X(a, b), PauliMatrix::Y(a, b), PauliMatrix::Z(a, b)).finished();
 }
 
-inline bool SpinHamiltonian::stateContributes(const int i, const int j, const int k) const
+bool SpinHamiltonian::spinState(int i, int k) const
 {
-  for(int l = 0; l < nprotons; ++l) {
-    if (l == k) {
-      continue;
-    }
-    if (m_states[i][l] != m_states[j][l]) {
-      return false;
-    }
-  }
+  // k-bit == 2^k = 0001000
+  //                   ^k = 4
+  const int kPow = (1 << k);
+  return i & kPow;
+}
 
-  return true;
+inline bool SpinHamiltonian::stateContributes(int i, int j, int k, bool ignoreElectron) const
+{
+  // states are equal if: all bits except for k-bit are equal
+  // k-bit == 2^k = 0001000
+  //                   ^k = 4
+  int kBit = (1 << k);
+  if (ignoreElectron) {
+    // ignore electron bit
+    // electronBit == 2^nprotons == 100000...
+    int electronBit = (1 << nprotons);
+    // essentially a fast variant of:
+    // i % electronBit
+    i &= electronBit - 1;
+    j &= electronBit - 1;
+  }
+  return (i | kBit) == (j | kBit);
 }
 
 MatrixXcd SpinHamiltonian::hamiltonian() const
@@ -181,8 +191,7 @@ MatrixXcd SpinHamiltonian::nuclearZeeman() const
     for (int j = 0; j < dimension; ++j) {
       //nprotons is always the index of the electronic spin state
 
-      if (m_states[i][nprotons] != m_states[j][nprotons]) {
-        ///TODO: understand
+      if (spinState(i, nprotons) != spinState(i, nprotons)) {
         continue;  //matrix elements between different e states are zero
       }
 
@@ -284,22 +293,12 @@ inline c_double SpinHamiltonian::magneticMoment(const int i, const int j) const
 {
   c_double ret = 0;
   for (int k = 0; k < nprotons+1; ++k) {
-    bool contributes = true;
-    for (int l = 0; l < nprotons+1; ++l) {
-      if (l==k) {
-        continue;
-      }
-      if (m_states[i][l] != m_states[j][l]) {
-        contributes = false;
-        break;
-      }
-    }
-    if (!contributes) {
+    if (!stateContributes(i, j, k, IncludeElectron)) {
       continue;
     }
 
-    const int a = m_states[i][k];  //spin state of state k in row i
-    const int b = m_states[j][k];  //spin state of state k in column j
+    const int a = spinState(i, k);  //spin state of state k in row i
+    const int b = spinState(j, k);  //spin state of state k in column j
     c_double xMoment = PauliMatrix::X(a, b);
 
     if (k != nprotons) {
