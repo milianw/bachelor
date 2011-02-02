@@ -247,6 +247,7 @@ MatrixXcd SpinHamiltonian::electronZeeman() const
 {
   //Compute eZeeman============================================================  
   MatrixXcd eZeeman(m_exp.dimension, m_exp.dimension);
+  eZeeman.setZero();
   //first multiply the g tensor with the static magnetic field hamiltonian
   const Vector3cd gDotH_B = m_exp.gTensor * m_staticBField;
 
