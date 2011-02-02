@@ -14,6 +14,11 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 find_package(Qt4 REQUIRED)
 include_directories(${QT_INCLUDE_DIR})
 
+find_package(OpenMP)
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+
 add_executable(hs_hossam hamiltonian+selection.cpp)
 OptimizeForArchitecture(hs_hossam)
 target_link_libraries(hs_hossam ${GSL_LIBRARIES})

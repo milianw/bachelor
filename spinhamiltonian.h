@@ -23,6 +23,7 @@
 #define MW_BACHELOR_SPINHAMILTONIAN_H
 
 #include <iostream>
+#include <QtCore/QTextStream>
 #include <string>
 #include <cmath>
 #include <bitset>
@@ -80,7 +81,7 @@ class SpinHamiltonian {
     void calculateTransitions() const;
     /// calculate total intensity of all transitions that are valid for the
     /// incoming microwave frequency
-    void calculateIntensity(const double mwFreq) const;
+    void calculateIntensity(const double mwFreq, QTextStream* out) const;
 
   private:
     /// the complete hamiltonian
@@ -331,7 +332,7 @@ MatrixXd SpinHamiltonian::intensityMatrix(const MatrixXcd& eigenVectors) const {
   return intensities;
 }
 
-void SpinHamiltonian::calculateIntensity(const double mwFreq) const
+void SpinHamiltonian::calculateIntensity(const double mwFreq, QTextStream* out) const
 {
   //Diagonalize the total Hamiltonian matrix===================================
   SelfAdjointEigenSolver<MatrixXcd> eigenSolver(hamiltonian());
@@ -352,7 +353,7 @@ void SpinHamiltonian::calculateIntensity(const double mwFreq) const
       intensity += (eigenVectors.col(j).adjoint() * moments * eigenVectors.col(i)).norm();
     }
   }
-  cout << scientific << m_B << '\t' << (intensity * 2.0 * M_PI * (Bohrm / hbar) * (Bohrm / hbar)) << endl;
+  (*out) << scientific << m_B << '\t' << (intensity * 2.0 * M_PI * (Bohrm / hbar) * (Bohrm / hbar)) << endl;
 }
 
 void SpinHamiltonian::calculateTransitions() const

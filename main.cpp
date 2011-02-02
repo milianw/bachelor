@@ -24,10 +24,16 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QStringList>
 #include <QtCore/QFile>
+#include <QtCore/QDir>
 #include <QtCore/QTextStream>
 #include <QtCore/QRegExp>
+#include <QtCore/QDateTime>
+#include <QtCore/QVector>
 
-QTextStream out(stdout);
+#include <omp.h>
+
+QTextStream qout(stdout);
+QTextStream qerr(stderr);
 
 void usage() {
   cout << "hs-N OPTIONS" << endl
@@ -51,12 +57,16 @@ void usage() {
        << "  \t  zx zy zz" << endl
        << endl
        */
-       << " OPTIONS:" << endl
-       << "  -n, --nprotons N     \tNumber of coupled nuclei" << endl
-       << "  -i, --intensity B_MIN-B_MAX:STEPS:MW\tCalculate intensity for given MW over B_0 range" << endl
-       << "         example: 0.2-0.4:1024:9.5    \t200 to 400mT, 1024 steps, 9.5GHz micro wave" << endl
-       << "  -p, --peaks B        \tCalculate peaks for given B_0 (in T)" << endl
-       << "  -h, --help           \tDisplay help" << endl
+       << " OPTIONS: (all are required, but -i and -p are mutually exclusive)" << endl
+       << "  -n, --nprotons N  \tNumber of coupled nuclei" << endl
+       << "  -i, --intensity B_MIN-B_MAX:STEPS:MW" << endl
+       << "                    \tCalculate intensity for given MW over B_0 range" << endl
+       << "         example: -i 0.2-0.4:1024:9.5 \t200 to 400mT, 1024 steps, 9.5GHz micro wave" << endl
+       << "  -p, --peaks B     \tCalculate peaks for given B_0 (in T)" << endl
+       << "         example: -p 0.2 \tpeaks at 0.2T" << endl
+       << "  -o, --output DIR  \tOutput file path, each run creates a folder from timestamp" << endl
+       << "                    \tand in there one file per thread gets created" << endl
+       << "  -h, --help        \tDisplay help" << endl
        ;
 }
 
@@ -74,7 +84,9 @@ int main(int argc, char* argv[])
   };
 
   Mode mode = Error;
+
   int nProtons = -1;
+  QString outputPath;
 
   // peaks
   double B = 0;
@@ -84,6 +96,7 @@ int main(int argc, char* argv[])
   double B_min = 0;
   double B_max = 0;
   double mwFreq = 0;
+  QString intensityArg;
 
   { // argument parsing
     const QStringList args = app.arguments();
@@ -94,9 +107,9 @@ int main(int argc, char* argv[])
       if (arg == "--intensity" || arg == "-i") {
         if ((it+1) != end) {
           ++it;
-          const QString val = *it;
+          intensityArg = *it;
           QRegExp pattern("(\\d+(?:\\.\\d+)?)-(\\d(?:\\.\\d+)?):(\\d+):(\\d+(?:\\.\\d+)?)", Qt::CaseSensitive, QRegExp::RegExp2);
-          if (pattern.exactMatch(val)) {
+          if (pattern.exactMatch(intensityArg)) {
             B_min = pattern.cap(1).toDouble();
             B_max = pattern.cap(2).toDouble();
             steps = pattern.cap(3).toInt();
@@ -127,6 +140,14 @@ int main(int argc, char* argv[])
           mode = Error;
           break;
         }
+      } else if (arg == "--output" || arg == "-o") {
+        if ((it+1) != end) {
+          ++it;
+          outputPath = *it;
+        } else {
+          mode = Error;
+          break;
+        }
       }
       ++it;
     }
@@ -135,6 +156,7 @@ int main(int argc, char* argv[])
   ENSURE(nProtons >= 1 && nProtons <= 15, "nprotons")
 
   Experiment exp(nProtons);
+
 
   switch (mode) {
     case Error:
@@ -150,7 +172,6 @@ int main(int argc, char* argv[])
       ENSURE(B_max > 0, "intensity")
       ENSURE(mwFreq > 0, "intensity")
       const double B_stepSize = (B_max - B_min) / steps;
-      B = B_min;
       cerr << "calculating intensity:" << endl
            << "mwFreq:\t" << mwFreq << "GHz" << endl
            << "B:\t" << B_min << "T to " << B_max << "T" << endl
@@ -159,10 +180,33 @@ int main(int argc, char* argv[])
            << "aTensor:\n" << exp.aTensor << endl
            << "gTensor:\n" << exp.gTensor << endl
            << "B direction:\n" << exp.staticBFieldDirection << endl;
-      for(int i = 0; i < steps; ++i) {
-        SpinHamiltonian(B, exp).calculateIntensity(mwFreq);
-        B += B_stepSize;
+      cerr << "max OMP threads:\t" << omp_get_max_threads() << endl;
+
+      QDir outputDir(outputPath);
+      ENSURE(outputDir.exists(), "--output")
+      QString base = intensityArg;
+      ENSURE(outputDir.exists(base) || outputDir.mkdir(base), "--output");
+      const QString outputFileTpl(outputDir.canonicalPath() + QDir::separator() + base + QDir::separator() + "%1");
+
+      QVector<QFile*> outputFiles;
+      QVector<QTextStream*> outputStreams;
+      for(int i = 0; i < omp_get_max_threads(); ++i) {
+        QFile* file = new QFile(outputFileTpl.arg(i));
+        ENSURE(file->open(QIODevice::WriteOnly), "--output");
+        outputFiles << file;
+        QTextStream* out = new QTextStream(file);
+        outputStreams << out;
       }
+
+      #pragma omp parallel
+      {
+        #pragma omp for
+        for(int i = 0; i < steps; ++i) {
+          SpinHamiltonian(B_min + B_stepSize * i, exp).calculateIntensity(mwFreq, outputStreams.at(omp_get_thread_num()));
+        }
+      }
+
+      qout << outputFileTpl.arg("") << endl;
       return 0;
     }
     case CalculatePeaks:
