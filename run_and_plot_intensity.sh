@@ -4,5 +4,5 @@ $@ | tee /tmp/.plt
 echo
 base=$(tail -n 1 /tmp/.plt)
 echo "plotting files from: $base"
-cat $base/* | sort -n > /tmp/.plt
+cat $base/* | sort -g > /tmp/.plt
 echo "plot '/tmp/.plt' w lines" | gnuplot -persist
