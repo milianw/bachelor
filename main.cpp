@@ -168,8 +168,8 @@ int main(int argc, char* argv[])
     case CalculateIntensity:
     {
       ENSURE(steps > 0, "intensity")
-      ENSURE(B_min > 0, "intensity")
-      ENSURE(B_max > 0, "intensity")
+      ENSURE(B_min >= 0, "intensity")
+      ENSURE(B_max > B_min, "intensity")
       ENSURE(mwFreq > 0, "intensity")
       const double B_stepSize = (B_max - B_min) / steps;
       cerr << "calculating intensity:" << endl
