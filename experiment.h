@@ -22,48 +22,38 @@
 #ifndef MW_BACHELOR_EXPERIMENT_H
 #define MW_BACHELOR_EXPERIMENT_H
 
+#include "constants.h"
+#include <cmath>
+
 /**
- * Experiment data and physical constants
+ * Experiment data / simulation parameters
  */
-namespace Experiment {
-#ifndef PROTONS
-const int nprotons = 7;
-#else
-const int nprotons = PROTONS;
-#endif
-
-const int dimension = pow(2, nprotons + 1);
-
-//gtensor=============================
-static inline Matrix3cd gTensor()
-{
-  return Matrix3cd::Identity() * 2.0022838;
-}
-
-//static field========================
-static inline Vector3cd staticBField(const double B)
-{
-  const double B0_norm = B; //0.2839; //field in Tesla
-  double B0[3] = {0, 0, 1}; //field direction
-  const double B_temp = sqrt( B0[0]*B0[0] + B0[1]*B0[1] + B0[2]*B0[2] );
-
-  for (int i = 0; i<3; i++) {
-    B0[i] = B0[i]*B0_norm/B_temp;
+struct Experiment {
+  Experiment(int _nProtons)
+  : nProtons(_nProtons)
+  , dimension(pow(2, nProtons + 1))
+  {
+    gTensor = Matrix3cd::Identity() * Constants::g_E;
+    aTensor = Matrix3cd::Identity() * 1420;
+    staticBFieldDirection << 0, 0, 1;
   }
 
-  //cout << endl << "B0:" << " " << B0[0] << '\t' << B0[1] << '\t' << B0[2] << endl;
-  //cout.precision(5);
-  //cout << "\nStatic Field (T): " << sqrt(B0[0]*B0[0]+B0[1]*B0[1]+B0[2]*B0[2]) << endl;
+  const int nProtons;
+  const int dimension;
 
-  return Vector3cd(B0[0], B0[1], B0[2]);
-}
+  Matrix3cd gTensor;
+  Matrix3cd aTensor;
+  Vector3cd staticBFieldDirection;
 
-//arbitrary A-tensor==================
-static inline Matrix3cd aTensor()
-{
-  return Matrix3cd::Identity() * 1420;  //proton hyperfine coupling in T
-}
-
+  /**
+   * static field of given strength in direction of @c staticBFieldDirection
+   *
+   * @p B field strength in tesla
+   */
+  inline Vector3cd staticBField(const double B) const
+  {
+    return staticBFieldDirection * B / staticBFieldDirection.norm();
+  }
 };
 
 #endif // MW_BACHELOR_EXPERIMENT_H

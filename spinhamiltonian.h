@@ -37,7 +37,6 @@ using namespace std;
 #include "experiment.h"
 
 using namespace Constants;
-using namespace Experiment;
 
 typedef complex<double> c_double;
 
@@ -74,8 +73,7 @@ const Matrix2cd Z = (Matrix2cd() << 0.5, 0, 0, -0.5).finished();
 class SpinHamiltonian {
   public:
     /// @p B magnetic field in Tesla
-    /// @p mwFreq micro wave frequency in GHz
-    SpinHamiltonian(const double B);
+    SpinHamiltonian(const double B, const Experiment& experiment);
     ~SpinHamiltonian();
 
     /// list all possible transitions with their frequency for the given B field
@@ -125,16 +123,14 @@ class SpinHamiltonian {
     MatrixXd intensityMatrix(const MatrixXcd& eigenVectors) const;
 
     const double m_B;
-    Matrix3cd m_gTensor;
-    Matrix3cd m_aTensor;
+    const Experiment m_exp;
     Vector3cd m_staticBField;
 };
 
-SpinHamiltonian::SpinHamiltonian(const double B)
+SpinHamiltonian::SpinHamiltonian(const double B, const Experiment& experiment)
 : m_B(B)
-, m_gTensor(Experiment::gTensor())
-, m_aTensor(Experiment::aTensor())
-, m_staticBField(Experiment::staticBField(B))
+, m_exp(experiment)
+, m_staticBField(m_exp.staticBField(B))
 {
 }
 
@@ -165,8 +161,8 @@ inline bool SpinHamiltonian::stateContributes(int i, int j, int k, bool ignoreEl
   int kBit = (1 << k);
   if (ignoreElectron) {
     // ignore electron bit
-    // electronBit == 2^nprotons == 100000...
-    int electronBit = (1 << nprotons);
+    // electronBit == 2^nProtons == 100000...
+    int electronBit = (1 << m_exp.nProtons);
     // essentially a fast variant of:
     // i % electronBit
     i &= electronBit - 1;
@@ -183,19 +179,19 @@ MatrixXcd SpinHamiltonian::hamiltonian() const
 MatrixXcd SpinHamiltonian::nuclearZeeman() const
 {
   //Compute nZeeman============================================================  
-  MatrixXcd nZeeman(dimension, dimension);
+  MatrixXcd nZeeman(m_exp.dimension, m_exp.dimension);
   nZeeman.setZero();
   //to turn off: return nZeeman;
 
-  for (int i = 0; i < dimension; ++i) {
-    for (int j = 0; j < dimension; ++j) {
-      //nprotons is always the index of the electronic spin state
+  for (int i = 0; i < m_exp.dimension; ++i) {
+    for (int j = 0; j < m_exp.dimension; ++j) {
+      //m_exp.nProtons is always the index of the electronic spin state
 
-      if (spinState(i, nprotons) != spinState(i, nprotons)) {
+      if (spinState(i, m_exp.nProtons) != spinState(i, m_exp.nProtons)) {
         continue;  //matrix elements between different e states are zero
       }
 
-      for (int k = 0; k < nprotons; ++k) {
+      for (int k = 0; k < m_exp.nProtons; ++k) {
         if (!stateContributes(i, j, k)) {
           continue;
         }
@@ -217,24 +213,24 @@ MatrixXcd SpinHamiltonian::nuclearZeeman() const
 MatrixXcd SpinHamiltonian::hyperFine() const
 {
   //Compute Hyperfine couplings matrix=========================================
-  MatrixXcd hyperfine(dimension, dimension);
+  MatrixXcd hyperfine(m_exp.dimension, m_exp.dimension);
   hyperfine.setZero();
 
-  for (int i = 0; i < dimension; ++i) {
-    for (int j = 0; j < dimension; ++j) {
+  for (int i = 0; i < m_exp.dimension; ++i) {
+    for (int j = 0; j < m_exp.dimension; ++j) {
       //compute elements of s vector
-      const Vector3cd s = spinVector(i, j, nprotons);
+      const Vector3cd s = spinVector(i, j, m_exp.nProtons);
 
-      for (int k = 0; k < nprotons; ++k) {    //loop over nuclei
+      for (int k = 0; k < m_exp.nProtons; ++k) {    //loop over nuclei
         if (!stateContributes(i, j, k)) {
           continue;
         }
 
         //multiply atensor by I
         //multiply s by atensor_I
-        hyperfine(i, j) += s.dot(m_aTensor * spinVector(i, j, k));
+        hyperfine(i, j) += s.dot(m_exp.aTensor * spinVector(i, j, k));
         ///TODO: before: it was this, BUT only conjugate because of zdotu instead of zdotc in original - OR?
-        ///hyperfine(i, j) += (m_aTensor.transpose() * spinVector(i, j, k)).conjugate().dot(s);
+        ///hyperfine(i, j) += (m_exp.aTensor.transpose() * spinVector(i, j, k)).conjugate().dot(s);
       }
     }
   }
@@ -249,19 +245,19 @@ MatrixXcd SpinHamiltonian::hyperFine() const
 MatrixXcd SpinHamiltonian::electronZeeman() const
 {
   //Compute eZeeman============================================================  
-  MatrixXcd eZeeman(dimension, dimension);
+  MatrixXcd eZeeman(m_exp.dimension, m_exp.dimension);
   //first multiply the g tensor with the static magnetic field hamiltonian
-  const Vector3cd gDotH_B = m_gTensor * m_staticBField;
+  const Vector3cd gDotH_B = m_exp.gTensor * m_staticBField;
 
   //depending on the convention, i might have to tranpose the gtensor here
-  for (int i = 0; i < dimension; ++i) {
-    for (int j = 0; j < dimension; ++j) {
-      //nprotons is always the index of the electron spin
-      if (!stateContributes(i, j, nprotons)) {
+  for (int i = 0; i < m_exp.dimension; ++i) {
+    for (int j = 0; j < m_exp.dimension; ++j) {
+      //m_exp.nProtons is always the index of the electron spin
+      if (!stateContributes(i, j, m_exp.nProtons)) {
         continue;
       }
 
-      eZeeman(i,j) = gDotH_B.dot(spinVector(i, j, nprotons));
+      eZeeman(i,j) = gDotH_B.dot(spinVector(i, j, m_exp.nProtons));
     }
   }
   eZeeman *= Bohrm;
@@ -274,11 +270,11 @@ MatrixXcd SpinHamiltonian::electronZeeman() const
 
 MatrixXcd SpinHamiltonian::magneticMoments() const
 {
-  MatrixXcd moments(dimension, dimension);
+  MatrixXcd moments(m_exp.dimension, m_exp.dimension);
 
-  for (int i = 0; i < dimension; ++i) {
-    for (int j = 0; j < dimension; ++j) {
-      //nprotons is always the index of the electronic spin state
+  for (int i = 0; i < m_exp.dimension; ++i) {
+    for (int j = 0; j < m_exp.dimension; ++j) {
+      //m_exp.nProtons is always the index of the electronic spin state
       moments(i, j) = magneticMoment(i, j);
 
 //       cout << i << '\t' << j << '\t' << "FINAL:" << '\t' << moments(i, j) << endl;
@@ -292,7 +288,7 @@ MatrixXcd SpinHamiltonian::magneticMoments() const
 inline c_double SpinHamiltonian::magneticMoment(const int i, const int j) const
 {
   c_double ret = 0;
-  for (int k = 0; k < nprotons+1; ++k) {
+  for (int k = 0; k < m_exp.nProtons+1; ++k) {
     if (!stateContributes(i, j, k, IncludeElectron)) {
       continue;
     }
@@ -301,7 +297,7 @@ inline c_double SpinHamiltonian::magneticMoment(const int i, const int j) const
     const int b = spinState(j, k);  //spin state of state k in column j
     c_double xMoment = PauliMatrix::X(a, b);
 
-    if (k != nprotons) {
+    if (k != m_exp.nProtons) {
       xMoment *= -1.0 * g_1H * NUC_MAGNETON;
     } else {
       xMoment *= 2.023 * Bohrm;
@@ -317,11 +313,11 @@ inline c_double SpinHamiltonian::magneticMoment(const int i, const int j) const
 MatrixXd SpinHamiltonian::intensityMatrix(const MatrixXcd& eigenVectors) const {
   const MatrixXcd moments = magneticMoments();
   ///TODO: take direction of B0 and B1 into account, integrate over plane
-  MatrixXd intensities(dimension, dimension);
-  for(int i = 0; i < dimension; ++i) {
+  MatrixXd intensities(m_exp.dimension, m_exp.dimension);
+  for(int i = 0; i < m_exp.dimension; ++i) {
     /// right part: M | Psi_i >
     const MatrixXcd mTimesPsiI = moments * eigenVectors.col(i);
-    for(int j = 0; j < dimension; ++j) {
+    for(int j = 0; j < m_exp.dimension; ++j) {
       if (i != j) {
         /// left part with < Psi_j | and abs squared: |< Psi_j | M | Psi_i >|^2
         intensities(i, j) = (eigenVectors.col(j).adjoint() * mTimesPsiI).norm();
@@ -345,8 +341,8 @@ void SpinHamiltonian::calculateIntensity(const double mwFreq) const
   const MatrixXcd moments = magneticMoments();
 
   double intensity = 0;
-  for (int i = 0;i < dimension; ++i) {
-    for (int j = i + 1; j < dimension; ++j) {
+  for (int i = 0;i < m_exp.dimension; ++i) {
+    for (int j = i + 1; j < m_exp.dimension; ++j) {
         // transition frequency:
       const double freq = (1.0/h/1.0E9 * abs(eigenValues(i) - eigenValues(j)));
       // assume it's only seen when energy is below frequency threshold
@@ -374,8 +370,8 @@ void SpinHamiltonian::calculateTransitions() const
   cout << "Transition\tFrequency (GHz)\t\tProbability" << endl;
   cout << "---------------------------------------------------\n";
   int transitions = 1;
-  for (int i = 0;i < dimension; ++i) {
-    for (int j = i + 1; j < dimension; ++j) {
+  for (int i = 0;i < m_exp.dimension; ++i) {
+    for (int j = i + 1; j < m_exp.dimension; ++j) {
       const double probability = probabilities(i, j);
       if (probability > 1.0E-6) {
         cout.width(10);

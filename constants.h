@@ -35,6 +35,7 @@ const double h = GSL_CONST_MKSA_PLANCKS_CONSTANT_H;
 const double NUC_MAGNETON = GSL_CONST_MKSA_NUCLEAR_MAGNETON; // (J/T)
 const double g_1H = 5.585694701 ;            // proton g factor
 const double g_14N = 0.403761;               // N14 g factor
+const double g_E = 2.0023193043622;          // electron g factor
 const double GAMMA_1H = 267.513E6 ;          // (rad/s.T)
 const double GAMMA_14N =  19.331E6 ;         // (rad/s.T)
 const double Bohrm = 9.27400949E-24;         // Bohr magneton in J/T
