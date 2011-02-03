@@ -24,6 +24,5 @@ OptimizeForArchitecture(hs_hossam)
 target_link_libraries(hs_hossam ${GSL_LIBRARIES})
 
 add_executable(hs main.cpp)
-set_target_properties(hs PROPERTIES COMPILE_FLAGS -DPROTONS=${PROTONS})
 OptimizeForArchitecture(hs)
 target_link_libraries(hs ${QT_QTCORE_LIBRARY})
