@@ -24,6 +24,7 @@
 
 #include "constants.h"
 #include <cmath>
+#include "types.h"
 
 /**
  * Experiment data / simulation parameters
@@ -33,24 +34,24 @@ struct Experiment {
   : nProtons(_nProtons)
   , dimension(pow(2, nProtons + 1))
   {
-    gTensor = Matrix3cd::Identity() * Constants::g_E;
-    aTensor = Matrix3cd::Identity() * 1420;
+    gTensor = Matrix3c::Identity() * Constants::g_E;
+    aTensor = Matrix3c::Identity() * 1420;
     staticBFieldDirection << 0, 0, 1;
   }
 
   const int nProtons;
   const int dimension;
 
-  Matrix3cd gTensor;
-  Matrix3cd aTensor;
-  Vector3cd staticBFieldDirection;
+  Matrix3c gTensor;
+  Matrix3c aTensor;
+  Vector3c staticBFieldDirection;
 
   /**
    * static field of given strength in direction of @c staticBFieldDirection
    *
    * @p B field strength in tesla
    */
-  inline Vector3cd staticBField(const double B) const
+  inline Vector3c staticBField(const fp B) const
   {
     return staticBFieldDirection * B / staticBFieldDirection.norm();
   }
