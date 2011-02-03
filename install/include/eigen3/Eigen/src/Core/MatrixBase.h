@@ -200,23 +200,15 @@ template<typename Derived> class MatrixBase
     const DiagonalProduct<Derived, DiagonalDerived, OnTheRight>
     operator*(const DiagonalBase<DiagonalDerived> &diagonal) const;
 
-    #if EIGEN2_SUPPORT_STAGE != STAGE20_RESOLVE_API_CONFLICTS
-      template<typename OtherDerived>
-      typename internal::scalar_product_traits<typename internal::traits<Derived>::Scalar,typename internal::traits<OtherDerived>::Scalar>::ReturnType
-      #if EIGEN2_SUPPORT_STAGE == STAGE15_RESOLVE_API_CONFLICTS_WARN
-      EIGEN_DEPRECATED Scalar
-      #endif
-      dot(const MatrixBase<OtherDerived>& other) const;
-    #endif
-    
+    template<typename OtherDerived>
+    typename internal::scalar_product_traits<typename internal::traits<Derived>::Scalar,typename internal::traits<OtherDerived>::Scalar>::ReturnType
+    dot(const MatrixBase<OtherDerived>& other) const;
+
     #ifdef EIGEN2_SUPPORT
       template<typename OtherDerived>
-      #if EIGEN2_SUPPORT_STAGE >= STAGE30_FULL_EIGEN3_API
-      EIGEN_DEPRECATED
-      #endif
       Scalar eigen2_dot(const MatrixBase<OtherDerived>& other) const;
     #endif
-    
+
     RealScalar squaredNorm() const;
     RealScalar norm() const;
     RealScalar stableNorm() const;
@@ -231,7 +223,7 @@ template<typename Derived> class MatrixBase
     typedef Diagonal<Derived> DiagonalReturnType;
     DiagonalReturnType diagonal();
     typedef const Diagonal<const Derived> ConstDiagonalReturnType;
-    ConstDiagonalReturnType diagonal() const;
+    const ConstDiagonalReturnType diagonal() const;
 
     template<int Index> struct DiagonalIndexReturnType { typedef Diagonal<Derived,Index> Type; };
     template<int Index> struct ConstDiagonalIndexReturnType { typedef const Diagonal<const Derived,Index> Type; };
@@ -240,8 +232,14 @@ template<typename Derived> class MatrixBase
     template<int Index> typename ConstDiagonalIndexReturnType<Index>::Type diagonal() const;
 
     // Note: The "MatrixBase::" prefixes are added to help MSVC9 to match these declarations with the later implementations.
+    // On the other hand they confuse MSVC8...
+    #if (defined _MSC_VER) && (_MSC_VER >= 1500) // 2008 or later
     typename MatrixBase::template DiagonalIndexReturnType<Dynamic>::Type diagonal(Index index);
     typename MatrixBase::template ConstDiagonalIndexReturnType<Dynamic>::Type diagonal(Index index) const;
+    #else
+    typename DiagonalIndexReturnType<Dynamic>::Type diagonal(Index index);
+    typename ConstDiagonalIndexReturnType<Dynamic>::Type diagonal(Index index) const;
+    #endif
 
     #ifdef EIGEN2_SUPPORT
     template<unsigned int Mode> typename internal::eigen2_part_return_type<Derived, Mode>::type part();
@@ -403,7 +401,7 @@ template<typename Derived> class MatrixBase
     /// \internal helper struct to form the return type of the cross product
     template<typename OtherDerived> struct cross_product_return_type {
       typedef typename internal::scalar_product_traits<typename internal::traits<Derived>::Scalar,typename internal::traits<OtherDerived>::Scalar>::ReturnType Scalar;
-      typedef Matrix<Scalar,RowsAtCompileTime,ColsAtCompileTime> type;
+      typedef Matrix<Scalar,MatrixBase::RowsAtCompileTime,MatrixBase::ColsAtCompileTime> type;
     };
     #endif // EIGEN_PARSED_BY_DOXYGEN
     template<typename OtherDerived>
