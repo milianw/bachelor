@@ -137,7 +137,7 @@ template<typename Derived> class MatrixBase
     /** \internal the return type of identity */
     typedef CwiseNullaryOp<internal::scalar_identity_op<Scalar>,Derived> IdentityReturnType;
     /** \internal the return type of unit vectors */
-    typedef Block<CwiseNullaryOp<internal::scalar_identity_op<Scalar>, SquareMatrixType>,
+    typedef Block<const CwiseNullaryOp<internal::scalar_identity_op<Scalar>, SquareMatrixType>,
                   internal::traits<Derived>::RowsAtCompileTime,
                   internal::traits<Derived>::ColsAtCompileTime> BasisReturnType;
 #endif // not EIGEN_PARSED_BY_DOXYGEN
@@ -507,10 +507,10 @@ template<typename Derived> class MatrixBase
     template<typename OtherDerived> explicit MatrixBase(const MatrixBase<OtherDerived>&);
   protected:
     // mixing arrays and matrices is not legal
-    template<typename OtherDerived> Derived& operator+=(const ArrayBase<OtherDerived>& array)
+    template<typename OtherDerived> Derived& operator+=(const ArrayBase<OtherDerived>& )
     {EIGEN_STATIC_ASSERT(sizeof(typename OtherDerived::Scalar)==-1,YOU_CANNOT_MIX_ARRAYS_AND_MATRICES);}
     // mixing arrays and matrices is not legal
-    template<typename OtherDerived> Derived& operator-=(const ArrayBase<OtherDerived>& array)
+    template<typename OtherDerived> Derived& operator-=(const ArrayBase<OtherDerived>& )
     {EIGEN_STATIC_ASSERT(sizeof(typename OtherDerived::Scalar)==-1,YOU_CANNOT_MIX_ARRAYS_AND_MATRICES);}
 };
 
