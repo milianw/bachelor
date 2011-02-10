@@ -39,11 +39,17 @@ typedef Matrix<c_fp, 2, 2> Matrix2c;
 typedef Matrix<fp, 3, 3> Matrix3;
 typedef Matrix<c_fp, 3, 3> Matrix3c;
 
+typedef Matrix<fp, 4, 4> Matrix4;
+typedef Matrix<c_fp, 4, 4> Matrix4c;
+
 typedef Matrix<fp, Dynamic, Dynamic> MatrixX;
 typedef Matrix<c_fp, Dynamic, Dynamic> MatrixXc;
 
 typedef Matrix<fp, 3, 1> Vector3;
 typedef Matrix<c_fp, 3, 1> Vector3c;
+
+typedef Matrix<fp, 4, 1> Vector4;
+typedef Matrix<c_fp, 4, 1> Vector4c;
 
 typedef Matrix<fp, Dynamic, 1> VectorX;
 typedef Matrix<c_fp, Dynamic, 1> VectorXc;

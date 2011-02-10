@@ -19,8 +19,6 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#include "spinhamiltonian.h"
-
 #include <QtCore/QCoreApplication>
 #include <QtCore/QStringList>
 #include <QtCore/QFile>
@@ -29,8 +27,13 @@
 #include <QtCore/QRegExp>
 #include <QtCore/QDateTime>
 #include <QtCore/QVector>
+#include <QtCore/QStack>
+#include <QtCore/QHash>
 
 #include <omp.h>
+
+#include "resonancefield.h"
+#include "spinhamiltonian.h"
 
 QTextStream qout(stdout);
 QTextStream qerr(stderr);
@@ -108,11 +111,11 @@ int main(int argc, char* argv[])
         if ((it+1) != end) {
           ++it;
           intensityArg = *it;
-          QRegExp pattern("(\\d+(?:\\.\\d+)?)-(\\d(?:\\.\\d+)?):(\\d+):(\\d+(?:\\.\\d+)?)", Qt::CaseSensitive, QRegExp::RegExp2);
+          QRegExp pattern("(\\d+(?:\\.\\d+)?)-(\\d(?:\\.\\d+)?):(\\d+|auto):(\\d+(?:\\.\\d+)?)", Qt::CaseSensitive, QRegExp::RegExp2);
           if (pattern.exactMatch(intensityArg)) {
             B_min = pattern.cap(1).toDouble();
             B_max = pattern.cap(2).toDouble();
-            steps = pattern.cap(3).toInt();
+            steps = pattern.cap(3) == "auto" ? -1 : pattern.cap(3).toInt();
             mwFreq = pattern.cap(4).toDouble();
           } else {
             mode = Error;
@@ -167,7 +170,7 @@ int main(int argc, char* argv[])
     }
     case CalculateIntensity:
     {
-      ENSURE(steps > 0, "intensity")
+      ENSURE(steps > 0 || steps == -1, "intensity")
       ENSURE(B_min >= 0, "intensity")
       ENSURE(B_max > B_min, "intensity")
       ENSURE(mwFreq > 0, "intensity")
@@ -198,14 +201,25 @@ int main(int argc, char* argv[])
         outputStreams << out;
       }
 
-      #pragma omp parallel
-      {
-        #pragma omp for
-        for(int i = 0; i < steps; ++i) {
-          SpinHamiltonian(B_min + B_stepSize * i, exp).calculateIntensity(mwFreq, outputStreams.at(omp_get_thread_num()));
+      if (steps != -1) { // dirty version that simply devides the max-min range into equal sized steps
+        #pragma omp parallel
+        {
+          #pragma omp for
+          for(int i = 0; i < steps; ++i) {
+            SpinHamiltonian(B_min + B_stepSize * i, exp).calculateIntensity(mwFreq, outputStreams.at(omp_get_thread_num()));
+          }
+        }
+      } else {
+        // wip implementation of "S. Stoll, A. Schweiger / Chemical Physics Letters 380 (2003) 464 - 470"
+        const QVector<fp> resonanceField = ResonanceField(exp).findRoots(B_min, B_max, mwFreq);
+        #pragma omp parallel
+        {
+          #pragma omp for
+          for(int i = 0; i < resonanceField.size(); ++i) {
+            SpinHamiltonian(resonanceField.at(i), exp).calculateIntensity(mwFreq, outputStreams.at(omp_get_thread_num()));
+          }
         }
       }
-
       qout << outputFileTpl.arg("") << endl;
       return 0;
     }

@@ -75,7 +75,8 @@ class SpinHamiltonian {
     /// incoming microwave frequency
     void calculateIntensity(const fp mwFreq, QTextStream* out) const;
 
-  private:
+    VectorX calculateEigenValues() const;
+
     /// the complete hamiltonian
     MatrixXc hamiltonian() const;
     /// nuclear Zeeman Hamiltonian component
@@ -85,6 +86,7 @@ class SpinHamiltonian {
     /// electron Zeeman Hamiltonian component
     MatrixXc electronZeeman() const;
 
+  private:
     /// interprets @p i as binary number and returns the k-th bit of it
     inline bool spinState(int i, int k) const;
 
@@ -379,6 +381,13 @@ void SpinHamiltonian::calculateTransitions() const
   }
   cout << "---------------------------------------------------\n";
   cout << transitions << " transitions in total" << endl;
+}
+
+VectorX SpinHamiltonian::calculateEigenValues() const
+{
+  //Diagonalize the total Hamiltonian matrix===================================
+  SelfAdjointEigenSolver<MatrixXc> eigenSolver(hamiltonian(), EigenvaluesOnly);
+  return eigenSolver.eigenvalues();
 }
 
 #endif // MW_BACHELOR_SPINHAMILTONIAN_H
