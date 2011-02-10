@@ -28,8 +28,8 @@
 using namespace Eigen;
 using namespace std;
 
-//typedef double fp;
-typedef float fp;
+typedef double fp;
+// typedef float fp;
 
 typedef complex<fp> c_fp;
 
