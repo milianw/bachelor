@@ -26,3 +26,7 @@ target_link_libraries(hs_hossam ${GSL_LIBRARIES})
 add_executable(hs main.cpp)
 OptimizeForArchitecture(hs)
 target_link_libraries(hs ${QT_QTCORE_LIBRARY})
+
+add_executable(convolute convolute.cpp)
+OptimizeForArchitecture(convolute)
+target_link_libraries(convolute ${QT_QTCORE_LIBRARY})
