@@ -28,6 +28,7 @@
 #include <QtCore/QDir>
 #include <QtCore/QMap>
 #include <QtCore/QDebug>
+#include <QtCore/QProcessEnvironment>
 
 #include "types.h"
 
@@ -86,6 +87,7 @@ private:
 
 int main(int argc, char* argv[]) {
   QCoreApplication app(argc, argv);
+  const QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
 
   if (app.arguments().count() < 2) {
     usage();
@@ -100,9 +102,15 @@ int main(int argc, char* argv[]) {
   }
 
   int steps = DEFAULT_STEPS;
+  QString stepsStr;
   if (app.arguments().count() >= 3) {
+    stepsStr = app.arguments().at(2);
+  } else if (env.contains("CONVOLUTE_STEPS")) {
+    stepsStr = env.value("CONVOLUTE_STEPS");
+  }
+  if (!stepsStr.isEmpty()) {
     bool ok = true;
-    steps = app.arguments().at(2).toInt(&ok);
+    steps = stepsStr.toInt(&ok);
     if (!ok) {
       qerr << "invalid steps argument" << endl << endl;
       usage();
@@ -111,9 +119,15 @@ int main(int argc, char* argv[]) {
   }
 
   fp width = DEFAULT_WIDTH;
+  QString widthStr;
   if (app.arguments().count() >= 4) {
+    widthStr = app.arguments().at(3);
+  } else if (env.contains("CONVOLUTE_WIDTH")) {
+    widthStr = env.value("CONVOLUTE_WIDTH");
+  }
+  if (!widthStr.isEmpty()) {
     bool ok = true;
-    width = app.arguments().at(3).toFloat(&ok);
+    width = widthStr.toFloat(&ok);
     if (!ok) {
       qerr << "invalid width argument" << endl << endl;
       usage();
@@ -122,9 +136,15 @@ int main(int argc, char* argv[]) {
   }
 
   bool deriv = DEFAULT_DERIV;
-  if (app.arguments().count() >= 5) {
+  QString derivStr;
+  if (app.arguments().count() >= 4) {
+    derivStr = app.arguments().at(3);
+  } else if (env.contains("CONVOLUTE_DERIV")) {
+    derivStr = env.value("CONVOLUTE_DERIV");
+  }
+  if (!derivStr.isEmpty()) {
     bool ok = true;
-    deriv = app.arguments().at(4).toInt(&ok);
+    deriv = derivStr.toFloat(&ok);
     if (!ok) {
       qerr << "invalid deriv argument" << endl << endl;
       usage();
