@@ -200,7 +200,7 @@ int main(int argc, char* argv[])
 
       QDir outputDir(outputPath);
       ENSURE(outputDir.exists(), "--output")
-      QString base = intensityArg;
+      QString base = QString("%1:%2").arg(QString::number(exp.nProtons), intensityArg);
       ENSURE(outputDir.exists(base) || outputDir.mkdir(base), "--output");
       const QString outputFileTpl(outputDir.canonicalPath() + QDir::separator() + base + QDir::separator() + "%1");
 
