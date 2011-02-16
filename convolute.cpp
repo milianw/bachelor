@@ -39,10 +39,11 @@ QTextStream qerr(stderr);
 const int DEFAULT_STEPS = 100;
 const fp DEFAULT_WIDTH = 0.0001;
 const fp WIDTHS_TO_ZERO = 4.0;
+const bool DEFAULT_DERIV = false;
 
 void usage()
 {
-  qerr << "convolute DATA_DIR [steps=" << DEFAULT_STEPS << "] [width=" << DEFAULT_WIDTH << "]" << endl;
+  qerr << "convolute DATA_DIR [steps=" << DEFAULT_STEPS << "] [width=" << DEFAULT_WIDTH << "] [deriv=" << DEFAULT_DERIV << "]" << endl;
 }
 
 class Gaussian {
@@ -54,12 +55,26 @@ public:
   {
   }
 
-  fp operator()(const double x) const
+  bool applies(const double x) const
   {
-    if (x < m_center - WIDTHS_TO_ZERO * m_width || x > m_center + WIDTHS_TO_ZERO * m_width) {
+    return x >= m_center - WIDTHS_TO_ZERO * m_width && x <= m_center + WIDTHS_TO_ZERO * m_width;
+  }
+
+  fp y(const double x) const
+  {
+    if (!applies(x)) {
       return 0;
     } else {
       return m_intensity * exp( - pow(x - m_center, 2) / (2.0 * pow(m_width, 2)) );
+    }
+  }
+
+  fp yDeriv(const double x) const
+  {
+    if (!applies(x)) {
+      return 0;
+    } else {
+      return - m_intensity * (x - m_center) / pow(m_width, 2) * exp( - pow(x - m_center, 2) / (2.0 * pow(m_width, 2)) );
     }
   }
 
@@ -106,6 +121,17 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  bool deriv = DEFAULT_DERIV;
+  if (app.arguments().count() >= 5) {
+    bool ok = true;
+    deriv = app.arguments().at(4).toInt(&ok);
+    if (!ok) {
+      qerr << "invalid deriv argument" << endl << endl;
+      usage();
+      return 3;
+    }
+  }
+
   // step 1: read data
   QMap<fp, Gaussian*> data;
 
@@ -137,7 +163,11 @@ int main(int argc, char* argv[]) {
     for(fp x = max(lastMax, center - width * WIDTHS_TO_ZERO); x <= center + width * WIDTHS_TO_ZERO; x += stepSize) {
       fp y = 0;
       foreach(Gaussian* g, data) {
-        y += (*g)(x);
+        if (deriv) {
+          y += g->yDeriv(x);
+        } else {
+          y += g->y(x);
+        }
       }
       cout << x << '\t' << y << endl;
     }
