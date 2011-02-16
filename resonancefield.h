@@ -177,7 +177,6 @@ QVector<fp> ResonanceField::findRoots(fp in_B_min, fp in_B_max, fp _mwFreq)
           for(int u = 0; u < m_exp.dimension; ++u) {
             for(int v = u + 1; v < m_exp.dimension; ++v) {
               // R_{uv}(B_q) * R_{uv}(B_r) <= 0
-              // but ignore mwFreq
 //               qDebug() << "(" << min.E(v) << " - " << min.E(u) << ") * (" << max.E(v) << " - " << max.E(u) << ") = " << (min.E(v) - min.E(u)) << " * " << (max.E(v) - max.E(u)) << " = " << ((min.E(v) - min.E(u)) * (max.E(v) - max.E(u)));
               if (((min.E(v) - min.E(u) - mwFreq) * (max.E(v) - max.E(u) - mwFreq)) <= 0) {
                 resonancePossible = true;
@@ -219,13 +218,15 @@ QVector<fp> ResonanceField::findRoots(fp in_B_min, fp in_B_max, fp _mwFreq)
         }
         epsilon *= 2;
 
+        eVals[B_new] = _new;
         if (epsilon > 1.0E-3 * mwFreq) {
 //           qDebug() << "adding new knot:" << B_new << "epsilon:" << epsilon <<  "VS:" << 1.0E-3 * mwFreq;
-          eVals[B_new] = _new;
           knots << Knot(knot.B_min, B_new) << Knot(B_new, knot.B_max);
         } else {
 //           qDebug() << "resonant segment approximated:" << knot.B_min << knot.B_max;
-          resonantSegments[knot.B_min] = knot.B_max;
+//           resonantSegments[knot.B_min] = knot.B_max;
+          resonantSegments[knot.B_min] = B_new;
+          resonantSegments[B_new] = knot.B_max;
         }
       }
     }
@@ -251,6 +252,7 @@ QVector<fp> ResonanceField::findRoots(fp in_B_min, fp in_B_max, fp _mwFreq)
   QMap<fp, fp>::const_iterator it = resonantSegments.constBegin();
   const QMap<fp, fp>::const_iterator end = resonantSegments.constEnd();
   cout << "set xrange[" << it.key() * 0.9 << ":" << (end-1).value() * 1.1 << "]" << endl;
+  cout << "u(x,min,max) = (x>=min)&&(x<max)? 1 : 1/0;" << endl;
   while(it != end) {
     const fp B_min = it.key();
     const fp B_max = it.value();
@@ -267,13 +269,15 @@ QVector<fp> ResonanceField::findRoots(fp in_B_min, fp in_B_max, fp _mwFreq)
 
     const fp B_diff = B_max - B_min;
 //     qDebug() << "find roots between:" << B_min << B_max << B_diff;
+    cout << "set arrow from " << B_min << ",-5e-26 to " << B_min << ",5e-26 ls 2" << endl;
+    cout << "set arrow from " << B_max << ",-5e-26 to " << B_max << ",5e-26 ls 2" << endl;
 
     for(int u = 0; u < m_exp.dimension; ++u) {
       const Vector4 e_u = (Vector4() << min.E(u), max.E(u), B_diff * min.E_deriv(u), B_diff * max.E_deriv(u)).finished();
       for(int v = u + 1; v < m_exp.dimension; ++v) {
         const Vector4 e_v = (Vector4() << min.E(v), max.E(v), B_diff * min.E_deriv(v), B_diff * max.E_deriv(v)).finished();
-        const Vector4 p = M * (e_v - e_u);
         ///NOTE: paper has different notation: p(0) == p_3, p(1) == p_2, ...
+        const Vector4 p = M * (e_v - e_u);
         fp root = 0;
         if (!loopingResonanceCanOccur) {
           if (((min.E(v) - min.E(u) - mwFreq) * (max.E(v) - max.E(u) - mwFreq)) > 0) {
@@ -296,7 +300,7 @@ QVector<fp> ResonanceField::findRoots(fp in_B_min, fp in_B_max, fp _mwFreq)
           }
 //           qDebug() << "initial root:" << t << B_min + t * B_diff;
           fp t2 = t;
-          const int maxIt = 100;
+          const int maxIt = 10000;
           int it = 0;
           do {
             t = t2;
@@ -311,7 +315,8 @@ QVector<fp> ResonanceField::findRoots(fp in_B_min, fp in_B_max, fp _mwFreq)
 
 //           qDebug() << "found root:" << B_min << " + " << t2 << " * " << B_diff << " = " << B_min << " + " << (t2 * B_diff) << " = " << root;
         resonanceField << root;
-        cout << "replot (x**3 * (" << p(0) << ") + x**2 * (" << p(1) << ") + x * (" << p(2) << ") + (" << p(3) << " - " << mwFreq << ")) "
+//         cout << "e = " << (e_v - e_u).transpose() << endl << "p = " << p.transpose() << endl;
+        cout << "replot u(x, " << B_min << "," << B_max << ") * ((((x-" << B_min << ")/" << B_diff << "))**3 * (" << p(0) << ") + (((x-" << B_min << ")/" << B_diff << "))**2 * (" << p(1) << ") + (((x-" << B_min << ")/" << B_diff << ")) * (" << p(2) << ") + (" << p(3) << " - " << mwFreq << ")) "
                      "title \"B_min = " << B_min << ", B_max = " << B_max << " || u = " << u << ", v = " << v << "\"" << endl;
         cout << "set arrow from " << root << ",-1e-24 to " << root << ",1e-24 ls 0" << endl;
       }
