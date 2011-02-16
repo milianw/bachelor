@@ -145,7 +145,7 @@ QVector<fp> ResonanceField::findRoots(fp in_B_min, fp in_B_max, fp _mwFreq)
 {
   // to atomic units:
   fp mwFreq = _mwFreq * 1E9 * h;
-  qDebug() << mwFreq;
+  qDebug() << " " << mwFreq;
 
   //STEP 1: find knots
   QMap<fp, EigenValues> eVals;

@@ -29,6 +29,7 @@ using namespace Eigen;
 using namespace std;
 
 typedef double fp;
+// typedef long double fp;
 // typedef float fp;
 
 typedef complex<fp> c_fp;

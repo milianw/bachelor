@@ -24,6 +24,19 @@
 #include <QtCore/QFile>
 #include <QtCore/QDir>
 #include <QtCore/QTextStream>
+
+QTextStream& operator<<(QTextStream& out, long double d)
+{
+  return out << static_cast<double>(d);
+}
+
+#include <QtCore/QDebug>
+
+QDebug& operator<<(QDebug& out, long double d)
+{
+  return out.operator<<(static_cast<double>(d));
+}
+
 #include <QtCore/QRegExp>
 #include <QtCore/QDateTime>
 #include <QtCore/QVector>
