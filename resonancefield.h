@@ -158,7 +158,15 @@ QVector< fp > ResonanceField::calculate(fp B_min, fp B_max, fp mwFreqGHz)
   }
 
   // cleanup field
-  qDebug() << "resonance field:" << field;
+  qSort(field);
+  fp* it = field.begin();
+  while(it != field.end() - 1) {
+    if (abs(*it / *(it+1) - 1) < 1E-05) {
+      it = field.erase(it);
+    } else {
+      ++it;
+    }
+  }
 
   m_eVals.clear();
   return field;
