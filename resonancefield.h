@@ -39,32 +39,47 @@
  * paper * h => SI value
  * us / h => SI value
  * hence most algorithms in the paper above have to be multiplied by h *twice*
- *
- * NOTE: mwFreq is in GHz!
- *
- * NOTE: This is WIP
  */
 class ResonanceField {
 public:
   ResonanceField(const Experiment& exp);
-  QVector<fp> findRoots(fp B_min, fp B_max, fp mwFreq);
+  /**
+   * Calculate resonance Field for given B-range and micro wave frequency.
+   *
+   * @p B_min minimum static B-Field in Tesla
+   * @p B_max maximum static B-Field in Tesla
+   * @p mwFreqGHz micro wave frequency in GHz
+   */
+  QVector<fp> calculate(fp B_min, fp B_max, fp mwFreqGHz);
 
 private:
-  bool needSignChangeCheck(fp mwFreq) const;
-  fp calculateLambda() const;
+  const Experiment& m_exp;
 
-  struct Knot {
-    Knot()
+  fp calculateLambda() const;
+  fp m_lambda;
+
+  /// @return true if looping resonance can occur, false otherwise
+  bool checkForLoopingResonance() const;
+  bool m_loopingResonanceCanOccur;
+  // micro wave frequency in atomic units
+  fp m_mwFreq;
+
+  QMap<fp, fp> resonantSegments(fp B_minStart, fp B_maxStart);
+  QVector<fp> findRoots(const QMap<fp, fp>& resonantSegments);
+
+  // segment of B
+  struct Segment {
+    Segment()
     : B_min(0), B_max(0)
     {
     }
 
-    Knot(fp min, fp max)
+    Segment(fp min, fp max)
     : B_min(min), B_max(max)
     {
     }
 
-    bool operator==(const Knot& other) const
+    bool operator==(const Segment& other) const
     {
       return B_min == other.B_min && B_max == other.B_max;
     }
@@ -93,20 +108,22 @@ private:
     VectorX E;
     VectorX E_deriv;
   };
-  const Experiment& m_exp;
+
+  QMap<fp, EigenValues> m_eVals;
 };
 
 ResonanceField::ResonanceField(const Experiment& exp)
 : m_exp(exp)
+, m_lambda(calculateLambda())
 {
 
 }
 
-bool ResonanceField::needSignChangeCheck(fp mwFreq) const
+bool ResonanceField::checkForLoopingResonance() const
 {
   ///TODO: make sure they are always sorted in the correct order...
   VectorX eVals = SpinHamiltonian(0, m_exp).calculateEigenValues();
-  return (eVals(m_exp.dimension - 1) - eVals(0)) < mwFreq;
+  return (eVals(m_exp.dimension - 1) - eVals(0)) >= m_mwFreq;
 }
 
 fp ResonanceField::calculateLambda() const
@@ -126,6 +143,107 @@ fp ResonanceField::calculateLambda() const
   return lambda;
 }
 
+QVector< fp > ResonanceField::calculate(fp B_min, fp B_max, fp mwFreqGHz)
+{
+  // to atomic units:
+  m_mwFreq = mwFreqGHz * 1.0E9 * h;
+  m_loopingResonanceCanOccur = checkForLoopingResonance();
+
+  m_eVals.clear();
+  QVector< fp > field = findRoots(resonantSegments(B_min, B_max));
+
+  if (field.isEmpty()) {
+    qWarning() << "ATTENTION: no resonant segments found in range [" << B_min << ", " << B_max << "] for mwFreq = " << mwFreqGHz;
+    return field;
+  }
+
+  // cleanup field
+  qDebug() << "resonance field:" << field;
+
+  m_eVals.clear();
+  return field;
+}
+
+QMap< fp, fp > ResonanceField::resonantSegments(fp B_minStart, fp B_maxStart)
+{
+  //STEP 1: find knots
+  QMap<fp, fp> resonantSegments;
+
+  m_eVals[B_minStart] = EigenValues(B_minStart, m_exp);
+  m_eVals[B_maxStart] = EigenValues(B_maxStart, m_exp);
+
+  QStack<Segment> segments;
+  segments << Segment(B_minStart, B_maxStart);
+
+  ///FIXME: how to parallelize this?
+  while (!segments.isEmpty()) {
+    Segment s = segments.pop();
+    const EigenValues& max = m_eVals.value(s.B_max);
+    const EigenValues& min = m_eVals.value(s.B_min);
+    const fp B_diff = s.B_max - s.B_min;
+    bool resonancePossible = false;
+    if ((max.E(m_exp.dimension - 1) - max.E(0)) > m_mwFreq) {
+      if (!m_loopingResonanceCanOccur) {
+        // for all kombinations u,v do eq 13
+        for(int u = 0; u < m_exp.dimension; ++u) {
+          for(int v = u + 1; v < m_exp.dimension; ++v) {
+            // R_{uv}(B_q) * R_{uv}(B_r) <= 0
+            if (((min.E(v) - min.E(u) - m_mwFreq) * (max.E(v) - max.E(u) - m_mwFreq)) <= 0) {
+              resonancePossible = true;
+              break;
+            }
+          }
+          if (resonancePossible) {
+            break;
+          }
+        }
+      } else {
+        // else for all kombinations u,v do eq 15
+        for(int u = 0; u < m_exp.dimension; ++u) {
+          for(int v = u + 1; v < m_exp.dimension; ++v) {
+            if (abs((min.E(v) - min.E(u) + max.E(v) - max.E(u)) * 0.5 - m_mwFreq) <= m_lambda * B_diff) {
+              resonancePossible = true;
+              break;
+            }
+          }
+          if (resonancePossible) {
+            break;
+          }
+        }
+      }
+    } // else ResonPossible = false
+    if (resonancePossible) {
+      const fp B_new = (s.B_min + s.B_max) * 0.5;
+
+      // eq 11
+      EigenValues _new(B_new, m_exp);
+      fp epsilon = 0;
+      for(int u = 0; u < m_exp.dimension; ++u) {
+        const fp E_u_tilde = 0.5 * (min.E(u) + max.E(u)) + B_diff / 8.0 * (min.E_deriv(u) - max.E_deriv(u));
+        fp epsilon_u = abs(_new.E(u) - E_u_tilde);
+        if (epsilon_u > epsilon) {
+          epsilon = epsilon_u;
+        }
+      }
+      epsilon *= 2;
+
+      m_eVals[B_new] = _new;
+      if (epsilon > 1.0E-5 * m_mwFreq) {
+        segments << Segment(s.B_min, B_new) << Segment(B_new, s.B_max);
+      } else {
+        resonantSegments[s.B_min] = B_new;
+        resonantSegments[B_new] = s.B_max;
+      }
+    }
+  }
+
+  if (resonantSegments.isEmpty()) {
+    qWarning() << "ATTENTION: no resonant segments found in range [" << B_minStart << ", " << B_maxStart << "] for mwFreq = " << (m_mwFreq/1.0E9/h);
+  }
+
+  return resonantSegments;
+}
+
 fp evalPolynomial(const Vector4& p, const fp t, const fp mwFreq)
 {
   return p(0) * t * t * t + p(1) * t * t + p(2) * t + p(3) - mwFreq;
@@ -141,93 +259,8 @@ fp newtonRaphson(const Vector4& p, const fp t, const fp mwFreq)
   return t - evalPolynomial(p, t, mwFreq) / evalDerivPolynomial(p, t);
 }
 
-QVector<fp> ResonanceField::findRoots(fp in_B_min, fp in_B_max, fp _mwFreq)
+QVector<fp> ResonanceField::findRoots(const QMap<fp, fp>& resonantSegments)
 {
-  // to atomic units:
-  fp mwFreq = _mwFreq * 1E9 * h;
-
-  //STEP 1: find knots
-  QMap<fp, EigenValues> eVals;
-  QMap<fp, fp> resonantSegments;
-
-  ///TODO: rename method
-  const bool loopingResonanceCanOccur = !needSignChangeCheck(mwFreq);
-  {
-    const fp lambda = calculateLambda();
-
-    eVals[in_B_min] = EigenValues(in_B_min, m_exp);
-    eVals[in_B_max] = EigenValues(in_B_max, m_exp);
-
-    QStack<Knot> knots;
-    knots << Knot(in_B_min, in_B_max);
-
-    ///FIXME: how to parallelize this?
-    while (!knots.isEmpty()) {
-      Knot knot = knots.pop();
-      const EigenValues& max = eVals.value(knot.B_max);
-      const EigenValues& min = eVals.value(knot.B_min);
-      const fp B_diff = knot.B_max - knot.B_min;
-      bool resonancePossible = false;
-      if ((max.E(m_exp.dimension - 1) - max.E(0)) > mwFreq) {
-        if (!loopingResonanceCanOccur) {
-          // for all kombinations u,v do eq 13
-          for(int u = 0; u < m_exp.dimension; ++u) {
-            for(int v = u + 1; v < m_exp.dimension; ++v) {
-              // R_{uv}(B_q) * R_{uv}(B_r) <= 0
-              if (((min.E(v) - min.E(u) - mwFreq) * (max.E(v) - max.E(u) - mwFreq)) <= 0) {
-                resonancePossible = true;
-                break;
-              }
-            }
-            if (resonancePossible) {
-              break;
-            }
-          }
-        } else {
-          // else for all kombinations u,v do eq 15
-          for(int u = 0; u < m_exp.dimension; ++u) {
-            for(int v = u + 1; v < m_exp.dimension; ++v) {
-              if (abs((min.E(v) - min.E(u) + max.E(v) - max.E(u)) * 0.5 - mwFreq) <= lambda * B_diff) {
-                resonancePossible = true;
-                break;
-              }
-            }
-            if (resonancePossible) {
-              break;
-            }
-          }
-        }
-      } // else ResonPossible = false
-      if (resonancePossible) {
-        const fp B_new = (knot.B_min + knot.B_max) * 0.5;
-
-        // eq 11
-        EigenValues _new(B_new, m_exp);
-        fp epsilon = 0;
-        for(int u = 0; u < m_exp.dimension; ++u) {
-          const fp E_u_tilde = 0.5 * (min.E(u) + max.E(u)) + B_diff / 8.0 * (min.E_deriv(u) - max.E_deriv(u));
-          fp epsilon_u = abs(_new.E(u) - E_u_tilde);
-          if (epsilon_u > epsilon) {
-            epsilon = epsilon_u;
-          }
-        }
-        epsilon *= 2;
-
-        eVals[B_new] = _new;
-        if (epsilon > 1.0E-5 * mwFreq) {
-          knots << Knot(knot.B_min, B_new) << Knot(B_new, knot.B_max);
-        } else {
-          resonantSegments[knot.B_min] = B_new;
-          resonantSegments[B_new] = knot.B_max;
-        }
-      }
-    }
-  }
-
-  if (resonantSegments.isEmpty()) {
-    qWarning() << "ATTENTION: no roots found in range [" << in_B_min << ", " << in_B_max << "] for mwFreq = " << mwFreq;
-    return QVector<fp>();
-  }
   //STEP 2: find roots
   QVector<fp> resonanceField;
 
@@ -250,8 +283,8 @@ QVector<fp> ResonanceField::findRoots(fp in_B_min, fp in_B_max, fp _mwFreq)
     const fp B_min = it.key();
     const fp B_max = it.value();
     ++it;
-    const EigenValues& min = eVals.value(B_min);
-    const EigenValues& max = eVals.value(B_max);
+    const EigenValues& min = m_eVals.value(B_min);
+    const EigenValues& max = m_eVals.value(B_max);
 
     const fp B_diff = B_max - B_min;
     GNUPLOT_DEBUG(
@@ -265,12 +298,12 @@ QVector<fp> ResonanceField::findRoots(fp in_B_min, fp in_B_max, fp _mwFreq)
         ///NOTE: paper has different notation: p(0) == p_3, p(1) == p_2, ...
         const Vector4 p = M * (e_v - e_u);
         fp root = 0;
-        if (!loopingResonanceCanOccur) {
-          if (((min.E(v) - min.E(u) - mwFreq) * (max.E(v) - max.E(u) - mwFreq)) > 0) {
+        if (!m_loopingResonanceCanOccur) {
+          if (((min.E(v) - min.E(u) - m_mwFreq) * (max.E(v) - max.E(u) - m_mwFreq)) > 0) {
             continue;
           }
           // Newton-Raphson root finding
-          fp t = newtonRaphson(p, 0.5, mwFreq); // x_0 = 0.5
+          fp t = newtonRaphson(p, 0.5, m_mwFreq); // x_0 = 0.5
           if (!isfinite(t)) {
             continue;
           }
@@ -279,7 +312,7 @@ QVector<fp> ResonanceField::findRoots(fp in_B_min, fp in_B_max, fp _mwFreq)
           int it = 0;
           do {
             t = t2;
-            t2 = newtonRaphson(p, t, mwFreq);
+            t2 = newtonRaphson(p, t, m_mwFreq);
           ///TODO: when to abort?
           } while(abs(t2/t - 1) > 1E-5 && (maxIt > ++it));
           root = B_min + t2 * B_diff;
@@ -302,9 +335,6 @@ QVector<fp> ResonanceField::findRoots(fp in_B_min, fp in_B_max, fp _mwFreq)
     cout << flush;
     qDebug() << _nodes;
   )
-
-  qSort(resonanceField);
-  qDebug() << "resonance field:" << resonanceField;
 
   return resonanceField;
 }
