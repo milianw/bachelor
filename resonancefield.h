@@ -253,6 +253,8 @@ QVector<fp> ResonanceField::findRoots(fp in_B_min, fp in_B_max, fp _mwFreq)
   const QMap<fp, fp>::const_iterator end = resonantSegments.constEnd();
   cout << "set xrange[" << it.key() * 0.9 << ":" << (end-1).value() * 1.1 << "]" << endl;
   cout << "u(x,min,max) = (x>=min)&&(x<max)? 1 : 1/0;" << endl;
+  QString _nodes;
+  QTextStream nodes(&_nodes);
   while(it != end) {
     const fp B_min = it.key();
     const fp B_max = it.value();
@@ -271,7 +273,6 @@ QVector<fp> ResonanceField::findRoots(fp in_B_min, fp in_B_max, fp _mwFreq)
 //     qDebug() << "find roots between:" << B_min << B_max << B_diff;
     cout << "set arrow from " << B_min << ",-5e-26 to " << B_min << ",5e-26 ls 2" << endl;
     cout << "set arrow from " << B_max << ",-5e-26 to " << B_max << ",5e-26 ls 2" << endl;
-
     for(int u = 0; u < m_exp.dimension; ++u) {
       const Vector4 e_u = (Vector4() << min.E(u), max.E(u), B_diff * min.E_deriv(u), B_diff * max.E_deriv(u)).finished();
       for(int v = u + 1; v < m_exp.dimension; ++v) {
@@ -319,12 +320,15 @@ QVector<fp> ResonanceField::findRoots(fp in_B_min, fp in_B_max, fp _mwFreq)
         cout << "replot u(x, " << B_min << "," << B_max << ") * ((((x-" << B_min << ")/" << B_diff << "))**3 * (" << p(0) << ") + (((x-" << B_min << ")/" << B_diff << "))**2 * (" << p(1) << ") + (((x-" << B_min << ")/" << B_diff << ")) * (" << p(2) << ") + (" << p(3) << " - " << mwFreq << ")) "
                      "title \"B_min = " << B_min << ", B_max = " << B_max << " || u = " << u << ", v = " << v << "\"" << endl;
         cout << "set arrow from " << root << ",-1e-24 to " << root << ",1e-24 ls 0" << endl;
+        nodes << B_min << '\t' << (min.E(v) - min.E(u) - mwFreq) << endl;
+        nodes << B_max << '\t' << (max.E(v) - max.E(u) - mwFreq) << endl;
       }
     }
   }
   cout << flush;
   qSort(resonanceField);
   qDebug() << "resonance field:" << resonanceField;
+  qDebug() << _nodes;
 
   return resonanceField;
 }
