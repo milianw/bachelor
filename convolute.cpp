@@ -38,7 +38,7 @@ QTextStream qout(stdout);
 QTextStream qerr(stderr);
 
 const int DEFAULT_STEPS = 100;
-const fp DEFAULT_WIDTH = 0.0001;
+const fp DEFAULT_WIDTH = 0.001;
 const fp WIDTHS_TO_ZERO = 4.0; // = exp(-N^2 /2), with N = 4 this is approx. 0.033%
 const bool DEFAULT_DERIV = false;
 
