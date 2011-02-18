@@ -26,77 +26,22 @@
 // typedef long double fp;
 typedef float fp;
 
-/****************** MPI Types ******/
-#include <boost/mpi.hpp>
-#include <boost/lexical_cast.hpp>
-
-namespace mpi = boost::mpi;
-
-class BisectInput
-{
-public:
-  BisectInput()
-  { }
-
-  BisectInput(fp _from, fp _to, fp _mwFreqGHz)
-  : from(_from), to(_to), mwFreqGHz(_mwFreqGHz)
-  { }
-
-  fp from;
-  fp to;
-  fp mwFreqGHz;
-
-private:
-  friend class boost::serialization::access;
-
-  template<class Archive>
-  void serialize(Archive & ar, const unsigned int version)
-  {
-    ar & from;
-    ar & to;
-    ar & mwFreqGHz;
-  }
-};
-
-class BisectAnswer
-{
-public:
-  BisectAnswer()
-  { }
-
-  enum Status {
-    Continue, Resonant, NotResonant
-  };
-
-  BisectAnswer(Status _status, fp _from, fp _mid, fp _to)
-  : status(_status), from(_from), mid(_mid), to(_to)
-  { }
-
-  Status status;
-  fp from;
-  fp mid;
-  fp to;
-
-private:
-  friend class boost::serialization::access;
-
-  template<class Archive>
-  void serialize(Archive & ar, const unsigned int version)
-  {
-    ar & status;
-    ar & from;
-    ar & mid;
-    ar & to;
-  }
-};
-
-/****************** EIGEN Types ***********/
-
 #include <complex>
 #include <Eigen/Dense>
 
+#include <boost/mpi.hpp>
+#include <boost/lexical_cast.hpp>
+
+#include <boost/serialization/collection_size_type.hpp>
+#include <boost/serialization/nvp.hpp>
+
+
 using namespace Eigen;
 using namespace std;
+
+namespace mpi = boost::mpi;
+
+/****************** EIGEN Types ***********/
 
 typedef complex<fp> c_fp;
 
@@ -120,5 +65,108 @@ typedef Matrix<c_fp, 4, 1> Vector4c;
 
 typedef Matrix<fp, Dynamic, 1> VectorX;
 typedef Matrix<c_fp, Dynamic, 1> VectorXc;
+
+/****************** MPI Types ******/
+
+namespace boost {
+namespace serialization {
+
+template<class Archive>
+void serialize(Archive& ar, VectorX& vec, unsigned int version)
+{
+  int size;
+  if ( !Archive::is_loading::value ) {
+      size = vec.size();
+  }
+  ar & size;
+  if ( Archive::is_loading::value ) {
+      vec.resize(size);
+  }
+  ar & make_array(vec.data(), size);
+}
+
+} // namespace serialization
+} // namespace boost
+
+class BisectNode {
+public:
+  BisectNode()
+  { }
+
+  BisectNode(fp _B, const VectorX& _E, const VectorX& _E_deriv)
+  : B(_B), E(_E), E_deriv(_E_deriv)
+  { }
+
+  fp B;
+  VectorX E;
+  VectorX E_deriv;
+
+private:
+  friend class boost::serialization::access;
+
+  template<class Archive>
+  void serialize(Archive& ar, const unsigned int version)
+  {
+    ar & B;
+    ar & E;
+    ar & E_deriv;
+  }
+};
+
+class BisectInput {
+public:
+  BisectInput()
+  { }
+
+  BisectInput(fp _from, fp _to, fp _mwFreqGHz)
+  : from(_from), to(_to), mwFreqGHz(_mwFreqGHz)
+  { }
+
+  fp from;
+  fp to;
+  fp mwFreqGHz;
+
+private:
+  friend class boost::serialization::access;
+
+  template<class Archive>
+  void serialize(Archive& ar, const unsigned int version)
+  {
+    ar & from;
+    ar & to;
+    ar & mwFreqGHz;
+  }
+};
+
+class BisectAnswer {
+public:
+  BisectAnswer()
+  { }
+
+  enum Status {
+    Continue, Resonant, NotResonant
+  };
+
+  BisectAnswer(Status _status, fp _from, fp _mid, fp _to)
+  : status(_status), from(_from), mid(_mid), to(_to)
+  { }
+
+  Status status;
+  fp from;
+  fp mid;
+  fp to;
+
+private:
+  friend class boost::serialization::access;
+
+  template<class Archive>
+  void serialize(Archive& ar, const unsigned int version)
+  {
+    ar & status;
+    ar & from;
+    ar & mid;
+    ar & to;
+  }
+};
 
 #endif // MW_BACHELOR_TYPES_H

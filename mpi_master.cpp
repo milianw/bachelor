@@ -29,12 +29,12 @@ MPIMaster::MPIMaster(const mpi::communicator& comm)
 : m_comm(comm)
 {
   if (comm.rank() != MASTER_RANK) {
-    cerr << "MPIMaster created outside of server rank!" << endl;
+    cerr << "MPIMaster created outside of master rank!" << endl;
     comm.abort(1);
     return;
   }
-  if (comm.size() - 1 == 0) {
-    cerr << "need at least one slave to operate properly" << endl;
+  if (comm.size() - 1 < 2) {
+    cerr << "need at least two slaves to operate properly" << endl;
     comm.abort(2);
     return;
   }
@@ -56,6 +56,24 @@ MPIMaster::~MPIMaster()
 
 void MPIMaster::startBisect(const fp from, const fp to, const fp mwFreqGHz)
 {
+  // notify slaves about work conditions
+
+  // diagonalize the hamiltonian at the edges
+  {
+    m_bisectNodes.resize(2);
+    vector<mpi::request> diagRequests(2);
+
+    for (int i = 0; i < 2; ++i) {
+      m_comm.isend(m_slaves.at(i), TAG_CMD, CMD_DIAGONALIZE);
+
+      m_comm.isend(m_slaves.at(i), TAG_DIAGONALIZE_INPUT, i == 0 ? from : to);
+
+      diagRequests[i] = m_comm.irecv(m_slaves.at(i), TAG_DIAGONALIZE_RESULT, m_bisectNodes.at(i));
+    }
+
+    mpi::wait_all(diagRequests.begin(), diagRequests.end());
+  }
+
   m_pendingSegments.push_back(BRange(from, to));
   // dispatch commands to nodes
   while(!m_pendingSegments.empty() || !m_pendingRequests.empty()) {
@@ -86,6 +104,8 @@ void MPIMaster::startBisect(const fp from, const fp to, const fp mwFreqGHz)
       m_pendingRequests.push_back(m_comm.irecv(slave, TAG_BISECT_RESULT, m_responses.at(slave)));
     }
   }
+
+  m_bisectNodes.clear();
 }
 
 void MPIMaster::handleBisectResponse(ResponsePair response)

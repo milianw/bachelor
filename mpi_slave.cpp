@@ -26,6 +26,11 @@
 MPISlave::MPISlave(const boost::mpi::communicator& comm)
 : m_comm(comm)
 {
+  if (comm.rank() == MASTER_RANK) {
+    cerr << "MPISlave created in master rank!" << endl;
+    comm.abort(1);
+    return;
+  }
 
 }
 

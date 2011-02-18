@@ -27,6 +27,7 @@ const int MASTER_RANK = 0;
 enum Commands {
   CMD_CLOSE,
   CMD_BISECT,
+  CMD_DIAGONALIZE
 //   CMD_INTENSITY
 };
 
@@ -38,6 +39,8 @@ enum BisectResults {
 
 enum Tags {
   TAG_CMD,
+  TAG_DIAGONALIZE_INPUT,
+  TAG_DIAGONALIZE_RESULT,
   TAG_BISECT_INPUT,
   TAG_BISECT_RESULT
 };

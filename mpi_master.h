@@ -19,8 +19,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef MW_MPI_SERVER_H
-#define MW_MPI_SERVER_H
+#ifndef MW_MPI_MASTER_H
+#define MW_MPI_MASTER_H
 
 #include "types.h"
 
@@ -47,6 +47,7 @@ private:
   vector<mpi::request> m_pendingRequests;
   vector<BisectAnswer> m_responses;
   vector<BRange> m_resonantSegments;
+  vector<BisectNode> m_bisectNodes;
 };
 
 #endif // MW_MPI_SERVER_H
