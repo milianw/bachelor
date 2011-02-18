@@ -22,15 +22,81 @@
 #ifndef MW_BACHELOR_TYPES_H
 #define MW_BACHELOR_TYPES_H
 
+// typedef double fp;
+// typedef long double fp;
+typedef float fp;
+
+/****************** MPI Types ******/
+#include <boost/mpi.hpp>
+#include <boost/lexical_cast.hpp>
+
+namespace mpi = boost::mpi;
+
+class BisectInput
+{
+public:
+  BisectInput()
+  { }
+
+  BisectInput(fp _from, fp _to, fp _mwFreqGHz)
+  : from(_from), to(_to), mwFreqGHz(_mwFreqGHz)
+  { }
+
+  fp from;
+  fp to;
+  fp mwFreqGHz;
+
+private:
+  friend class boost::serialization::access;
+
+  template<class Archive>
+  void serialize(Archive & ar, const unsigned int version)
+  {
+    ar & from;
+    ar & to;
+    ar & mwFreqGHz;
+  }
+};
+
+class BisectAnswer
+{
+public:
+  BisectAnswer()
+  { }
+
+  enum Status {
+    Continue, Resonant, NotResonant
+  };
+
+  BisectAnswer(Status _status, fp _from, fp _mid, fp _to)
+  : status(_status), from(_from), mid(_mid), to(_to)
+  { }
+
+  Status status;
+  fp from;
+  fp mid;
+  fp to;
+
+private:
+  friend class boost::serialization::access;
+
+  template<class Archive>
+  void serialize(Archive & ar, const unsigned int version)
+  {
+    ar & status;
+    ar & from;
+    ar & mid;
+    ar & to;
+  }
+};
+
+/****************** EIGEN Types ***********/
+
 #include <complex>
 #include <Eigen/Dense>
 
 using namespace Eigen;
 using namespace std;
-
-// typedef double fp;
-// typedef long double fp;
-typedef float fp;
 
 typedef complex<fp> c_fp;
 

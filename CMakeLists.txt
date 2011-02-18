@@ -39,6 +39,6 @@ include_directories(${Boost_INCLUDE_DIRS} /usr/include/openmpi)
 
 SET(CMAKE_C_COMPILER mpicc)
 SET(CMAKE_CXX_COMPILER mpicxx)
-add_executable(hs-mpi server.cpp bisect.cpp intensity.cpp)
+add_executable(hs-mpi mpi_main.cpp mpi_master.cpp mpi_slave.cpp)
 OptimizeForArchitecture(hs-mpi)
 target_link_libraries(hs-mpi ${Boost_LIBRARIES} mpi)
