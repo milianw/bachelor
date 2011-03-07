@@ -25,6 +25,7 @@
 
 #include "experiment.h"
 #include "resonancefield.h"
+#include "spinhamiltonian.h"
 
 MPISlave::MPISlave(const mpi::communicator& comm, const Experiment& exp)
 : m_comm(comm)
@@ -87,6 +88,19 @@ void MPISlave::work()
         BisectInput input;
         m_comm.recv(MASTER_RANK, TAG_FINDROOTS_INPUT, input);
         m_comm.send(MASTER_RANK, TAG_FINDROOTS_RESULT, m_resonanceField.findRootsInSegment(input.from, input.to));
+        break;
+      }
+      case CMD_INTENSITY: {
+        /*
+        * calculate intensity at given B
+        *
+        * input: fp B
+        * output: fp intensity
+        */
+        fp B;
+        m_comm.recv(MASTER_RANK, TAG_INTENSITY_INPUT, B);
+        SpinHamiltonian H(B, m_exp);
+        m_comm.send(MASTER_RANK, TAG_INTENSITY_RESULT, IntensityAnswer(B, H.calculateIntensity()));
         break;
       }
     }

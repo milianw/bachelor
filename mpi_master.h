@@ -53,6 +53,8 @@ private:
   vector< vector<fp> > m_findRootResponses;
   vector<fp> m_resonancyField;
 
+  vector<IntensityAnswer> m_intensityResponses;
+
   typedef vector<mpi::request> RequestList;
   RequestList m_pendingRequests;
   typedef pair<mpi::status, RequestList::iterator> ResponsePair;
@@ -61,6 +63,7 @@ private:
   void handleResponseGeneric(ResponseHandler handler, const ResponsePair& response);
   void handleBisectResponse(int slave);
   void handleFindRootResponse(int slave);
+  void handleIntensityResponse(int slave);
 };
 
 #endif // MW_MPI_SERVER_H

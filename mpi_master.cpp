@@ -49,8 +49,6 @@ MPIMaster::MPIMaster(const mpi::communicator& comm, const Experiment& exp)
     }
   }
   m_availableSlaves = m_slaves;
-  m_bisectResponses.resize(comm.size());
-  m_findRootResponses.resize(comm.size());
 }
 
 MPIMaster::~MPIMaster()
@@ -62,6 +60,7 @@ MPIMaster::~MPIMaster()
 
 void MPIMaster::startBisect(const fp from, const fp to)
 {
+  /// find resonant segments
   // diagonalize the hamiltonian at the edges
   {
     m_bisectNodes[from] = BisectNode();
@@ -82,6 +81,7 @@ void MPIMaster::startBisect(const fp from, const fp to)
 
   m_pendingSegments.push_back(BRange(from, to));
   // dispatch commands to nodes
+  m_bisectResponses.resize(m_comm.size());
   while(!m_pendingSegments.empty() || !m_pendingRequests.empty()) {
     checkResponses(boost::bind(&MPIMaster::handleBisectResponse, this, _1));
 
@@ -106,7 +106,8 @@ void MPIMaster::startBisect(const fp from, const fp to)
 
   cout << "found resonant segments:" << m_resonantSegments.size() << endl;
 
-  // find roots
+  /// find roots in resonant segments
+  m_findRootResponses.resize(m_comm.size());
   while(!m_resonantSegments.empty() || !m_pendingRequests.empty()) {
     // check for finished requests
     checkResponses(boost::bind(&MPIMaster::handleFindRootResponse, this, _1));
@@ -116,18 +117,37 @@ void MPIMaster::startBisect(const fp from, const fp to)
       m_resonantSegments.pop_back();
       int slave = m_availableSlaves.back();
       m_availableSlaves.pop_back();
-      cout << "assigning root work to slave " << slave << " for range " << segment.first << " to " << segment.second << endl;
+      cout << "assigning root-finding work to slave " << slave << " for range " << segment.first << " to " << segment.second << endl;
       m_comm.isend(slave, TAG_CMD, CMD_FINDROOTS);
       m_comm.isend(slave, TAG_FINDROOTS_INPUT, BisectInput(m_bisectNodes.at(segment.first), m_bisectNodes.at(segment.second)));
       m_pendingRequests.push_back(m_comm.irecv(slave, TAG_FINDROOTS_RESULT, m_findRootResponses.at(slave)));
     }
   }
+  m_bisectNodes.clear();
+  m_findRootResponses.clear();
 
   ResonanceField::cleanupResonancyField(m_resonancyField);
 
   cout << "found resonancy field:" << m_resonancyField.size() << endl;
 
-  m_bisectNodes.clear();
+  /// calculate intensity for found roots
+  m_intensityResponses.resize(m_comm.size());
+  while(!m_resonancyField.empty() || !m_pendingRequests.empty()) {
+    // check for finished requests
+    checkResponses(boost::bind(&MPIMaster::handleIntensityResponse, this, _1));
+
+    if (!m_resonancyField.empty()) {
+      const fp B = m_resonancyField.back();
+      m_resonancyField.pop_back();
+      int slave = m_availableSlaves.back();
+      m_availableSlaves.pop_back();
+      cout << "assigning intensity-calculation work to slave " << slave << " at B = " << B << "T" << endl;
+      m_comm.isend(slave, TAG_CMD, CMD_INTENSITY);
+      m_comm.isend(slave, TAG_INTENSITY_INPUT, B);
+      m_pendingRequests.push_back(m_comm.irecv(slave, TAG_INTENSITY_RESULT, m_intensityResponses.at(slave)));
+    }
+  }
+  m_intensityResponses.clear();
 }
 
 void MPIMaster::checkResponses(ResponseHandler handler)
@@ -182,4 +202,8 @@ void MPIMaster::handleFindRootResponse(int slave)
   copy(roots.begin(), roots.end(), back_inserter(m_resonancyField));
 }
 
-
+void MPIMaster::handleIntensityResponse(int slave)
+{
+  const IntensityAnswer& answer = m_intensityResponses.at(slave);
+  cout << "intensity:\t" << answer.B << '\t' << answer.intensity << endl;
+}
