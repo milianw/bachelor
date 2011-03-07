@@ -49,28 +49,45 @@ void MPISlave::work()
   int cmd;
   while(true) {
     m_comm.recv(MASTER_RANK, TAG_CMD, cmd);
-    if (cmd == CMD_CLOSE) {
-      break;
-    } else if (cmd == CMD_BISECT) {
-      /*
-       * bisect range and decide whether it is resonant or not.
-       *
-       * input: BisectInput
-       * output: BisectAnswer
-       */
-      BisectInput input;
-      m_comm.recv(MASTER_RANK, TAG_BISECT_INPUT, input);
-      m_comm.isend(MASTER_RANK, TAG_BISECT_RESULT, m_resonanceField.checkSegment(input.from, input.to));
-    } else if (cmd == CMD_DIAGONALIZE) {
-      /*
-       * diagonlize spin hamiltonian and reply with eigen values and derivative of it
-       *
-       * input: fp B - static B field node
-       * output: BisectNode
-       */
-      fp B;
-      m_comm.recv(MASTER_RANK, TAG_DIAGONALIZE_INPUT, B);
-      m_comm.isend(MASTER_RANK, TAG_DIAGONALIZE_RESULT, m_resonanceField.diagonalizeNode(B));
+    switch(cmd) {
+      case CMD_CLOSE:
+        return;
+      case CMD_BISECT: {
+        /*
+         * bisect range and decide whether it is resonant or not.
+         *
+         * input: BisectInput
+         * output: BisectAnswer
+         */
+        BisectInput input;
+        m_comm.recv(MASTER_RANK, TAG_BISECT_INPUT, input);
+        m_comm.isend(MASTER_RANK, TAG_BISECT_RESULT, m_resonanceField.checkSegment(input.from, input.to));
+        break;
+      }
+      case CMD_DIAGONALIZE: {
+        /*
+         * diagonlize spin hamiltonian and reply with eigen values and derivative of it
+         *
+         * input: fp B - static B field node
+         * output: BisectNode
+         */
+        fp B;
+        m_comm.recv(MASTER_RANK, TAG_DIAGONALIZE_INPUT, B);
+        m_comm.isend(MASTER_RANK, TAG_DIAGONALIZE_RESULT, m_resonanceField.diagonalizeNode(B));
+        break;
+      }
+      case CMD_FINDROOTS: {
+        /*
+         * find roots in given input segment
+         *
+         * input: BisectInput
+         * output: vector<fp>
+         */
+        BisectInput input;
+        m_comm.recv(MASTER_RANK, TAG_FINDROOTS_INPUT, input);
+        m_comm.send(MASTER_RANK, TAG_FINDROOTS_RESULT, m_resonanceField.findRootsInSegment(input.from, input.to));
+        break;
+      }
     }
   }
 }

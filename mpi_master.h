@@ -42,15 +42,21 @@ private:
   vector<int> m_slaves;
   vector<int> m_availableSlaves;
 
-  typedef pair< mpi::status, vector< mpi::request >::iterator> ResponsePair;
-  void handleBisectResponse(ResponsePair response);
-
   typedef pair<fp, fp> BRange;
   vector<BRange> m_pendingSegments;
-  vector<mpi::request> m_pendingRequests;
-  vector<BisectAnswer> m_responses;
+  vector<BisectAnswer> m_bisectResponses;
   vector<BRange> m_resonantSegments;
   map<fp, BisectNode> m_bisectNodes;
+
+  vector< vector<fp> > m_findRootResponses;
+  vector<fp> m_resonancyField;
+
+  typedef vector<mpi::request> RequestList;
+  RequestList m_pendingRequests;
+  typedef pair<mpi::status, RequestList::iterator> ResponsePair;
+  boost::optional<ResponsePair> checkResponse();
+  void handleBisectResponse(const ResponsePair& response);
+  void handleFindRootResponse(const ResponsePair& response);
 };
 
 #endif // MW_MPI_SERVER_H
