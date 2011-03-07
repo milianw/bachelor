@@ -27,6 +27,7 @@
 #include "resonancefield.h"
 
 #include <boost/foreach.hpp>
+#include <boost/bind.hpp>
 
 MPIMaster::MPIMaster(const mpi::communicator& comm, const Experiment& exp)
 : m_comm(comm)
@@ -82,15 +83,7 @@ void MPIMaster::startBisect(const fp from, const fp to)
   m_pendingSegments.push_back(BRange(from, to));
   // dispatch commands to nodes
   while(!m_pendingSegments.empty() || !m_pendingRequests.empty()) {
-    // check for finished requests
-    while(true) {
-      boost::optional<ResponsePair> status = checkResponse();
-      if (status) {
-        handleBisectResponse(*status);
-      } else {
-        break;
-      }
-    }
+    checkResponses(boost::bind(&MPIMaster::handleBisectResponse, this, _1));
 
     if (!m_pendingSegments.empty()) {
       const BRange segment = m_pendingSegments.back();
@@ -116,14 +109,7 @@ void MPIMaster::startBisect(const fp from, const fp to)
   // find roots
   while(!m_resonantSegments.empty() || !m_pendingRequests.empty()) {
     // check for finished requests
-    while(true) {
-      boost::optional<ResponsePair> status = checkResponse();
-      if (status) {
-        handleFindRootResponse(*status);
-      } else {
-        break;
-      }
-    }
+    checkResponses(boost::bind(&MPIMaster::handleFindRootResponse, this, _1));
 
     if (!m_resonantSegments.empty()) {
       const BRange segment = m_resonantSegments.back();
@@ -144,27 +130,34 @@ void MPIMaster::startBisect(const fp from, const fp to)
   m_bisectNodes.clear();
 }
 
-boost::optional< MPIMaster::ResponsePair > MPIMaster::checkResponse()
+void MPIMaster::checkResponses(ResponseHandler handler)
 {
-  if (!m_pendingRequests.empty()) {
-    // check for finished requests
+  // check for finished requests
+  while(!m_pendingRequests.empty()) {
     boost::optional<ResponsePair> status = mpi::test_any(m_pendingRequests.begin(), m_pendingRequests.end());
     if (status) {
-      return status;
+      handleResponseGeneric(handler, *status);
+    } else {
+      break;
     }
   }
+
   if (m_availableSlaves.empty()) {
     cout << "all slaves working, waiting for any to finish before assigning new work..." << endl;
-    return boost::optional<ResponsePair>(mpi::wait_any(m_pendingRequests.begin(), m_pendingRequests.end()));
+    handleResponseGeneric(handler, mpi::wait_any(m_pendingRequests.begin(), m_pendingRequests.end()));
   }
-  // else work can continue
-  return boost::optional<ResponsePair>();
 }
-///FIXME: cleanup to remove boiler plate code (re-add slave and remove pending request)
-void MPIMaster::handleBisectResponse(const ResponsePair& response)
+
+void MPIMaster::handleResponseGeneric(ResponseHandler handler, const ResponsePair& response)
 {
   int slave = response.first.source();
   m_availableSlaves.push_back(slave);
+  handler(slave);
+  m_pendingRequests.erase(response.second);
+}
+
+void MPIMaster::handleBisectResponse(int slave)
+{
   const BisectAnswer& answer = m_bisectResponses.at(slave);
   switch (answer.status) {
     case BisectAnswer::Continue:
@@ -181,18 +174,14 @@ void MPIMaster::handleBisectResponse(const ResponsePair& response)
       // nothing to do
       break;
   }
-  m_pendingRequests.erase(response.second);
 }
 
-void MPIMaster::handleFindRootResponse(const ResponsePair& response)
+void MPIMaster::handleFindRootResponse(int slave)
 {
-  int slave = response.first.source();
-  m_availableSlaves.push_back(slave);
   const vector<fp>& roots = m_findRootResponses.at(slave);
   BOOST_FOREACH(fp root, roots) {
     m_resonancyField.push_back(root);
   }
-  m_pendingRequests.erase(response.second);
 }
 
 

@@ -24,6 +24,8 @@
 
 #include "types.h"
 
+#include <boost/function.hpp>
+
 class Experiment;
 
 /**
@@ -54,9 +56,11 @@ private:
   typedef vector<mpi::request> RequestList;
   RequestList m_pendingRequests;
   typedef pair<mpi::status, RequestList::iterator> ResponsePair;
-  boost::optional<ResponsePair> checkResponse();
-  void handleBisectResponse(const ResponsePair& response);
-  void handleFindRootResponse(const ResponsePair& response);
+  typedef boost::function<void(int)> ResponseHandler;
+  void checkResponses(ResponseHandler handler);
+  void handleResponseGeneric(ResponseHandler handler, const ResponsePair& response);
+  void handleBisectResponse(int slave);
+  void handleFindRootResponse(int slave);
 };
 
 #endif // MW_MPI_SERVER_H
