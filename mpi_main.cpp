@@ -43,6 +43,7 @@ int main(int argc, char* argv[]) {
     ("from", po::value<fp>()->default_value(0), "minimum B range in Tesla")
     ("to", po::value<fp>()->default_value(1), "maximum B range in Tesla")
     ("mwFreq", po::value<fp>()->required(), "micro wave frequency in GHz")
+    ("outputDir", po::value<string>()->required(), "path for writing intensity data to")
   ;
 
   po::variables_map vm;
@@ -68,9 +69,10 @@ int main(int argc, char* argv[]) {
     cout << "protons:" << exp.nProtons << endl
          << "mwFreq:" << exp.mwFreqGHz << " GHz" << endl;
     // master
-    MPIMaster master(world, exp);
+    MPIMaster master(world, exp, vm["outputDir"].as<string>());
 
     master.startBisect(vm["from"].as<fp>(), vm["to"].as<fp>());
+    cout << vm["outputDir"].as<string>();
   } else {
     MPISlave slave(world, exp);
     slave.work();

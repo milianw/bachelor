@@ -94,11 +94,22 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  QDir dir(app.arguments().at(1));
-  if (!dir.exists() || !dir.isReadable()) {
-    qerr << "could not open data dir for reading:" << dir.path() << endl << endl;
+  QFileInfo info(app.arguments().at(1));
+  if (!info.exists() || !info.isReadable()) {
+    qerr << "data not readable or does not exist:" << info.filePath();
     usage();
     return 2;
+  }
+
+  QStringList dataFiles;
+
+  if (info.isDir()) {
+    QDir dir(info.absoluteFilePath());
+    foreach(const QString& file, dir.entryList(QDir::Files)) {
+      dataFiles << dir.absoluteFilePath(file);
+    }
+  } else {
+    dataFiles << info.absoluteFilePath();
   }
 
   int steps = DEFAULT_STEPS;
@@ -155,8 +166,8 @@ int main(int argc, char* argv[]) {
   // step 1: read data
   QMap<fp, Gaussian*> data;
 
-  foreach(const QString& dataFile, dir.entryList(QDir::Files)) {
-    QFile file(dir.absoluteFilePath(dataFile));
+  foreach(const QString& dataFile, dataFiles) {
+    QFile file(dataFile);
     if (!file.open(QIODevice::ReadOnly)) {
       qerr << "could not open data file for reading:" << dataFile << endl;
       return 3;

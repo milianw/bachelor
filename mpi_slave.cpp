@@ -50,7 +50,6 @@ void MPISlave::work()
   Commands cmd;
   while(true) {
     m_comm.recv(MASTER_RANK, TAG_CMD, cmd);
-    cout << "got cmd:" << cmd << endl << flush;
     switch(cmd) {
       case CMD_CLOSE:
         return;

@@ -29,9 +29,20 @@
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
 
-MPIMaster::MPIMaster(const mpi::communicator& comm, const Experiment& exp)
+#include <sstream>
+
+string intensityOutputFile(const Experiment& exp, const string& outputDir, const fp from, const fp to)
+{
+  stringstream stream;
+  stream << outputDir << '/' << exp.nProtons << ':' << from << '-' << to << ":auto:" << exp.mwFreqGHz << ":mpi";
+  return stream.str();
+}
+
+MPIMaster::MPIMaster(const mpi::communicator& comm, const Experiment& exp,
+                     const string& outputDir)
 : m_comm(comm)
 , m_exp(exp)
+, m_outputDir(outputDir)
 {
   if (comm.rank() != MASTER_RANK) {
     cerr << "MPIMaster created outside of master rank!" << endl;
@@ -56,6 +67,7 @@ MPIMaster::~MPIMaster()
   BOOST_FOREACH(int slave, m_slaves) {
     m_comm.isend(slave, TAG_CMD, CMD_CLOSE);
   }
+  cout << "intensity data written to file:" << endl << m_intensityOutputFile  << endl;
 }
 
 void MPIMaster::startBisect(const fp from, const fp to)
@@ -131,6 +143,8 @@ void MPIMaster::startBisect(const fp from, const fp to)
   cout << "found resonancy field:" << m_resonancyField.size() << endl;
 
   /// calculate intensity for found roots
+  m_intensityOutputFile = intensityOutputFile(m_exp, m_outputDir, from, to);
+  m_intensityOutput.open(m_intensityOutputFile.data());
   m_intensityResponses.resize(m_comm.size());
   while(!m_resonancyField.empty() || !m_pendingRequests.empty()) {
     // check for finished requests
@@ -205,5 +219,5 @@ void MPIMaster::handleFindRootResponse(int slave)
 void MPIMaster::handleIntensityResponse(int slave)
 {
   const IntensityAnswer& answer = m_intensityResponses.at(slave);
-  cout << "intensity:\t" << answer.B << '\t' << answer.intensity << endl;
+  m_intensityOutput << answer.B << '\t' << answer.intensity << endl;
 }

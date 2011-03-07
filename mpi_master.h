@@ -26,6 +26,8 @@
 
 #include <boost/function.hpp>
 
+#include <fstream>
+
 class Experiment;
 
 /**
@@ -33,7 +35,8 @@ class Experiment;
  */
 class MPIMaster {
 public:
-  MPIMaster(const mpi::communicator& comm, const Experiment& exp);
+  MPIMaster(const mpi::communicator& comm, const Experiment& exp,
+            const string& outputDir);
   ~MPIMaster();
 
   void startBisect(const fp from, const fp to);
@@ -43,6 +46,7 @@ private:
   const Experiment& m_exp;
   vector<int> m_slaves;
   vector<int> m_availableSlaves;
+  const string& m_outputDir;
 
   typedef pair<fp, fp> BRange;
   vector<BRange> m_pendingSegments;
@@ -53,6 +57,8 @@ private:
   vector< vector<fp> > m_findRootResponses;
   vector<fp> m_resonancyField;
 
+  string m_intensityOutputFile;
+  ofstream m_intensityOutput;
   vector<IntensityAnswer> m_intensityResponses;
 
   typedef vector<mpi::request> RequestList;
