@@ -221,7 +221,8 @@ int main(int argc, char* argv[])
         {
           #pragma omp for
           for(int i = 0; i < steps; ++i) {
-            SpinHamiltonian(B_min + B_stepSize * i, exp).calculateIntensity(outputStreams.at(omp_get_thread_num()));
+            const fp B = B_min + B_stepSize * i;
+            *outputStreams.at(omp_get_thread_num()) << B << '\t' << SpinHamiltonian(B, exp).calculateIntensity() << endl;
           }
         }
       } else {
@@ -231,7 +232,8 @@ int main(int argc, char* argv[])
         {
           #pragma omp for
           for(int i = 0; i < resonanceField.size(); ++i) {
-            SpinHamiltonian(resonanceField.at(i), exp).calculateIntensity(outputStreams.at(omp_get_thread_num()));
+            const fp B = resonanceField.at(i);
+            *outputStreams.at(omp_get_thread_num()) << B << '\t' << SpinHamiltonian(B, exp).calculateIntensity() << endl;
           }
         }
       }

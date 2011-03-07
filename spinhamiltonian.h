@@ -24,7 +24,6 @@
 
 #include "types.h"
 
-class QTextStream;
 class Experiment;
 
 /**
@@ -60,7 +59,7 @@ class SpinHamiltonian {
     void calculateTransitions() const;
     /// calculate total intensity of all transitions that are valid for the
     /// incoming microwave frequency (as set in @c Experiment)
-    void calculateIntensity(QTextStream* out) const;
+    fp calculateIntensity() const;
 
     VectorX calculateEigenValues() const;
 

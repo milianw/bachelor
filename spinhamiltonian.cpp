@@ -22,7 +22,6 @@
 #include "spinhamiltonian.h"
 
 #include <iostream>
-#include <QtCore/QTextStream>
 #include <string>
 #include <cmath>
 
@@ -241,7 +240,7 @@ MatrixX SpinHamiltonian::intensityMatrix(const MatrixXc& eigenVectors) const {
   return intensities;
 }
 
-void SpinHamiltonian::calculateIntensity(QTextStream* out) const
+fp SpinHamiltonian::calculateIntensity() const
 {
   //Diagonalize the total Hamiltonian matrix===================================
   SelfAdjointEigenSolver<MatrixXc> eigenSolver(hamiltonian());
@@ -262,7 +261,7 @@ void SpinHamiltonian::calculateIntensity(QTextStream* out) const
       intensity += (eigenVectors.col(j).adjoint() * moments * eigenVectors.col(i)).norm();
     }
   }
-  (*out) << scientific << m_B << '\t' << (intensity * 2.0 * M_PI * (Bohrm / hbar) * (Bohrm / hbar)) << endl;
+  return (intensity * 2.0 * M_PI * (Bohrm / hbar) * (Bohrm / hbar));
 }
 
 void SpinHamiltonian::calculateTransitions() const
