@@ -72,8 +72,8 @@ class SpinHamiltonian {
     /// list all possible transitions with their frequency for the given B field
     void calculateTransitions() const;
     /// calculate total intensity of all transitions that are valid for the
-    /// incoming microwave frequency
-    void calculateIntensity(const fp mwFreq, QTextStream* out) const;
+    /// incoming microwave frequency (as set in @c Experiment)
+    void calculateIntensity(QTextStream* out) const;
 
     VectorX calculateEigenValues() const;
 
@@ -325,7 +325,7 @@ MatrixX SpinHamiltonian::intensityMatrix(const MatrixXc& eigenVectors) const {
   return intensities;
 }
 
-void SpinHamiltonian::calculateIntensity(const fp mwFreq, QTextStream* out) const
+void SpinHamiltonian::calculateIntensity(QTextStream* out) const
 {
   //Diagonalize the total Hamiltonian matrix===================================
   SelfAdjointEigenSolver<MatrixXc> eigenSolver(hamiltonian());
@@ -340,7 +340,7 @@ void SpinHamiltonian::calculateIntensity(const fp mwFreq, QTextStream* out) cons
         // transition frequency:
       const fp freq = (1.0/h/1.0E9 * abs(eigenValues(i) - eigenValues(j)));
       // assume it's only seen when energy is below frequency threshold
-      if (abs(mwFreq/freq - 1.0) > 5.0E-4) {
+      if (abs(m_exp.mwFreqGHz/freq - 1.0) > 5.0E-4) {
         continue;
       }
       intensity += (eigenVectors.col(j).adjoint() * moments * eigenVectors.col(i)).norm();

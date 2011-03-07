@@ -33,6 +33,7 @@ struct Experiment {
   Experiment(int _nProtons)
   : nProtons(_nProtons)
   , dimension(pow(2, nProtons + 1))
+  , mwFreqGHz(0)
   {
     gTensor = Matrix3c::Identity() * Constants::g_E;
     aTensor = Matrix3c::Identity() * 1420;
@@ -45,6 +46,7 @@ struct Experiment {
   Matrix3c gTensor;
   Matrix3c aTensor;
   Vector3c staticBFieldDirection;
+  fp mwFreqGHz;
 
   /**
    * static field of given strength in direction of @c staticBFieldDirection

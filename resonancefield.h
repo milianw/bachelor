@@ -48,12 +48,13 @@ public:
    *
    * @p B_min minimum static B-Field in Tesla
    * @p B_max maximum static B-Field in Tesla
-   * @p mwFreqGHz micro wave frequency in GHz
    */
-  QVector<fp> calculate(fp B_min, fp B_max, fp mwFreqGHz);
+  QVector<fp> calculate(fp B_min, fp B_max);
 
 private:
   const Experiment& m_exp;
+  // micro wave frequency in atomic units
+  const fp m_mwFreq;
 
   fp calculateLambda() const;
   fp m_lambda;
@@ -61,8 +62,6 @@ private:
   /// @return true if looping resonance can occur, false otherwise
   bool checkForLoopingResonance() const;
   bool m_loopingResonanceCanOccur;
-  // micro wave frequency in atomic units
-  fp m_mwFreq;
 
   QMap<fp, fp> resonantSegments(fp B_minStart, fp B_maxStart);
   QVector<fp> findRoots(const QMap<fp, fp>& resonantSegments);
@@ -114,6 +113,8 @@ private:
 
 ResonanceField::ResonanceField(const Experiment& exp)
 : m_exp(exp)
+  // to atomic units:
+,  m_mwFreq(exp.mwFreqGHz * 1.0E9 * h)
 , m_lambda(calculateLambda())
 {
 
@@ -143,17 +144,15 @@ fp ResonanceField::calculateLambda() const
   return lambda;
 }
 
-QVector< fp > ResonanceField::calculate(fp B_min, fp B_max, fp mwFreqGHz)
+QVector< fp > ResonanceField::calculate(fp B_min, fp B_max)
 {
-  // to atomic units:
-  m_mwFreq = mwFreqGHz * 1.0E9 * h;
   m_loopingResonanceCanOccur = checkForLoopingResonance();
 
   m_eVals.clear();
   QVector< fp > field = findRoots(resonantSegments(B_min, B_max));
 
   if (field.isEmpty()) {
-    qWarning() << "ATTENTION: no resonant segments found in range [" << B_min << ", " << B_max << "] for mwFreq = " << mwFreqGHz;
+    qWarning() << "ATTENTION: no resonant segments found in range [" << B_min << ", " << B_max << "] for mwFreq = " << m_exp.mwFreqGHz;
     return field;
   }
 
@@ -246,7 +245,7 @@ QMap< fp, fp > ResonanceField::resonantSegments(fp B_minStart, fp B_maxStart)
   }
 
   if (resonantSegments.isEmpty()) {
-    qWarning() << "ATTENTION: no resonant segments found in range [" << B_minStart << ", " << B_maxStart << "] for mwFreq = " << (m_mwFreq/1.0E9/h);
+    qWarning() << "ATTENTION: no resonant segments found in range [" << B_minStart << ", " << B_maxStart << "] for mwFreq = " << (m_exp.mwFreqGHz);
   }
 
   return resonantSegments;

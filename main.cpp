@@ -187,9 +187,10 @@ int main(int argc, char* argv[])
       ENSURE(B_min >= 0, "intensity")
       ENSURE(B_max > B_min, "intensity")
       ENSURE(mwFreq > 0, "intensity")
+      exp.mwFreqGHz = mwFreq;
       const double B_stepSize = (B_max - B_min) / steps;
       cerr << "calculating intensity:" << endl
-           << "mwFreq:\t" << mwFreq << "GHz" << endl
+           << "mwFreq:\t" << exp.mwFreqGHz << "GHz" << endl
            << "B:\t" << B_min << "T to " << B_max << "T" << endl
            << "steps:\t" << steps << endl;
       cerr << "nProtons:\t" << exp.nProtons << endl
@@ -219,17 +220,17 @@ int main(int argc, char* argv[])
         {
           #pragma omp for
           for(int i = 0; i < steps; ++i) {
-            SpinHamiltonian(B_min + B_stepSize * i, exp).calculateIntensity(mwFreq, outputStreams.at(omp_get_thread_num()));
+            SpinHamiltonian(B_min + B_stepSize * i, exp).calculateIntensity(outputStreams.at(omp_get_thread_num()));
           }
         }
       } else {
         // wip implementation of "S. Stoll, A. Schweiger / Chemical Physics Letters 380 (2003) 464 - 470"
-        const QVector<fp> resonanceField = ResonanceField(exp).calculate(B_min, B_max, mwFreq);
+        const QVector<fp> resonanceField = ResonanceField(exp).calculate(B_min, B_max);
         #pragma omp parallel
         {
           #pragma omp for
           for(int i = 0; i < resonanceField.size(); ++i) {
-            SpinHamiltonian(resonanceField.at(i), exp).calculateIntensity(mwFreq, outputStreams.at(omp_get_thread_num()));
+            SpinHamiltonian(resonanceField.at(i), exp).calculateIntensity(outputStreams.at(omp_get_thread_num()));
           }
         }
       }
