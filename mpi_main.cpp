@@ -66,6 +66,8 @@ int main(int argc, char* argv[]) {
   exp.mwFreqGHz = vm["mwFreq"].as<fp>();
 
   if (world.rank() == MASTER_RANK) {
+    cout << "protons:" << exp.nProtons << endl
+         << "mwFreq:" << exp.mwFreqGHz << " GHz" << endl;
     // master
     MPIMaster master(world, exp);
 

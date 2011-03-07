@@ -47,6 +47,7 @@ QDebug& operator<<(QDebug& out, long double d)
 
 #include "resonancefield.h"
 #include "spinhamiltonian.h"
+#include "experiment.h"
 
 QTextStream qout(stdout);
 QTextStream qerr(stderr);

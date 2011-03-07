@@ -22,8 +22,7 @@
 #define MW_MPI_SLAVE_H
 
 #include "types.h"
-
-class Experiment;
+#include "resonancefield.h"
 
 class MPISlave {
 public:
@@ -35,6 +34,7 @@ public:
 private:
   const mpi::communicator& m_comm;
   const Experiment& m_exp;
+  const ResonanceField m_resonanceField;
 };
 
 #endif // MW_MPI_SLAVE_H

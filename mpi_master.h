@@ -50,7 +50,7 @@ private:
   vector<mpi::request> m_pendingRequests;
   vector<BisectAnswer> m_responses;
   vector<BRange> m_resonantSegments;
-  vector<BisectNode> m_bisectNodes;
+  map<fp, BisectNode> m_bisectNodes;
 };
 
 #endif // MW_MPI_SERVER_H

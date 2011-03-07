@@ -23,12 +23,13 @@
 
 #include "mpi_iface.h"
 
-#include "spinhamiltonian.h"
 #include "experiment.h"
+#include "resonancefield.h"
 
 MPISlave::MPISlave(const mpi::communicator& comm, const Experiment& exp)
 : m_comm(comm)
 , m_exp(exp)
+, m_resonanceField(exp)
 {
   if (comm.rank() == MASTER_RANK) {
     cerr << "MPISlave created in master rank!" << endl;
@@ -51,27 +52,25 @@ void MPISlave::work()
     if (cmd == CMD_CLOSE) {
       break;
     } else if (cmd == CMD_BISECT) {
+      /*
+       * bisect range and decide whether it is resonant or not.
+       *
+       * input: BisectInput
+       * output: BisectAnswer
+       */
       BisectInput input;
       m_comm.recv(MASTER_RANK, TAG_BISECT_INPUT, input);
-      if (abs(input.from - input.to) > 0.001) {
-        m_comm.isend(MASTER_RANK, TAG_BISECT_RESULT, BisectAnswer(BisectAnswer::Continue, input.from, (input.from + input.to)/2, input.to));
-      } else {
-        m_comm.isend(MASTER_RANK, TAG_BISECT_RESULT, BisectAnswer(BisectAnswer::NotResonant, input.from, (input.from + input.to)/2, input.to));
-      }
+      m_comm.isend(MASTER_RANK, TAG_BISECT_RESULT, m_resonanceField.checkSegment(input.from, input.to));
     } else if (cmd == CMD_DIAGONALIZE) {
+      /*
+       * diagonlize spin hamiltonian and reply with eigen values and derivative of it
+       *
+       * input: fp B - static B field node
+       * output: BisectNode
+       */
       fp B;
       m_comm.recv(MASTER_RANK, TAG_DIAGONALIZE_INPUT, B);
-      SpinHamiltonian H(B, m_exp);
-      SelfAdjointEigenSolver<MatrixXc> eigenSolver(H.hamiltonian());
-      VectorX E = eigenSolver.eigenvalues();
-      const MatrixXc eigenVectors = eigenSolver.eigenvectors();
-      const MatrixXc G = H.nuclearZeeman() + H.electronZeeman();
-      VectorX E_deriv(m_exp.dimension);
-      for(int u = 0; u < m_exp.dimension; ++u) {
-        // <u| G |u> => expectation value is always real
-        E_deriv(u) = (eigenVectors.col(u).adjoint() * G * eigenVectors.col(u))(0, 0).real();
-      }
-      m_comm.isend(MASTER_RANK, TAG_DIAGONALIZE_RESULT, BisectNode(B, E, E_deriv));
+      m_comm.isend(MASTER_RANK, TAG_DIAGONALIZE_RESULT, m_resonanceField.diagonalizeNode(B));
     }
   }
 }

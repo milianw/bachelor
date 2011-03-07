@@ -63,20 +63,20 @@ void MPIMaster::startBisect(const fp from, const fp to)
 
   // diagonalize the hamiltonian at the edges
   {
-    m_bisectNodes.resize(2);
+    m_bisectNodes[from] = BisectNode();
+    m_bisectNodes[to] = BisectNode();
     vector<mpi::request> diagRequests(2);
 
     for (int i = 0; i < 2; ++i) {
+      const fp B = (i == 0) ? from : to;
       m_comm.isend(m_slaves.at(i), TAG_CMD, CMD_DIAGONALIZE);
 
-      m_comm.isend(m_slaves.at(i), TAG_DIAGONALIZE_INPUT, i == 0 ? from : to);
+      m_comm.isend(m_slaves.at(i), TAG_DIAGONALIZE_INPUT, B);
 
-      diagRequests[i] = m_comm.irecv(m_slaves.at(i), TAG_DIAGONALIZE_RESULT, m_bisectNodes.at(i));
+      diagRequests[i] = m_comm.irecv(m_slaves.at(i), TAG_DIAGONALIZE_RESULT, m_bisectNodes[B]);
     }
 
     mpi::wait_all(diagRequests.begin(), diagRequests.end());
-    std::cout << m_bisectNodes.at(0).B << m_bisectNodes.at(0).E << m_bisectNodes.at(0).E_deriv << endl;
-    std::cout << m_bisectNodes.at(1).B << m_bisectNodes.at(1).E << m_bisectNodes.at(1).E_deriv << endl;
   }
 
   m_pendingSegments.push_back(BRange(from, to));
@@ -105,7 +105,7 @@ void MPIMaster::startBisect(const fp from, const fp to)
       m_availableSlaves.pop_back();
       cout << "assigning bisect work to slave " << slave << " for range " << segment.first << " to " << segment.second << endl;
       m_comm.isend(slave, TAG_CMD, CMD_BISECT);
-      m_comm.isend(slave, TAG_BISECT_INPUT, BisectInput(segment.first, segment.second));
+      m_comm.isend(slave, TAG_BISECT_INPUT, BisectInput(m_bisectNodes.at(segment.first), m_bisectNodes.at(segment.second)));
       m_pendingRequests.push_back(m_comm.irecv(slave, TAG_BISECT_RESULT, m_responses.at(slave)));
     }
   }
@@ -117,18 +117,20 @@ void MPIMaster::handleBisectResponse(ResponsePair response)
 {
   int slave = response.first.source();
   m_availableSlaves.push_back(slave);
-  BisectAnswer answer = m_responses.at(slave);
-  cout << "got bisect answer:" << slave << '\t' << answer.from << '\t' << answer.mid << '\t' << answer.to << endl;
+  const BisectAnswer answer = m_responses.at(slave);
   switch (answer.status) {
     case BisectAnswer::Continue:
-      m_pendingSegments.push_back(BRange(answer.from, answer.mid));
-      m_pendingSegments.push_back(BRange(answer.mid, answer.to));
+      m_pendingSegments.push_back(BRange(answer.from, answer.mid.B));
+      m_pendingSegments.push_back(BRange(answer.mid.B, answer.to));
+      m_bisectNodes[answer.mid.B] = answer.mid;
       break;
     case BisectAnswer::Resonant:
-      m_resonantSegments.push_back(BRange(answer.from, answer.mid));
-      m_resonantSegments.push_back(BRange(answer.mid, answer.to));
+      m_resonantSegments.push_back(BRange(answer.from, answer.mid.B));
+      m_resonantSegments.push_back(BRange(answer.mid.B, answer.to));
+      m_bisectNodes[answer.mid.B] = answer.mid;
       break;
     case BisectAnswer::NotResonant:
+      // nothing to do
       break;
   }
   m_pendingRequests.erase(response.second);

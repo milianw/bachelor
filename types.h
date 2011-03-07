@@ -118,12 +118,12 @@ public:
   BisectInput()
   { }
 
-  BisectInput(fp _from, fp _to)
+  BisectInput(const BisectNode& _from, const BisectNode& _to)
   : from(_from), to(_to)
   { }
 
-  fp from;
-  fp to;
+  BisectNode from;
+  BisectNode to;
 
 private:
   friend class boost::serialization::access;
@@ -145,14 +145,40 @@ public:
     Continue, Resonant, NotResonant
   };
 
-  BisectAnswer(Status _status, fp _from, fp _mid, fp _to)
-  : status(_status), from(_from), mid(_mid), to(_to)
-  { }
+  static BisectAnswer notResonantAnswer(const fp from, const fp to)
+  {
+    BisectAnswer answer;
+    answer.status = NotResonant;
+    answer.from = from;
+    answer.to = to;
+    return answer;
+  }
+
+  static BisectAnswer continueAnswer(const fp from, const fp to, const BisectNode& mid)
+  {
+    BisectAnswer answer;
+    answer.status = Continue;
+    answer.from = from;
+    answer.to = to;
+    answer.mid = mid;
+    return answer;
+  }
+
+  static BisectAnswer resonantAnswer(const fp from, const fp to, const BisectNode& mid)
+  {
+    BisectAnswer answer;
+    answer.status = Resonant;
+    answer.from = from;
+    answer.to = to;
+    answer.mid = mid;
+    return answer;
+  }
 
   Status status;
   fp from;
-  fp mid;
   fp to;
+
+  BisectNode mid;
 
 private:
   friend class boost::serialization::access;
@@ -162,8 +188,8 @@ private:
   {
     ar & status;
     ar & from;
-    ar & mid;
     ar & to;
+    ar & mid;
   }
 };
 
