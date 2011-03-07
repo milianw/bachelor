@@ -54,7 +54,12 @@ public:
    */
   BisectNode diagonalizeNode(const fp B) const;
 
+  /**
+   * Check B-segment @p from @p to and decide whether it is resonant or not.
+   */
   BisectAnswer checkSegment(const BisectNode& from, const BisectNode& to) const;
+
+  vector<fp> findRootsInSegment(const BisectNode& from, const BisectNode& to) const;
 
 private:
   const Experiment& m_exp;

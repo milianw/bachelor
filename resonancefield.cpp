@@ -129,17 +129,17 @@ QVector< fp > ResonanceField::calculate(fp B_min, fp B_max)
   return field;
 }
 
-BisectAnswer ResonanceField::checkSegment(const BisectNode& min, const BisectNode& max) const
+BisectAnswer ResonanceField::checkSegment(const BisectNode& from, const BisectNode& to) const
 {
-  const fp B_diff = max.B - min.B;
+  const fp B_diff = to.B - from.B;
   bool resonancePossible = false;
-  if ((max.E(m_exp.dimension - 1) - max.E(0)) > m_mwFreq) {
+  if ((to.E(m_exp.dimension - 1) - to.E(0)) > m_mwFreq) {
     if (!m_loopingResonanceCanOccur) {
       // for all kombinations u,v do eq 13
       for(int u = 0; u < m_exp.dimension; ++u) {
         for(int v = u + 1; v < m_exp.dimension; ++v) {
           // R_{uv}(B_q) * R_{uv}(B_r) <= 0
-          if (((min.E(v) - min.E(u) - m_mwFreq) * (max.E(v) - max.E(u) - m_mwFreq)) <= 0) {
+          if (((from.E(v) - from.E(u) - m_mwFreq) * (to.E(v) - to.E(u) - m_mwFreq)) <= 0) {
             resonancePossible = true;
             break;
           }
@@ -152,7 +152,7 @@ BisectAnswer ResonanceField::checkSegment(const BisectNode& min, const BisectNod
       // else for all kombinations u,v do eq 15
       for(int u = 0; u < m_exp.dimension; ++u) {
         for(int v = u + 1; v < m_exp.dimension; ++v) {
-          if (abs((min.E(v) - min.E(u) + max.E(v) - max.E(u)) * 0.5 - m_mwFreq) <= m_lambda * B_diff) {
+          if (abs((from.E(v) - from.E(u) + to.E(v) - to.E(u)) * 0.5 - m_mwFreq) <= m_lambda * B_diff) {
             resonancePossible = true;
             break;
           }
@@ -165,10 +165,10 @@ BisectAnswer ResonanceField::checkSegment(const BisectNode& min, const BisectNod
   } // else ResonPossible = false
   if (resonancePossible) {
     // eq 11
-    const BisectNode mid = diagonalizeNode((min.B + max.B) * 0.5);
+    const BisectNode mid = diagonalizeNode((from.B + to.B) * 0.5);
     fp epsilon = 0;
     for(int u = 0; u < m_exp.dimension; ++u) {
-      const fp E_u_tilde = 0.5 * (min.E(u) + max.E(u)) + B_diff / 8.0 * (min.E_deriv(u) - max.E_deriv(u));
+      const fp E_u_tilde = 0.5 * (from.E(u) + to.E(u)) + B_diff / 8.0 * (from.E_deriv(u) - to.E_deriv(u));
       fp epsilon_u = abs(mid.E(u) - E_u_tilde);
       if (epsilon_u > epsilon) {
         epsilon = epsilon_u;
@@ -177,12 +177,12 @@ BisectAnswer ResonanceField::checkSegment(const BisectNode& min, const BisectNod
     epsilon *= 2;
 
     if (epsilon > 1.0E-5 * m_mwFreq) {
-      return BisectAnswer::continueAnswer(min.B, max.B, mid);
+      return BisectAnswer::continueAnswer(from.B, to.B, mid);
     } else {
-      return BisectAnswer::resonantAnswer(min.B, max.B, mid);
+      return BisectAnswer::resonantAnswer(from.B, to.B, mid);
     }
   } else {
-    return BisectAnswer::notResonantAnswer(min.B, max.B);
+    return BisectAnswer::notResonantAnswer(from.B, to.B);
   }
 }
 
@@ -245,77 +245,74 @@ QVector<fp> ResonanceField::findRoots(const QMap<fp, fp>& resonantSegments)
   //STEP 2: find roots
   QVector<fp> resonanceField;
 
-  // see eq 8
-  const Matrix4 M = (Matrix4() << 
-                      2, -2, 1, 1,
-                      -3, 3, -2, -1,
-                      0, 0, 1, 0,
-                      1, 0, 0, 0).finished();
-
   QMap<fp, fp>::const_iterator it = resonantSegments.constBegin();
   const QMap<fp, fp>::const_iterator end = resonantSegments.constEnd();
   GNUPLOT_DEBUG(
     cout << "set xrange[" << it.key() * 0.9 << ":" << (end-1).value() * 1.1 << "]" << endl;
     cout << "u(x,min,max) = (x>=min)&&(x<max)? 1 : 1/0;" << endl;
-    QString _nodes;
-    QTextStream nodes(&_nodes);
   )
   while(it != end) {
-    const fp B_min = it.key();
-    const fp B_max = it.value();
+    resonanceField += QVector<fp>::fromStdVector(findRootsInSegment(m_eVals.value(it.key()), m_eVals.value(it.value())));
     ++it;
-    const BisectNode& min = m_eVals.value(B_min);
-    const BisectNode& max = m_eVals.value(B_max);
-
-    const fp B_diff = B_max - B_min;
-    GNUPLOT_DEBUG(
-      cout << "set arrow from " << B_min << ",-5e-26 to " << B_min << ",5e-26 ls 2" << endl;
-      cout << "set arrow from " << B_max << ",-5e-26 to " << B_max << ",5e-26 ls 2" << endl;
-    )
-    for(int u = 0; u < m_exp.dimension; ++u) {
-      const Vector4 e_u = (Vector4() << min.E(u), max.E(u), B_diff * min.E_deriv(u), B_diff * max.E_deriv(u)).finished();
-      for(int v = u + 1; v < m_exp.dimension; ++v) {
-        const Vector4 e_v = (Vector4() << min.E(v), max.E(v), B_diff * min.E_deriv(v), B_diff * max.E_deriv(v)).finished();
-        ///NOTE: paper has different notation: p(0) == p_3, p(1) == p_2, ...
-        const Vector4 p = M * (e_v - e_u);
-        fp root = 0;
-        if (!m_loopingResonanceCanOccur) {
-          if (((min.E(v) - min.E(u) - m_mwFreq) * (max.E(v) - max.E(u) - m_mwFreq)) > 0) {
-            continue;
-          }
-          // Newton-Raphson root finding
-          fp t = newtonRaphson(p, 0.5, m_mwFreq); // x_0 = 0.5
-          if (!isfinite(t)) {
-            continue;
-          }
-          fp t2 = t;
-          const int maxIt = 10000;
-          int it = 0;
-          do {
-            t = t2;
-            t2 = newtonRaphson(p, t, m_mwFreq);
-          ///TODO: when to abort?
-          } while(abs(t2/t - 1) > 1E-5 && (maxIt > ++it));
-          root = B_min + t2 * B_diff;
-        } else {
-          qDebug() << "NOT IMPLEMENTED YET";
-        }
-
-        resonanceField << root;
-        GNUPLOT_DEBUG(
-          cout << "replot u(x, " << B_min << "," << B_max << ") * ((((x-" << B_min << ")/" << B_diff << "))**3 * (" << p(0) << ") + (((x-" << B_min << ")/" << B_diff << "))**2 * (" << p(1) << ") + (((x-" << B_min << ")/" << B_diff << ")) * (" << p(2) << ") + (" << p(3) << " - " << mwFreq << ")) "
-                   "title \"B_min = " << B_min << ", B_max = " << B_max << " || u = " << u << ", v = " << v << "\"" << endl;
-          cout << "set arrow from " << root << ",-1e-24 to " << root << ",1e-24 ls 0" << endl;
-          nodes << B_min << '\t' << (min.E(v) - min.E(u) - mwFreq) << endl;
-          nodes << B_max << '\t' << (max.E(v) - max.E(u) - mwFreq) << endl;
-        )
-      }
-    }
   }
-  GNUPLOT_DEBUG(
-    cout << flush;
-    qDebug() << _nodes;
-  )
 
   return resonanceField;
+}
+
+vector<fp> ResonanceField::findRootsInSegment(const BisectNode& from, const BisectNode& to) const
+{
+  vector<fp> roots;
+  const fp B_diff = to.B - from.B;
+  GNUPLOT_DEBUG(
+    cout << "set arrow from " << B_min << ",-5e-26 to " << B_min << ",5e-26 ls 2" << endl;
+    cout << "set arrow from " << B_max << ",-5e-26 to " << B_max << ",5e-26 ls 2" << endl;
+  )
+  // see eq 8
+  static const Matrix4 M = (Matrix4() << 
+                            2, -2, 1, 1,
+                            -3, 3, -2, -1,
+                            0, 0, 1, 0,
+                            1, 0, 0, 0).finished();
+  for(int u = 0; u < m_exp.dimension; ++u) {
+    const Vector4 e_u = (Vector4() << from.E(u), to.E(u), B_diff * from.E_deriv(u), B_diff * to.E_deriv(u)).finished();
+    for(int v = u + 1; v < m_exp.dimension; ++v) {
+      const Vector4 e_v = (Vector4() << from.E(v), to.E(v), B_diff * from.E_deriv(v), B_diff * to.E_deriv(v)).finished();
+      ///NOTE: paper has different notation: p(0) == p_3, p(1) == p_2, ...
+      const Vector4 p = M * (e_v - e_u);
+      fp root = 0;
+      if (!m_loopingResonanceCanOccur) {
+        if (((from.E(v) - from.E(u) - m_mwFreq) * (to.E(v) - to.E(u) - m_mwFreq)) > 0) {
+          continue;
+        }
+        // Newton-Raphson root finding
+        fp t = newtonRaphson(p, 0.5, m_mwFreq); // x_0 = 0.5
+        if (!isfinite(t)) {
+          continue;
+        }
+        fp t2 = t;
+        const int maxIt = 10000;
+        int it = 0;
+        do {
+          t = t2;
+          t2 = newtonRaphson(p, t, m_mwFreq);
+        ///TODO: when to abort?
+        } while(abs(t2/t - 1) > 1E-5 && (maxIt > ++it));
+        root = from.B + t2 * B_diff;
+      } else {
+        ///FIXME
+        qDebug() << "NOT IMPLEMENTED YET";
+        exit(1);
+      }
+
+      roots.push_back(root);
+      GNUPLOT_DEBUG(
+        cout << "replot u(x, " << B_min << "," << B_max << ") * ((((x-" << B_min << ")/" << B_diff << "))**3 * (" << p(0) << ") + (((x-" << B_min << ")/" << B_diff << "))**2 * (" << p(1) << ") + (((x-" << B_min << ")/" << B_diff << ")) * (" << p(2) << ") + (" << p(3) << " - " << mwFreq << ")) "
+                  "title \"B_min = " << B_min << ", B_max = " << B_max << " || u = " << u << ", v = " << v << "\"" << endl;
+        cout << "set arrow from " << root << ",-1e-24 to " << root << ",1e-24 ls 0" << endl;
+        nodes << B_min << '\t' << (from.E(v) - from.E(u) - mwFreq) << endl;
+        nodes << B_max << '\t' << (to.E(v) - to.E(u) - mwFreq) << endl;
+      )
+    }
+  }
+  return roots;
 }
