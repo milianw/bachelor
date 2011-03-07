@@ -179,9 +179,7 @@ void MPIMaster::handleBisectResponse(int slave)
 void MPIMaster::handleFindRootResponse(int slave)
 {
   const vector<fp>& roots = m_findRootResponses.at(slave);
-  BOOST_FOREACH(fp root, roots) {
-    m_resonancyField.push_back(root);
-  }
+  copy(roots.begin(), roots.end(), back_inserter(m_resonancyField));
 }
 
 
