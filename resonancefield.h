@@ -22,8 +22,8 @@
 #ifndef MW_BACHELOR_RESONANCEFIELD_H
 #define MW_BACHELOR_RESONANCEFIELD_H
 
-#include <QtCore/QVector>
-#include <QtCore/QMap>
+#include <vector>
+#include <map>
 
 #include "types.h"
 
@@ -46,7 +46,7 @@ public:
    * @p B_min minimum static B-Field in Tesla
    * @p B_max maximum static B-Field in Tesla
    */
-  QVector<fp> calculate(fp B_min, fp B_max);
+  vector<fp> calculate(fp B_min, fp B_max);
 
   /**
    * Diagonalize spin hamiltonian for @p B and save eigen values to @p E
@@ -59,7 +59,15 @@ public:
    */
   BisectAnswer checkSegment(const BisectNode& from, const BisectNode& to) const;
 
+  /**
+   * Find roots in given segment @p from @p to.
+   */
   vector<fp> findRootsInSegment(const BisectNode& from, const BisectNode& to) const;
+
+  /**
+   * Cleanup resonancy field, removes nearby B ranges below resolution threshold.
+   */
+  static void cleanupResonancyField(vector<fp>& field);
 
 private:
   const Experiment& m_exp;
@@ -73,10 +81,10 @@ private:
   /// @return true if looping resonance can occur, false otherwise
   bool checkForLoopingResonance() const;
 
-  QMap<fp, fp> resonantSegments(fp B_minStart, fp B_maxStart);
-  QVector<fp> findRoots(const QMap<fp, fp>& resonantSegments);
+  map<fp, fp> resonantSegments(fp B_minStart, fp B_maxStart);
+  vector<fp> findRoots(const map<fp, fp>& resonantSegments);
 
-  QMap<fp, BisectNode> m_eVals;
+  map<fp, BisectNode> m_eVals;
 };
 
 

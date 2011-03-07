@@ -24,8 +24,7 @@
 #include "experiment.h"
 #include "spinhamiltonian.h"
 
-#include <QtCore/QStack>
-#include <QtCore/QDebug>
+#include <stack>
 
 #define GNUPLOT_DEBUG(x)
 
@@ -104,19 +103,10 @@ BisectNode ResonanceField::diagonalizeNode(const fp B) const
   return BisectNode(B, E, E_deriv);
 }
 
-QVector< fp > ResonanceField::calculate(fp B_min, fp B_max)
+void ResonanceField::cleanupResonancyField(vector< fp >& field)
 {
-  m_eVals.clear();
-  QVector< fp > field = findRoots(resonantSegments(B_min, B_max));
-
-  if (field.isEmpty()) {
-    qWarning() << "ATTENTION: no resonant segments found in range [" << B_min << ", " << B_max << "] for mwFreq = " << m_exp.mwFreqGHz;
-    return field;
-  }
-
-  // cleanup field
-  qSort(field);
-  fp* it = field.begin();
+  sort(field.begin(), field.end());
+  vector<fp>::iterator it = field.begin();
   while(it != field.end() - 1) {
     if (abs(*it / *(it+1) - 1) < 1E-05) {
       it = field.erase(it);
@@ -124,6 +114,19 @@ QVector< fp > ResonanceField::calculate(fp B_min, fp B_max)
       ++it;
     }
   }
+}
+
+vector< fp > ResonanceField::calculate(fp B_min, fp B_max)
+{
+  m_eVals.clear();
+  vector< fp > field = findRoots(resonantSegments(B_min, B_max));
+
+  if (field.empty()) {
+    cerr << "ATTENTION: no resonant segments found in range [" << B_min << ", " << B_max << "] for mwFreq = " << m_exp.mwFreqGHz << endl;
+    return field;
+  }
+
+  cleanupResonancyField(field);
 
   m_eVals.clear();
   return field;
@@ -186,29 +189,29 @@ BisectAnswer ResonanceField::checkSegment(const BisectNode& from, const BisectNo
   }
 }
 
-QMap< fp, fp > ResonanceField::resonantSegments(fp B_minStart, fp B_maxStart)
+map< fp, fp > ResonanceField::resonantSegments(fp B_minStart, fp B_maxStart)
 {
   //STEP 1: find knots
-  QMap<fp, fp> resonantSegments;
+  map<fp, fp> resonantSegments;
 
   m_eVals[B_minStart] = diagonalizeNode(B_minStart);
   m_eVals[B_maxStart] = diagonalizeNode(B_maxStart);
 
-  QStack<Segment> segments;
-  segments << Segment(B_minStart, B_maxStart);
+  stack<Segment> segments;
+  segments.push(Segment(B_minStart, B_maxStart));
 
-  ///FIXME: how to parallelize this?
-  while (!segments.isEmpty()) {
-    const Segment s = segments.pop();
-    const BisectAnswer answer = checkSegment(m_eVals.value(s.B_min), m_eVals.value(s.B_max));
+  while (!segments.empty()) {
+    const Segment s = segments.top();
+    segments.pop();
+    const BisectAnswer answer = checkSegment(m_eVals.at(s.B_min), m_eVals.at(s.B_max));
     switch(answer.status) {
       case BisectAnswer::NotResonant:
         // nothing to do
         break;
       case BisectAnswer::Continue:
         m_eVals[answer.mid.B] = answer.mid;
-        segments << Segment(answer.from, answer.mid.B);
-        segments << Segment(answer.mid.B, answer.to);
+        segments.push(Segment(answer.from, answer.mid.B));
+        segments.push(Segment(answer.mid.B, answer.to));
         break;
       case BisectAnswer::Resonant:
         m_eVals[answer.mid.B] = answer.mid;
@@ -218,8 +221,8 @@ QMap< fp, fp > ResonanceField::resonantSegments(fp B_minStart, fp B_maxStart)
     }
   }
 
-  if (resonantSegments.isEmpty()) {
-    qWarning() << "ATTENTION: no resonant segments found in range [" << B_minStart << ", " << B_maxStart << "] for mwFreq = " << (m_exp.mwFreqGHz);
+  if (resonantSegments.empty()) {
+    cerr << "ATTENTION: no resonant segments found in range [" << B_minStart << ", " << B_maxStart << "] for mwFreq = " << (m_exp.mwFreqGHz) << endl;
   }
 
   return resonantSegments;
@@ -240,19 +243,20 @@ fp newtonRaphson(const Vector4& p, const fp t, const fp mwFreq)
   return t - evalPolynomial(p, t, mwFreq) / evalDerivPolynomial(p, t);
 }
 
-QVector<fp> ResonanceField::findRoots(const QMap<fp, fp>& resonantSegments)
+vector<fp> ResonanceField::findRoots(const map<fp, fp>& resonantSegments)
 {
   //STEP 2: find roots
-  QVector<fp> resonanceField;
+  vector<fp> resonanceField;
 
-  QMap<fp, fp>::const_iterator it = resonantSegments.constBegin();
-  const QMap<fp, fp>::const_iterator end = resonantSegments.constEnd();
+  map<fp, fp>::const_iterator it = resonantSegments.begin();
+  const map<fp, fp>::const_iterator end = resonantSegments.end();
   GNUPLOT_DEBUG(
     cout << "set xrange[" << it.key() * 0.9 << ":" << (end-1).value() * 1.1 << "]" << endl;
     cout << "u(x,min,max) = (x>=min)&&(x<max)? 1 : 1/0;" << endl;
   )
   while(it != end) {
-    resonanceField += QVector<fp>::fromStdVector(findRootsInSegment(m_eVals.value(it.key()), m_eVals.value(it.value())));
+    const vector<fp> roots = findRootsInSegment(m_eVals.at(it->first), m_eVals.at(it->second));
+    copy(roots.begin(), roots.end(), back_inserter(resonanceField));
     ++it;
   }
 
@@ -300,7 +304,7 @@ vector<fp> ResonanceField::findRootsInSegment(const BisectNode& from, const Bise
         root = from.B + t2 * B_diff;
       } else {
         ///FIXME
-        qDebug() << "NOT IMPLEMENTED YET";
+        cerr << "NOT IMPLEMENTED YET" << endl;
         exit(1);
       }
 

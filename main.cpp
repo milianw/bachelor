@@ -226,7 +226,7 @@ int main(int argc, char* argv[])
         }
       } else {
         // wip implementation of "S. Stoll, A. Schweiger / Chemical Physics Letters 380 (2003) 464 - 470"
-        const QVector<fp> resonanceField = ResonanceField(exp).calculate(B_min, B_max);
+        const vector<fp> resonanceField = ResonanceField(exp).calculate(B_min, B_max);
         #pragma omp parallel
         {
           #pragma omp for
