@@ -39,27 +39,26 @@ int main(int argc, char* argv[]) {
   po::options_description desc("OPTIONS");
   desc.add_options()
     ("help", "show help message")
-    ("protons", po::value<int>(), "number of protons in system")
+    ("protons", po::value<int>()->required(), "number of protons in system")
     ("from", po::value<fp>()->default_value(0), "minimum B range in Tesla")
     ("to", po::value<fp>()->default_value(1), "maximum B range in Tesla")
-    ("mwFreq", po::value<fp>(), "micro wave frequency in GHz")
+    ("mwFreq", po::value<fp>()->required(), "micro wave frequency in GHz")
   ;
 
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
-  po::notify(vm);
+  try {
+    po::notify(vm);
+  } catch(boost::program_options::required_option e) {
+    if (world.rank() == MASTER_RANK) {
+      cerr << e.what() << endl;
+    }
+    return 1;
+  }
 
   if (vm.count("help")) {
     cout << desc << endl;
     return 0;
-  }
-  if (!vm.count("mwFreq")) {
-    cerr << "missing mwFreq argument" << endl;
-    return 1;
-  }
-  if (!vm.count("protons")) {
-    cerr << "missing protons argument" << endl;
-    return 2;
   }
 
   Experiment exp(vm["protons"].as<int>());
