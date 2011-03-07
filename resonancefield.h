@@ -166,7 +166,7 @@ QVector< fp > ResonanceField::calculate(fp B_min, fp B_max)
       ++it;
     }
   }
-
+qDebug() << field.size();
   m_eVals.clear();
   return field;
 }

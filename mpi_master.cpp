@@ -23,10 +23,13 @@
 
 #include "mpi_iface.h"
 
+#include "experiment.h"
+
 #include <boost/foreach.hpp>
 
-MPIMaster::MPIMaster(const mpi::communicator& comm)
+MPIMaster::MPIMaster(const mpi::communicator& comm, const Experiment& exp)
 : m_comm(comm)
+, m_exp(exp)
 {
   if (comm.rank() != MASTER_RANK) {
     cerr << "MPIMaster created outside of master rank!" << endl;
@@ -54,7 +57,7 @@ MPIMaster::~MPIMaster()
   }
 }
 
-void MPIMaster::startBisect(const fp from, const fp to, const fp mwFreqGHz)
+void MPIMaster::startBisect(const fp from, const fp to)
 {
   // notify slaves about work conditions
 
@@ -72,6 +75,8 @@ void MPIMaster::startBisect(const fp from, const fp to, const fp mwFreqGHz)
     }
 
     mpi::wait_all(diagRequests.begin(), diagRequests.end());
+    std::cout << m_bisectNodes.at(0).B << m_bisectNodes.at(0).E << m_bisectNodes.at(0).E_deriv << endl;
+    std::cout << m_bisectNodes.at(1).B << m_bisectNodes.at(1).E << m_bisectNodes.at(1).E_deriv << endl;
   }
 
   m_pendingSegments.push_back(BRange(from, to));
@@ -100,7 +105,7 @@ void MPIMaster::startBisect(const fp from, const fp to, const fp mwFreqGHz)
       m_availableSlaves.pop_back();
       cout << "assigning bisect work to slave " << slave << " for range " << segment.first << " to " << segment.second << endl;
       m_comm.isend(slave, TAG_CMD, CMD_BISECT);
-      m_comm.isend(slave, TAG_BISECT_INPUT, BisectInput(segment.first, segment.second, mwFreqGHz));
+      m_comm.isend(slave, TAG_BISECT_INPUT, BisectInput(segment.first, segment.second));
       m_pendingRequests.push_back(m_comm.irecv(slave, TAG_BISECT_RESULT, m_responses.at(slave)));
     }
   }

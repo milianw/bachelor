@@ -24,18 +24,21 @@
 
 #include "types.h"
 
+class Experiment;
+
 /**
  * MPI master node that delegates work to slave nodes
  */
 class MPIMaster {
 public:
-  MPIMaster(const mpi::communicator& comm);
+  MPIMaster(const mpi::communicator& comm, const Experiment& exp);
   ~MPIMaster();
 
-  void startBisect(const fp from, const fp to, const fp mwFreqGHz);
+  void startBisect(const fp from, const fp to);
 
 private:
   const mpi::communicator& m_comm;
+  const Experiment& m_exp;
   vector<int> m_slaves;
   vector<int> m_availableSlaves;
 

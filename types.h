@@ -118,13 +118,12 @@ public:
   BisectInput()
   { }
 
-  BisectInput(fp _from, fp _to, fp _mwFreqGHz)
-  : from(_from), to(_to), mwFreqGHz(_mwFreqGHz)
+  BisectInput(fp _from, fp _to)
+  : from(_from), to(_to)
   { }
 
   fp from;
   fp to;
-  fp mwFreqGHz;
 
 private:
   friend class boost::serialization::access;
@@ -134,7 +133,6 @@ private:
   {
     ar & from;
     ar & to;
-    ar & mwFreqGHz;
   }
 };
 

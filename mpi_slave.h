@@ -23,15 +23,18 @@
 
 #include "types.h"
 
+class Experiment;
+
 class MPISlave {
 public:
-  MPISlave(const mpi::communicator& comm);
+  MPISlave(const mpi::communicator& comm, const Experiment& exp);
   ~MPISlave();
 
   void work();
 
 private:
   const mpi::communicator& m_comm;
+  const Experiment& m_exp;
 };
 
 #endif // MW_MPI_SLAVE_H

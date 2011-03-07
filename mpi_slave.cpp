@@ -23,8 +23,12 @@
 
 #include "mpi_iface.h"
 
-MPISlave::MPISlave(const boost::mpi::communicator& comm)
+#include "spinhamiltonian.h"
+#include "experiment.h"
+
+MPISlave::MPISlave(const mpi::communicator& comm, const Experiment& exp)
 : m_comm(comm)
+, m_exp(exp)
 {
   if (comm.rank() == MASTER_RANK) {
     cerr << "MPISlave created in master rank!" << endl;
@@ -54,6 +58,20 @@ void MPISlave::work()
       } else {
         m_comm.isend(MASTER_RANK, TAG_BISECT_RESULT, BisectAnswer(BisectAnswer::NotResonant, input.from, (input.from + input.to)/2, input.to));
       }
+    } else if (cmd == CMD_DIAGONALIZE) {
+      fp B;
+      m_comm.recv(MASTER_RANK, TAG_DIAGONALIZE_INPUT, B);
+      SpinHamiltonian H(B, m_exp);
+      SelfAdjointEigenSolver<MatrixXc> eigenSolver(H.hamiltonian());
+      VectorX E = eigenSolver.eigenvalues();
+      const MatrixXc eigenVectors = eigenSolver.eigenvectors();
+      const MatrixXc G = H.nuclearZeeman() + H.electronZeeman();
+      VectorX E_deriv(m_exp.dimension);
+      for(int u = 0; u < m_exp.dimension; ++u) {
+        // <u| G |u> => expectation value is always real
+        E_deriv(u) = (eigenVectors.col(u).adjoint() * G * eigenVectors.col(u))(0, 0).real();
+      }
+      m_comm.isend(MASTER_RANK, TAG_DIAGONALIZE_RESULT, BisectNode(B, E, E_deriv));
     }
   }
 }

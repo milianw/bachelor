@@ -29,39 +29,49 @@ namespace po = boost::program_options;
 #include "mpi_slave.h"
 #include "mpi_iface.h"
 
+#include "experiment.h"
+
 int main(int argc, char* argv[]) {
   mpi::environment env(argc, argv);
   mpi::communicator world;
 
+  // Declare the supported options.
+  po::options_description desc("OPTIONS");
+  desc.add_options()
+    ("help", "show help message")
+    ("protons", po::value<int>(), "number of protons in system")
+    ("from", po::value<fp>()->default_value(0), "minimum B range in Tesla")
+    ("to", po::value<fp>()->default_value(1), "maximum B range in Tesla")
+    ("mwFreq", po::value<fp>(), "micro wave frequency in GHz")
+  ;
+
+  po::variables_map vm;
+  po::store(po::parse_command_line(argc, argv, desc), vm);
+  po::notify(vm);
+
+  if (vm.count("help")) {
+    cout << desc << endl;
+    return 0;
+  }
+  if (!vm.count("mwFreq")) {
+    cerr << "missing mwFreq argument" << endl;
+    return 1;
+  }
+  if (!vm.count("protons")) {
+    cerr << "missing protons argument" << endl;
+    return 2;
+  }
+
+  Experiment exp(vm["protons"].as<int>());
+  exp.mwFreqGHz = vm["mwFreq"].as<fp>();
+
   if (world.rank() == MASTER_RANK) {
     // master
-    MPIMaster master(world);
+    MPIMaster master(world, exp);
 
-    // Declare the supported options.
-    po::options_description desc("OPTIONS");
-    desc.add_options()
-      ("help", "show help message")
-      ("from", po::value<fp>()->default_value(0), "minimum B range in Tesla")
-      ("to", po::value<fp>()->default_value(1), "maximum B range in Tesla")
-      ("mwFreq", po::value<fp>(), "micro wave frequency in GHz")
-    ;
-
-    po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, desc), vm);
-    po::notify(vm);
-
-    if (vm.count("help")) {
-      cout << desc << endl;
-      return 0;
-    }
-    if (!vm.count("mwFreq")) {
-      cerr << "missng mwFreq argument" << endl;
-      return 1;
-    }
-
-    master.startBisect(vm["from"].as<fp>(), vm["to"].as<fp>(), vm["mwFreq"].as<fp>());
+    master.startBisect(vm["from"].as<fp>(), vm["to"].as<fp>());
   } else {
-    MPISlave slave(world);
+    MPISlave slave(world, exp);
     slave.work();
   }
 
