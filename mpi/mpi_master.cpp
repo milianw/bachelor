@@ -21,12 +21,11 @@
 
 #include "mpi_master.h"
 
-#include "mpi_iface.h"
+#include "mpi_job.h"
 
 #include "spinlib/experiment.h"
 
 #include <boost/foreach.hpp>
-#include <boost/bind.hpp>
 
 #include <sstream>
 
@@ -73,152 +72,68 @@ MPIMaster::~MPIMaster()
 
 void MPIMaster::startBisect(const fp from, const fp to)
 {
-  /// find resonant segments
-  // diagonalize the hamiltonian at the edges
-  {
-    m_bisectNodes[from] = BisectNode();
-    m_bisectNodes[to] = BisectNode();
-    vector<mpi::request> diagRequests(2);
-
-    for (int i = 0; i < 2; ++i) {
-      const fp B = (i == 0) ? from : to;
-      m_comm.isend(m_slaves.at(i), TAG_CMD, CMD_DIAGONALIZE);
-
-      m_comm.isend(m_slaves.at(i), TAG_DIAGONALIZE_INPUT, B);
-
-      diagRequests[i] = m_comm.irecv(m_slaves.at(i), TAG_DIAGONALIZE_RESULT, m_bisectNodes[B]);
-    }
-
-    mpi::wait_all(diagRequests.begin(), diagRequests.end());
-  }
-
-  m_pendingSegments.push_back(BRange(from, to));
-  // dispatch commands to nodes
-  m_bisectResponses.resize(m_comm.size());
-  while(!m_pendingSegments.empty() || !m_pendingRequests.empty()) {
-    checkResponses(boost::bind(&MPIMaster::handleBisectResponse, this, _1));
-
-    if (!m_pendingSegments.empty()) {
-      const BRange segment = m_pendingSegments.back();
-      m_pendingSegments.pop_back();
-      int slave = m_availableSlaves.back();
-      m_availableSlaves.pop_back();
-      cout << "assigning bisect work to slave " << slave << " for range " << segment.first << " to " << segment.second << endl;
-      m_comm.isend(slave, TAG_CMD, CMD_BISECT);
-      m_comm.isend(slave, TAG_BISECT_INPUT, BisectInput(m_bisectNodes.at(segment.first), m_bisectNodes.at(segment.second)));
-      m_pendingRequests.push_back(m_comm.irecv(slave, TAG_BISECT_RESULT, m_bisectResponses.at(slave)));
-    }
-  }
-//   m_bisectResponses.clear();
-  ///TODO: clear unneeded parts of m_bisectNodes
-
-  if (m_resonantSegments.empty()) {
-    cerr << "could not find any resonant segments in B range " << from << " to " << to << "T" << endl;
-    return;
-  }
-
-  cout << "found resonant segments:" << m_resonantSegments.size() << endl;
-
-  /// find roots in resonant segments
-  m_findRootResponses.resize(m_comm.size());
-  while(!m_resonantSegments.empty() || !m_pendingRequests.empty()) {
-    // check for finished requests
-    checkResponses(boost::bind(&MPIMaster::handleFindRootResponse, this, _1));
-
-    if (!m_resonantSegments.empty()) {
-      const BRange segment = m_resonantSegments.back();
-      m_resonantSegments.pop_back();
-      int slave = m_availableSlaves.back();
-      m_availableSlaves.pop_back();
-      cout << "assigning root-finding work to slave " << slave << " for range " << segment.first << " to " << segment.second << endl;
-      m_comm.isend(slave, TAG_CMD, CMD_FINDROOTS);
-      m_comm.isend(slave, TAG_FINDROOTS_INPUT, BisectInput(m_bisectNodes.at(segment.first), m_bisectNodes.at(segment.second)));
-      m_pendingRequests.push_back(m_comm.irecv(slave, TAG_FINDROOTS_RESULT, m_findRootResponses.at(slave)));
-    }
-  }
-  m_bisectNodes.clear();
-  m_findRootResponses.clear();
-
-  ResonanceField::cleanupResonancyField(m_resonancyField);
-
-  cout << "found resonancy field:" << m_resonancyField.size() << endl;
-
-  /// calculate intensity for found roots
-  m_intensityOutputFile = intensityOutputFile(m_exp, m_outputDir, from, to);
+  m_intensityOutputFile = ::intensityOutputFile(m_exp, m_outputDir, from, to);
   m_intensityOutput.open(m_intensityOutputFile.data());
-  m_intensityResponses.resize(m_comm.size());
-  while(!m_resonancyField.empty() || !m_pendingRequests.empty()) {
+
+  enqueueJob(new BisectStartJob(this, from, to));
+
+  while(!m_jobQueue.empty() || !m_pendingRequests.empty()) {
     // check for finished requests
-    checkResponses(boost::bind(&MPIMaster::handleIntensityResponse, this, _1));
-
-    if (!m_resonancyField.empty()) {
-      const fp B = m_resonancyField.back();
-      m_resonancyField.pop_back();
-      int slave = m_availableSlaves.back();
-      m_availableSlaves.pop_back();
-      cout << "assigning intensity-calculation work to slave " << slave << " at B = " << B << "T" << endl;
-      m_comm.isend(slave, TAG_CMD, CMD_INTENSITY);
-      m_comm.isend(slave, TAG_INTENSITY_INPUT, B);
-      m_pendingRequests.push_back(m_comm.irecv(slave, TAG_INTENSITY_RESULT, m_intensityResponses.at(slave)));
+    while(!m_pendingRequests.empty()) {
+      boost::optional<ResponsePair> status = mpi::test_any(m_pendingRequests.begin(), m_pendingRequests.end());
+      if (status) {
+        handleResponse(*status);
+      } else {
+        break;
+      }
     }
-  }
-  m_intensityResponses.clear();
-}
 
-void MPIMaster::checkResponses(ResponseHandler handler)
-{
-  // check for finished requests
-  while(!m_pendingRequests.empty()) {
-    boost::optional<ResponsePair> status = mpi::test_any(m_pendingRequests.begin(), m_pendingRequests.end());
-    if (status) {
-      handleResponseGeneric(handler, *status);
-    } else {
-      break;
+    if (m_availableSlaves.empty()) {
+//       cout << "all slaves working, waiting for any to finish before assigning new work..." << endl;
+      handleResponse(mpi::wait_any(m_pendingRequests.begin(), m_pendingRequests.end()));
     }
-  }
 
-  if (m_availableSlaves.empty()) {
-    cout << "all slaves working, waiting for any to finish before assigning new work..." << endl;
-    handleResponseGeneric(handler, mpi::wait_any(m_pendingRequests.begin(), m_pendingRequests.end()));
+    if (!m_jobQueue.empty()) {
+      MPIJob* job = m_jobQueue.front();
+      m_jobQueue.pop();
+      job->start();
+    }
   }
 }
 
-void MPIMaster::handleResponseGeneric(ResponseHandler handler, const ResponsePair& response)
+void MPIMaster::enqueueJob(MPIJob* job)
 {
-  int slave = response.first.source();
-  m_availableSlaves.push_back(slave);
-  handler(slave);
+  m_jobQueue.push(job);
+}
+
+void MPIMaster::handleResponse(const ResponsePair& response)
+{
   m_pendingRequests.erase(response.second);
-}
 
-void MPIMaster::handleBisectResponse(int slave)
-{
-  const BisectAnswer& answer = m_bisectResponses.at(slave);
-  switch (answer.status) {
-    case BisectAnswer::Continue:
-      m_pendingSegments.push_back(BRange(answer.from, answer.mid.B));
-      m_pendingSegments.push_back(BRange(answer.mid.B, answer.to));
-      m_bisectNodes[answer.mid.B] = answer.mid;
+  const int slave = response.first.source();
+  m_availableSlaves.push_back(slave);
+
+  MPIJob* job = m_runningJobs.at(slave);
+  job->handleResult();
+  m_runningJobs.erase(slave);
+
+  bool stillRunning = false;
+  std::map< int, MPIJob* >::const_iterator it = m_runningJobs.begin();
+  std::map< int, MPIJob* >::const_iterator end = m_runningJobs.end();
+  while(it != end) {
+    if (it->second == job) {
+      stillRunning = true;
       break;
-    case BisectAnswer::Resonant:
-      m_resonantSegments.push_back(BRange(answer.from, answer.mid.B));
-      m_resonantSegments.push_back(BRange(answer.mid.B, answer.to));
-      m_bisectNodes[answer.mid.B] = answer.mid;
-      break;
-    case BisectAnswer::NotResonant:
-      // nothing to do
-      break;
+    }
+    ++it;
   }
+  if (!stillRunning) {
+    delete job;
+  }
+//   cout << "slave " << slave << " finished work on job " << job << (stillRunning ? ", job still running" : "") << endl;
 }
 
-void MPIMaster::handleFindRootResponse(int slave)
+ofstream& MPIMaster::intensityOutputFile()
 {
-  const vector<fp>& roots = m_findRootResponses.at(slave);
-  copy(roots.begin(), roots.end(), back_inserter(m_resonancyField));
-}
-
-void MPIMaster::handleIntensityResponse(int slave)
-{
-  const IntensityAnswer& answer = m_intensityResponses.at(slave);
-  m_intensityOutput << answer.B << '\t' << answer.intensity << endl;
+  return m_intensityOutput;
 }

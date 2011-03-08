@@ -100,7 +100,7 @@ void MPISlave::work()
         fp B;
         m_comm.recv(MASTER_RANK, TAG_INTENSITY_INPUT, B);
         SpinHamiltonian H(B, m_exp);
-        m_comm.send(MASTER_RANK, TAG_INTENSITY_RESULT, IntensityAnswer(B, H.calculateIntensity()));
+        m_comm.send(MASTER_RANK, TAG_INTENSITY_RESULT, H.calculateIntensity());
         break;
       }
     }

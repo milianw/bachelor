@@ -22,13 +22,14 @@
 #ifndef MW_MPI_MASTER_H
 #define MW_MPI_MASTER_H
 
+#include "mpi_iface.h"
 #include "mpi_types.h"
 
-#include <boost/function.hpp>
-
 #include <fstream>
+#include <queue>
 
 class Experiment;
+class MPIJob;
 
 /**
  * MPI master node that delegates work to slave nodes
@@ -41,6 +42,15 @@ public:
 
   void startBisect(const fp from, const fp to);
 
+  template<typename InputT, typename OutputT>
+  void runCommand(MPIJob* job, Commands cmd,
+                  Tags inputTag, const InputT& input,
+                  Tags outputTag, OutputT& output);
+
+  void enqueueJob(MPIJob *job);
+
+  std::ofstream& intensityOutputFile();
+
 private:
   const mpi::communicator& m_comm;
   const Experiment& m_exp;
@@ -48,28 +58,34 @@ private:
   std::vector<int> m_availableSlaves;
   const std::string& m_outputDir;
 
-  typedef std::pair<fp, fp> BRange;
-  std::vector<BRange> m_pendingSegments;
-  std::vector<BisectAnswer> m_bisectResponses;
-  std::vector<BRange> m_resonantSegments;
-  std::map<fp, BisectNode> m_bisectNodes;
-
-  std::vector< std::vector<fp> > m_findRootResponses;
-  std::vector<fp> m_resonancyField;
+  std::queue<MPIJob *> m_jobQueue;
 
   std::string m_intensityOutputFile;
   std::ofstream m_intensityOutput;
-  std::vector<IntensityAnswer> m_intensityResponses;
 
+  // slave <-> job
+  std::map<int, MPIJob *> m_runningJobs;
+
+  // running requests
   typedef std::vector<mpi::request> RequestList;
   RequestList m_pendingRequests;
   typedef std::pair<mpi::status, RequestList::iterator> ResponsePair;
-  typedef boost::function<void(int)> ResponseHandler;
-  void checkResponses(ResponseHandler handler);
-  void handleResponseGeneric(ResponseHandler handler, const ResponsePair& response);
-  void handleBisectResponse(int slave);
-  void handleFindRootResponse(int slave);
-  void handleIntensityResponse(int slave);
+  void handleResponse(const ResponsePair& response);
 };
 
-#endif // MW_MPI_SERVER_H
+template<typename InputT, typename OutputT>
+void MPIMaster::runCommand(MPIJob* job, Commands cmd,
+                           Tags inputTag, const InputT& input,
+                           Tags outputTag, OutputT& output)
+{
+  const int slave = m_availableSlaves.back();
+//   std::cout << "running job " << job << " on slave " << slave << std::endl;
+  m_availableSlaves.pop_back();
+  m_runningJobs[slave] = job;
+
+  m_comm.isend(slave, TAG_CMD, cmd);
+  m_comm.isend(slave, inputTag, input);
+  m_pendingRequests.push_back(m_comm.irecv(slave, outputTag, output));
+}
+
+#endif // MW_MPI_MASTER_H

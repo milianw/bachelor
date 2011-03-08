@@ -93,29 +93,4 @@ private:
   }
 };
 
-
-class IntensityAnswer {
-public:
-  IntensityAnswer()
-  { }
-
-  IntensityAnswer(const fp _B, const fp _intensity)
-  : B(_B)
-  , intensity(_intensity)
-  { }
-
-  fp B;
-  fp intensity;
-
-private:
-  friend class boost::serialization::access;
-
-  template<class Archive>
-  void serialize(Archive& ar, const unsigned int version)
-  {
-    ar & B;
-    ar & intensity;
-  }
-};
-
 #endif // MW_BACHELOR_MPITYPES_H
