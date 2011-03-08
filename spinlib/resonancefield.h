@@ -25,9 +25,12 @@
 #include <vector>
 #include <map>
 
-#include "types.h"
+#include "eigentypes.h"
 
 class Experiment;
+
+class BisectNode;
+class BisectAnswer;
 
 /**
  * Implementation of "S. Stoll, A. Schweiger / Chemical Physics Letters 380 (2003) 464 - 470"
@@ -46,7 +49,7 @@ public:
    * @p B_min minimum static B-Field in Tesla
    * @p B_max maximum static B-Field in Tesla
    */
-  vector<fp> calculate(fp B_min, fp B_max);
+  std::vector<fp> calculate(fp B_min, fp B_max);
 
   /**
    * Diagonalize spin hamiltonian for @p B and save eigen values to @p E
@@ -62,12 +65,12 @@ public:
   /**
    * Find roots in given segment @p from @p to.
    */
-  vector<fp> findRootsInSegment(const BisectNode& from, const BisectNode& to) const;
+  std::vector<fp> findRootsInSegment(const BisectNode& from, const BisectNode& to) const;
 
   /**
    * Cleanup resonancy field, removes nearby B ranges below resolution threshold.
    */
-  static void cleanupResonancyField(vector<fp>& field);
+  static void cleanupResonancyField(std::vector<fp>& field);
 
 private:
   const Experiment& m_exp;
@@ -81,11 +84,39 @@ private:
   /// @return true if looping resonance can occur, false otherwise
   bool checkForLoopingResonance() const;
 
-  map<fp, fp> resonantSegments(fp B_minStart, fp B_maxStart);
-  vector<fp> findRoots(const map<fp, fp>& resonantSegments);
+  std::map<fp, fp> resonantSegments(fp B_minStart, fp B_maxStart);
+  std::vector<fp> findRoots(const std::map<fp, fp>& resonantSegments);
 
-  map<fp, BisectNode> m_eVals;
+  std::map<fp, BisectNode> m_eVals;
 };
 
+class BisectNode {
+public:
+  BisectNode()
+  { }
 
+  BisectNode(fp _B, const VectorX& _E, const VectorX& _E_deriv)
+  : B(_B), E(_E), E_deriv(_E_deriv)
+  { }
+
+  fp B;
+  VectorX E;
+  VectorX E_deriv;
+};
+
+class BisectAnswer {
+public:
+  BisectAnswer()
+  { }
+
+  enum Status {
+    Continue, Resonant, NotResonant
+  };
+
+  Status status;
+  fp from;
+  fp to;
+
+  BisectNode mid;
+};
 #endif // MW_BACHELOR_RESONANCEFIELD_H

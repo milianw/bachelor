@@ -25,6 +25,8 @@
 #include "spinhamiltonian.h"
 
 #include <stack>
+#include <iostream>
+#include <cmath>
 
 #define GNUPLOT_DEBUG(x)
 
@@ -51,9 +53,40 @@ struct Segment {
   fp B_max;
 };
 
+static BisectAnswer notResonantAnswer(const fp from, const fp to)
+{
+  BisectAnswer answer;
+  answer.status = BisectAnswer::NotResonant;
+  answer.from = from;
+  answer.to = to;
+  return answer;
+}
+
+static BisectAnswer continueAnswer(const fp from, const fp to, const BisectNode& mid)
+{
+  BisectAnswer answer;
+  answer.status = BisectAnswer::Continue;
+  answer.from = from;
+  answer.to = to;
+  answer.mid = mid;
+  return answer;
+}
+
+static BisectAnswer resonantAnswer(const fp from, const fp to, const BisectNode& mid)
+{
+  BisectAnswer answer;
+  answer.status = BisectAnswer::Resonant;
+  answer.from = from;
+  answer.to = to;
+  answer.mid = mid;
+  return answer;
+}
+
 }
 
 using namespace Constants;
+using namespace Eigen;
+using namespace std;
 
 ResonanceField::ResonanceField(const Experiment& exp)
 : m_exp(exp)
@@ -180,12 +213,12 @@ BisectAnswer ResonanceField::checkSegment(const BisectNode& from, const BisectNo
     epsilon *= 2;
 
     if (epsilon > 1.0E-5 * m_mwFreq) {
-      return BisectAnswer::continueAnswer(from.B, to.B, mid);
+      return continueAnswer(from.B, to.B, mid);
     } else {
-      return BisectAnswer::resonantAnswer(from.B, to.B, mid);
+      return resonantAnswer(from.B, to.B, mid);
     }
   } else {
-    return BisectAnswer::notResonantAnswer(from.B, to.B);
+    return notResonantAnswer(from.B, to.B);
   }
 }
 

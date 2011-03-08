@@ -29,6 +29,8 @@
 #include "experiment.h"
 
 using namespace Constants;
+using namespace Eigen;
+using namespace std;
 
 // Pauli Matrices
 namespace PauliMatrix {
@@ -252,7 +254,7 @@ fp SpinHamiltonian::calculateIntensity() const
   fp intensity = 0;
   for (int i = 0;i < m_exp.dimension; ++i) {
     for (int j = i + 1; j < m_exp.dimension; ++j) {
-        // transition frequency:
+      // transition frequency:
       const fp freq = (1.0/h/1.0E9 * abs(eigenValues(i) - eigenValues(j)));
       // assume it's only seen when energy is below frequency threshold
       if (abs(m_exp.mwFreqGHz/freq - 1.0) > 5.0E-4) {

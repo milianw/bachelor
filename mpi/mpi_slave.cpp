@@ -23,9 +23,10 @@
 
 #include "mpi_iface.h"
 
-#include "experiment.h"
-#include "resonancefield.h"
-#include "spinhamiltonian.h"
+#include "spinlib/spinhamiltonian.h"
+#include "spinlib/experiment.h"
+
+using namespace std;
 
 MPISlave::MPISlave(const mpi::communicator& comm, const Experiment& exp)
 : m_comm(comm)

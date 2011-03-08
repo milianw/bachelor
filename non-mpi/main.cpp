@@ -19,6 +19,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+#include <iostream>
+
 #include <QtCore/QCoreApplication>
 #include <QtCore/QStringList>
 #include <QtCore/QFile>
@@ -45,12 +47,14 @@ QDebug& operator<<(QDebug& out, long double d)
 
 #include <omp.h>
 
-#include "resonancefield.h"
-#include "spinhamiltonian.h"
-#include "experiment.h"
+#include "spinlib/resonancefield.h"
+#include "spinlib/spinhamiltonian.h"
+#include "spinlib/experiment.h"
 
 QTextStream qout(stdout);
 QTextStream qerr(stderr);
+
+using namespace std;
 
 void usage() {
   cout << "hs-N OPTIONS" << endl

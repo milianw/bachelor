@@ -23,13 +23,14 @@
 
 #include "mpi_iface.h"
 
-#include "experiment.h"
-#include "resonancefield.h"
+#include "spinlib/experiment.h"
 
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
 
 #include <sstream>
+
+using namespace std;
 
 string intensityOutputFile(const Experiment& exp, const string& outputDir, const fp from, const fp to)
 {

@@ -23,7 +23,8 @@
 #define MW_BACHELOR_CONSTANTS_H
 
 #include <gsl/gsl_const_mksa.h>
-#include "types.h"
+
+#include "fptype.h"
 
 /**
  * Physical constants, all in MKS units

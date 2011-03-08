@@ -30,7 +30,7 @@
 #include <QtCore/QDebug>
 #include <QtCore/QProcessEnvironment>
 
-#include "types.h"
+#include "spinlib/fptype.h"
 
 using namespace std;
 
@@ -111,6 +111,7 @@ int main(int argc, char* argv[]) {
   } else {
     dataFiles << info.absoluteFilePath();
   }
+
 
   int steps = DEFAULT_STEPS;
   QString stepsStr;

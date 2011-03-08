@@ -22,9 +22,10 @@
 #ifndef MW_BACHELOR_EXPERIMENT_H
 #define MW_BACHELOR_EXPERIMENT_H
 
-#include "constants.h"
 #include <cmath>
-#include "types.h"
+
+#include "constants.h"
+#include "eigentypes.h"
 
 /**
  * Experiment data / simulation parameters

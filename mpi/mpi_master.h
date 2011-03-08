@@ -22,7 +22,7 @@
 #ifndef MW_MPI_MASTER_H
 #define MW_MPI_MASTER_H
 
-#include "types.h"
+#include "mpi_types.h"
 
 #include <boost/function.hpp>
 
@@ -36,7 +36,7 @@ class Experiment;
 class MPIMaster {
 public:
   MPIMaster(const mpi::communicator& comm, const Experiment& exp,
-            const string& outputDir);
+            const std::string& outputDir);
   ~MPIMaster();
 
   void startBisect(const fp from, const fp to);
@@ -44,26 +44,26 @@ public:
 private:
   const mpi::communicator& m_comm;
   const Experiment& m_exp;
-  vector<int> m_slaves;
-  vector<int> m_availableSlaves;
-  const string& m_outputDir;
+  std::vector<int> m_slaves;
+  std::vector<int> m_availableSlaves;
+  const std::string& m_outputDir;
 
-  typedef pair<fp, fp> BRange;
-  vector<BRange> m_pendingSegments;
-  vector<BisectAnswer> m_bisectResponses;
-  vector<BRange> m_resonantSegments;
-  map<fp, BisectNode> m_bisectNodes;
+  typedef std::pair<fp, fp> BRange;
+  std::vector<BRange> m_pendingSegments;
+  std::vector<BisectAnswer> m_bisectResponses;
+  std::vector<BRange> m_resonantSegments;
+  std::map<fp, BisectNode> m_bisectNodes;
 
-  vector< vector<fp> > m_findRootResponses;
-  vector<fp> m_resonancyField;
+  std::vector< std::vector<fp> > m_findRootResponses;
+  std::vector<fp> m_resonancyField;
 
-  string m_intensityOutputFile;
-  ofstream m_intensityOutput;
-  vector<IntensityAnswer> m_intensityResponses;
+  std::string m_intensityOutputFile;
+  std::ofstream m_intensityOutput;
+  std::vector<IntensityAnswer> m_intensityResponses;
 
-  typedef vector<mpi::request> RequestList;
+  typedef std::vector<mpi::request> RequestList;
   RequestList m_pendingRequests;
-  typedef pair<mpi::status, RequestList::iterator> ResponsePair;
+  typedef std::pair<mpi::status, RequestList::iterator> ResponsePair;
   typedef boost::function<void(int)> ResponseHandler;
   void checkResponses(ResponseHandler handler);
   void handleResponseGeneric(ResponseHandler handler, const ResponsePair& response);

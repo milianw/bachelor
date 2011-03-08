@@ -22,7 +22,7 @@
 #ifndef MW_BACHELOR_SPINHAMILTONIAN_H
 #define MW_BACHELOR_SPINHAMILTONIAN_H
 
-#include "types.h"
+#include "eigentypes.h"
 
 class Experiment;
 

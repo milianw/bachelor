@@ -23,13 +23,15 @@
 #include <string>
 
 #include <boost/program_options.hpp>
-namespace po = boost::program_options;
 
 #include "mpi_master.h"
 #include "mpi_slave.h"
 #include "mpi_iface.h"
 
-#include "experiment.h"
+#include "spinlib/experiment.h"
+
+using namespace std;
+namespace po = boost::program_options;
 
 int main(int argc, char* argv[]) {
   mpi::environment env(argc, argv);

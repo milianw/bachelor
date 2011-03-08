@@ -18,23 +18,33 @@
  * Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-#ifndef MW_MPI_SLAVE_H
-#define MW_MPI_SLAVE_H
 
-#include "types.h"
-#include "resonancefield.h"
+#ifndef MW_BACHELOR_EIGENTYPES_H
+#define MW_BACHELOR_EIGENTYPES_H
 
-class MPISlave {
-public:
-  MPISlave(const mpi::communicator& comm, const Experiment& exp);
-  ~MPISlave();
+#include <Eigen/Dense>
 
-  void work();
+#include "fptype.h"
 
-private:
-  const mpi::communicator& m_comm;
-  const Experiment& m_exp;
-  const ResonanceField m_resonanceField;
-};
+typedef Eigen::Matrix<fp, 2, 2> Matrix2;
+typedef Eigen::Matrix<c_fp, 2, 2> Matrix2c;
 
-#endif // MW_MPI_SLAVE_H
+typedef Eigen::Matrix<fp, 3, 3> Matrix3;
+typedef Eigen::Matrix<c_fp, 3, 3> Matrix3c;
+
+typedef Eigen::Matrix<fp, 4, 4> Matrix4;
+typedef Eigen::Matrix<c_fp, 4, 4> Matrix4c;
+
+typedef Eigen::Matrix<fp, Eigen::Dynamic, Eigen::Dynamic> MatrixX;
+typedef Eigen::Matrix<c_fp, Eigen::Dynamic, Eigen::Dynamic> MatrixXc;
+
+typedef Eigen::Matrix<fp, 3, 1> Vector3;
+typedef Eigen::Matrix<c_fp, 3, 1> Vector3c;
+
+typedef Eigen::Matrix<fp, 4, 1> Vector4;
+typedef Eigen::Matrix<c_fp, 4, 1> Vector4c;
+
+typedef Eigen::Matrix<fp, Eigen::Dynamic, 1> VectorX;
+typedef Eigen::Matrix<c_fp, Eigen::Dynamic, 1> VectorXc;
+
+#endif // MW_BACHELOR_EIGENTYPES_H
