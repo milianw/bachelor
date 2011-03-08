@@ -138,6 +138,10 @@ BisectNode ResonanceField::diagonalizeNode(const fp B) const
 
 void ResonanceField::cleanupResonancyField(vector< fp >& field)
 {
+  if (field.size() < 2) {
+    return;
+  }
+
   sort(field.begin(), field.end());
   vector<fp>::iterator it = field.begin();
   while(it != field.end() - 1) {
