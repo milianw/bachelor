@@ -50,14 +50,14 @@ SpinHamiltonian::~SpinHamiltonian()
 {
 }
 
-Vector3c SpinHamiltonian::spinVector(int i, int j, int k) const
+inline Vector3c SpinHamiltonian::spinVector(int i, int j, int k) const
 {
   const int a = spinState(i, k); //spin state of state k in row i
   const int b = spinState(j, k); //spin state of state k in column j
   return (Vector3c() << PauliMatrix::X(a, b), PauliMatrix::Y(a, b), PauliMatrix::Z(a, b)).finished();
 }
 
-bool SpinHamiltonian::spinState(int i, int k) const
+inline bool SpinHamiltonian::spinState(int i, int k) const
 {
   // k-bit == 2^k = 0001000
   //                   ^k = 4
@@ -152,6 +152,11 @@ MatrixXc SpinHamiltonian::hyperFine() const
   return hyperfine;
 }
 
+// equation: \beta S * g * H
+// \beta: borh magneton
+// S: electron Spin Operator
+// g: g Tensor
+// H: static B Field hamiltonian
 MatrixXc SpinHamiltonian::electronZeeman() const
 {
   //Compute eZeeman============================================================  
@@ -252,6 +257,7 @@ fp SpinHamiltonian::calculateIntensity() const
   const MatrixXc moments = magneticMoments();
 
   fp intensity = 0;
+  ///TODO: take direction of B0 and B1 into account, integrate over plane
   for (int i = 0;i < m_exp.dimension; ++i) {
     for (int j = i + 1; j < m_exp.dimension; ++j) {
       // transition frequency:
@@ -260,7 +266,10 @@ fp SpinHamiltonian::calculateIntensity() const
       if (abs(m_exp.mwFreqGHz/freq - 1.0) > 5.0E-4) {
         continue;
       }
+      /// < Psi_j | and abs squared: |< Psi_j | M | Psi_i >|^2 M | Psi_i >
       intensity += (eigenVectors.col(j).adjoint() * moments * eigenVectors.col(i)).norm();
+      ///TODO: eq 3-24, p 52 says: |< j|M|i > dot H_1|^2
+      ///meaning: what about H_1?
     }
   }
   return (intensity * 2.0 * M_PI * (Bohrm / hbar) * (Bohrm / hbar));
