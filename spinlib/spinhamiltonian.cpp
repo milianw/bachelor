@@ -83,6 +83,45 @@ inline bool SpinHamiltonian::stateContributes(int i, int j, int k, bool ignoreEl
   return (i | kBit) == (j | kBit);
 }
 
+inline MatrixXc spinOperator(const Matrix2c& pauliMatrix, const int dimension)
+{
+  // see also: The Theory Of Magnetic Resonance (Poole, Farach), p. 20, p. 26f
+  // direct product expansion of PauliMatrix::X with identity to reach requested dimension
+  // i.e.: e.q. 2-77 with J_2 = 0
+  // pauli matrix dimension: 2x2
+  // requested dimension: dimension x dimension
+  // identity matrix: dimension / 2 x dimension / 2
+  MatrixXc op(dimension, dimension);
+  op.setZero();
+  const int halfDim = dimension / 2;
+  for(int i = 0; i < halfDim; ++i) {
+    // upper left corner
+    op(i, i) = pauliMatrix(0, 0);
+    // upper right corner
+    op(i + halfDim, i) = pauliMatrix(1, 0);
+    // lower left corner
+    op(i, i + halfDim) = pauliMatrix(0, 1);
+    // lower right corner
+    op(i + halfDim, i + halfDim) = pauliMatrix(1, 1);
+  }
+  return op;
+}
+
+MatrixXc SpinHamiltonian::spinXOperator() const
+{
+  return spinOperator(PauliMatrix::X, m_exp.dimension);
+}
+
+MatrixXc SpinHamiltonian::spinYOperator() const
+{
+  return spinOperator(PauliMatrix::Y, m_exp.dimension);
+}
+
+MatrixXc SpinHamiltonian::spinZOperator() const
+{
+  return spinOperator(PauliMatrix::Z, m_exp.dimension);
+}
+
 MatrixXc SpinHamiltonian::hamiltonian() const
 {
   return nuclearZeeman() + hyperFine() + electronZeeman();
@@ -159,11 +198,13 @@ MatrixXc SpinHamiltonian::hyperFine() const
 // H: static B Field hamiltonian
 MatrixXc SpinHamiltonian::electronZeeman() const
 {
+  //first multiply the g tensor with the static magnetic field hamiltonian
+  const Vector3c gDotH_B = m_exp.gTensor * m_staticBField;
+  return Bohrm * (spinXOperator() * gDotH_B(0) + spinYOperator() * gDotH_B(1) + spinZOperator() * gDotH_B(2));
+  /*
   //Compute eZeeman============================================================  
   MatrixXc eZeeman(m_exp.dimension, m_exp.dimension);
   eZeeman.setZero();
-  //first multiply the g tensor with the static magnetic field hamiltonian
-  const Vector3c gDotH_B = m_exp.gTensor * m_staticBField;
 
   //depending on the convention, i might have to tranpose the gtensor here
   for (int i = 0; i < m_exp.dimension; ++i) {
@@ -182,6 +223,7 @@ MatrixXc SpinHamiltonian::electronZeeman() const
   // cout << eZeeman << endl;
 
   return eZeeman;
+  */
 }
 
 MatrixXc SpinHamiltonian::magneticMoments() const

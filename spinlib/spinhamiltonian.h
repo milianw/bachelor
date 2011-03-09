@@ -92,6 +92,13 @@ class SpinHamiltonian {
     };
     inline bool stateContributes(int i, int j, int k, bool ignoreElectron = IgnoreElectron) const;
 
+    /// returns the spin operator matrix in X direction
+    inline MatrixXc spinXOperator() const;
+    /// returns the spin operator matrix in X direction
+    inline MatrixXc spinYOperator() const;
+    /// returns the spin operator matrix in X direction
+    inline MatrixXc spinZOperator() const;
+
     /// moments
     /// TODO: better document
     MatrixXc magneticMoments() const;
