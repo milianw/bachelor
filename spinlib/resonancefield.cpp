@@ -321,7 +321,8 @@ vector<fp> ResonanceField::findRootsInSegment(const BisectNode& from, const Bise
       ///NOTE: paper has different notation: p(0) == p_3, p(1) == p_2, ...
       const Vector4 p = M * (e_v - e_u);
       fp root = 0;
-      if (!m_loopingResonanceCanOccur) {
+      // apply newton raphson rootfinding algo if no looping resonance can occur or polynomial is monotonic
+      if (!m_loopingResonanceCanOccur || (p(1) * p(1) - 3.0 * p(0) * p(2)) <= 0) {
         if (((from.E(v) - from.E(u) - m_mwFreq) * (to.E(v) - to.E(u) - m_mwFreq)) > 0) {
           continue;
         }
