@@ -138,7 +138,7 @@ MatrixXc SpinHamiltonian::nuclearZeeman() const
     for (int j = 0; j < m_exp.dimension; ++j) {
       //m_exp.nProtons is always the index of the electronic spin state
 
-      if (spinState(i, m_exp.nProtons) != spinState(i, m_exp.nProtons)) {
+      if (spinState(i, m_exp.nProtons) != spinState(j, m_exp.nProtons)) {
         continue;  //matrix elements between different e states are zero
       }
 
