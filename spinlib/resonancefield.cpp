@@ -300,6 +300,12 @@ vector<fp> ResonanceField::findRoots(const map<fp, fp>& resonantSegments)
   return resonanceField;
 }
 
+// t_k from the wiki
+fp trigonometricRoot(const int k, const fp p, const fp q)
+{
+    return 2.0 * sqrt(-p / 3.0) * cos(1.0/3.0 * acos(3.0 * q / (2.0 * p) * sqrt(-3.0 / p)) - k * 2.0 * M_PI / 3.0);
+}
+
 vector<fp> ResonanceField::findRootsInSegment(const BisectNode& from, const BisectNode& to) const
 {
   vector<fp> roots;
@@ -342,8 +348,23 @@ vector<fp> ResonanceField::findRootsInSegment(const BisectNode& from, const Bise
         root = from.B + t2 * B_diff;
       } else {
         ///FIXME
-        cerr << "NOT IMPLEMENTED YET" << endl;
-        exit(1);
+        cout << "EXPERIMENTAL - non-monotonic polynomial with three roots - CHECK RESULTS!" << endl;
+        // http://en.wikipedia.org/wiki/Cubic_function#General_formula_of_roots
+        // reduction to a monic trinomial
+        const fp p_ = (3.0 * p(0) * p(2) - p(1) * p(1)) / (3.0 * p(0) * p(0));
+        const fp q_ = (2.0 * p(1) * p(1) * p(1) - 9.0 * p(0) * p(1) * p(2) + 27.0 * p(0) * p(0) * p(3))
+                        / (27.0 * p(0) * p(0) * p(0));
+        // only real roots are interesting
+        if (4.0 * p_ * p_ * p_ + 27.0 * q_ * q_ <= 0) {
+            // trigonometric (and hyperbolic) method
+            for(int i = 0; i < 3; ++i) {
+                const fp t = trigonometricRoot(i, p_, q_);
+                if (!isnan(t)) {
+                    roots.push_back(t);
+                }
+            }
+        }
+        continue;
       }
 
       roots.push_back(root);
