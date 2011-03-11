@@ -90,7 +90,7 @@ MatrixXc SpinHamiltonian::nuclearZeeman() const
       }
 
       // k = 1 to skip electron
-      for (int k = 1; k < m_spins.states; ++k) {
+      for (int k = 1; k < m_spins.elements; ++k) {
         if (!stateContributes(bra, ket, k)) {
           continue;
         }
