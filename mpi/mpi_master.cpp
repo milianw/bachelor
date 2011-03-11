@@ -34,7 +34,7 @@ using namespace std;
 string intensityOutputFile(const Experiment& exp, const string& outputDir, const fp from, const fp to)
 {
   stringstream stream;
-  stream << outputDir << '/' << exp.nProtons << ':' << from << '-' << to << ":auto:" << exp.mwFreqGHz << ":mpi";
+  stream << outputDir << '/' << exp.nProtons << ':' << exp.nNitrogens << ':' << from << '-' << to << ":auto:" << exp.mwFreqGHz << ":mpi";
   return stream.str();
 }
 

@@ -210,6 +210,7 @@ int main(int argc, char* argv[])
            << "B:\t" << B_min << "T to " << B_max << "T" << endl
            << "steps:\t" << steps << endl;
       cerr << "nProtons:\t" << exp.nProtons << endl
+           << "nNitrogens:\t" << exp.nNitrogens << endl
            << "aTensor:\n" << exp.aTensor << endl
            << "gTensor:\n" << exp.gTensor << endl
            << "B direction:\n" << exp.staticBFieldDirection << endl;
@@ -217,7 +218,7 @@ int main(int argc, char* argv[])
 
       QDir outputDir(outputPath);
       ENSURE(outputDir.exists(), "--output")
-      QString base = QString("%1:%2").arg(QString::number(exp.nProtons), intensityArg);
+      QString base = QString("%1:%2:%3").arg(QString::number(exp.nProtons), QString::number(exp.nNitrogens), intensityArg);
       ENSURE(outputDir.exists(base) || outputDir.mkdir(base), "--output");
       const QString outputFileTpl(outputDir.canonicalPath() + QDir::separator() + base + QDir::separator() + "%1");
 
