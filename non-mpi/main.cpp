@@ -107,7 +107,7 @@ int main(int argc, char* argv[])
 
   Mode mode = Error;
 
-  int nProtons = -1;
+  int nProtons = 0;
   int nNitrogens = 0;
   QString outputPath;
 
