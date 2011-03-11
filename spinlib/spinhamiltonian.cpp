@@ -33,13 +33,6 @@ using namespace Constants;
 using namespace Eigen;
 using namespace std;
 
-// Pauli Matrices
-namespace PauliMatrix {
-const Matrix2c X = (Matrix2c() << 0, 0.5, 0.5, 0).finished();
-const Matrix2c Y = (Matrix2c() << 0, c_fp(0, -0.5), c_fp(0, 0.5), 0).finished();
-const Matrix2c Z = (Matrix2c() << 0.5, 0, 0, -0.5).finished();
-}
-
 SpinHamiltonian::SpinHamiltonian(const fp B, const Experiment& experiment)
 : m_B(B)
 , m_exp(experiment)
@@ -59,22 +52,11 @@ SpinHamiltonian::~SpinHamiltonian()
 inline Vector3c SpinHamiltonian::spinVector(int bra, int ket, int k) const
 {
   return m_spins.spinVector(bra, ket, k);
-  /*
-  const int a = spinState(i, k); //spin state of state k in row i
-  const int b = spinState(j, k); //spin state of state k in column j
-  return (Vector3c() << PauliMatrix::X(a, b), PauliMatrix::Y(a, b), PauliMatrix::Z(a, b)).finished();
-  */
 }
 
 inline bool SpinHamiltonian::spinState(int state, int k) const
 {
   return m_spins.spinInState(k, state);
-  /*
-  // k-bit == 2^k = 0001000
-  //                   ^k = 4
-  const int kPow = (1 << k);
-  return i & kPow;
-  */
 }
 
 inline bool SpinHamiltonian::stateContributes(int bra, int ket, int k, bool ignoreElectron) const
@@ -87,22 +69,6 @@ inline bool SpinHamiltonian::stateContributes(int bra, int ket, int k, bool igno
     }
   }
   return true;
-  /*
-  // states are equal if: all bits except for k-bit are equal
-  // k-bit == 2^k = 0001000
-  //                   ^k = 4
-  int kBit = (1 << k);
-  if (ignoreElectron) {
-    // ignore electron bit
-    // electronBit == 2^nProtons == 100000...
-    int electronBit = (1 << m_exp.nProtons);
-    // essentially a fast variant of:
-    // i % electronBit
-    i &= electronBit - 1;
-    j &= electronBit - 1;
-  }
-  return (i | kBit) == (j | kBit);
-  */
 }
 
 MatrixXc SpinHamiltonian::hamiltonian() const
@@ -240,13 +206,11 @@ c_fp SpinHamiltonian::magneticMoment(const int bra, const int ket) const
       continue;
     }
 
-    const int braSpin = spinState(bra, k);  //spin state of state k in row i
-    const int ketSpin = spinState(ket, k);  //spin state of state k in column j
-    c_fp xMoment = PauliMatrix::X(braSpin, ketSpin);
+    c_fp xMoment = spinVector(bra, ket, k)(0);
 
     if (k == 0) {
       // electron
-      xMoment *= 2.023 * Bohrm;
+      xMoment *= g_E * Bohrm;
     } else if (k < m_spins.spinHalfs) {
       // J = 1/2 nucleus
       xMoment *= -1.0 * g_1H * NUC_MAGNETON;
