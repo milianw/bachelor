@@ -29,3 +29,7 @@ add_subdirectory(spinlib)
 add_subdirectory(mpi)
 add_subdirectory(non-mpi)
 add_subdirectory(convolute)
+
+add_executable(test test.cpp)
+OptimizeForArchitecture(test)
+target_link_libraries(test)
