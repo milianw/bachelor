@@ -28,6 +28,9 @@ class Experiment;
 
 /**
  * TODO: check whether inlining some parts is noticeable
+ * TODO: avoid temporaries in ret vals, see Eigen::ReturnByValue
+ *
+ * NOTE: size of MatrixXc is (4 bytes * (2^(nProtons + 1))^2 * 2), 2^(nProtons + 1) being the dimension of the problem
  *
  * notes on porting:
  *
