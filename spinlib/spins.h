@@ -87,6 +87,10 @@ struct Spins
     // decide which spin this spinId has
     // actually we calc 2J
     const int twoJ = spinId < spinHalfs ? 1 : 2;
+    if (twoJ == 1) {
+      /// optimization for twoJ = 1, i.e. spin 1/2
+      return bool(state & (1 << spinId));
+    }
     // number of spins with same dimension
     const int relatedSpins = twoJ == 1 ? spinHalfs : spinOnes;
     // position of spinId in the related spins
