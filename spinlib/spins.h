@@ -22,6 +22,7 @@
 #ifndef MW_BACHELOR_SPINS_H
 #define MW_BACHELOR_SPINS_H
 
+#include <iostream>
 #include "eigentypes.h"
 
 // pauli matrices for J = 1/2
@@ -77,6 +78,8 @@ struct Spins
   , spinOnes(_spinOnes)
   , elements(spinHalfs + spinOnes)
   , states(pow(2, spinHalfs) * pow(3, spinOnes))
+  , dimPow_one(pow(3, spinOnes))
+  , elemPows_one(cacheElemPows(3, spinOnes))
   {
 
   }
@@ -92,14 +95,20 @@ struct Spins
       return bool(state & (1 << spinId));
     }
     // number of spins with same dimension
-    const int relatedSpins = twoJ == 1 ? spinHalfs : spinOnes;
+    const int relatedSpins = spinOnes;
     // position of spinId in the related spins
-    const int posInRelatedSpins = twoJ == 1 ? spinId : spinId - spinHalfs;
+    const int posInRelatedSpins = spinId - spinHalfs;
+    if (posInRelatedSpins >= relatedSpins) {
+      std::cerr << "invalid spin pos:" << posInRelatedSpins << "for spin id:" << spinId << ", elements:" << elements << ", spin halfs:" << spinHalfs << ", spin ones:" << spinOnes;
+      throw 1;
+    }
 
     // dimension is 2J + 1
     const int dim = twoJ + 1;
     // number of states created by spins of this type
-    const int dimPow = pow(dim, relatedSpins);
+    // generic version: const int dimPow = pow(dim, relatedSpins);
+    // cached version for J = 1
+    const int dimPow = dimPow_one;
     // modulate state by dimPow to get a number representing
     // the sate of spins of the current type
     const int dimState = state % dimPow;
@@ -109,7 +118,9 @@ struct Spins
     // for dim = 2 this is equal to dimState & posInRelatedSpins
     // for arbitrary dims we first calculate dim^{posInRelatedSpins}
     // and devide dimState by it and modulate again by dim
-    const int elemPow = pow(dim, posInRelatedSpins);
+    // generic version: const int elemPow = pow(dim, posInRelatedSpins)
+    // cached version for J = 1
+    const int elemPow = elemPows_one[posInRelatedSpins];
     return dimState / elemPow % dim;
   }
 
@@ -131,6 +142,22 @@ struct Spins
   const int spinOnes;
   const int elements;
   const int states;
+  /// caches for pow calls
+  const int dimPow_one;
+  // size: relatedSpins, index: posInRelatedSpins
+  const int* const elemPows_one;
+
+private:
+  const int* cacheElemPows(const int dim, const int size) const
+  {
+    int* ret = new int[size];
+    int pow = 1;
+    for(int i = 0; i < size; ++i) {
+      ret[i] = pow;
+      pow *= dim;
+    }
+    return ret;
+  }
 };
 
 #endif // MW_BACHELOR_SPINS_H
