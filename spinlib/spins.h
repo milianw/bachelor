@@ -87,37 +87,37 @@ struct Spins
   /// @return spin of @p spinId in @p state
   int spinInState(const int spinId, const int state) const
   {
-    // decide which spin this spinId has
-    // actually we calc 2J
+    /// decide which spin this spinId has
+    /// actually we calc 2J
     const int twoJ = spinId < spinHalfs ? 1 : 2;
     if (twoJ == 1) {
       /// optimization for twoJ = 1, i.e. spin 1/2
       return bool(state & (1 << spinId));
     }
-    // number of spins with same dimension
+    /// number of spins with same dimension
     const int relatedSpins = spinOnes;
-    // position of spinId in the related spins
+    /// position of spinId in the related spins
     const int posInRelatedSpins = spinId - spinHalfs;
     if (posInRelatedSpins >= relatedSpins) {
       std::cerr << "invalid spin pos:" << posInRelatedSpins << "for spin id:" << spinId << ", elements:" << elements << ", spin halfs:" << spinHalfs << ", spin ones:" << spinOnes;
       throw 1;
     }
 
-    // dimension is 2J + 1
+    /// dimension is 2J + 1
     const int dim = twoJ + 1;
-    // number of states created by spins of this type
+    /// number of states created by spins of this type
     // generic version: const int dimPow = pow(dim, relatedSpins);
     // cached version for J = 1
     const int dimPow = dimPow_one;
-    // modulate state by dimPow to get a number representing
-    // the sate of spins of the current type
+    /// modulate state by dimPow to get a number representing
+    /// the sate of spins of the current type
     const int dimState = state % dimPow;
-    // now interpret dimstate as number in base dim:
-    // dimState = dim^0 * a_0 + dim^1 * a_1 + ... dim^N * a_n
-    // and return a_{posInRelatedSpin},
-    // for dim = 2 this is equal to dimState & posInRelatedSpins
-    // for arbitrary dims we first calculate dim^{posInRelatedSpins}
-    // and devide dimState by it and modulate again by dim
+    /// now interpret dimstate as number in base dim:
+    /// dimState = dim^0 * a_0 + dim^1 * a_1 + ... dim^N * a_n
+    /// and return a_{posInRelatedSpin},
+    /// for dim = 2 this is equal to dimState & posInRelatedSpins
+    /// for arbitrary dims we first calculate dim^{posInRelatedSpins}
+    /// and devide dimState by it and modulate again by dim
     // generic version: const int elemPow = pow(dim, posInRelatedSpins)
     // cached version for J = 1
     const int elemPow = elemPows_one[posInRelatedSpins];
