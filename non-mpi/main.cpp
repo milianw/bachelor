@@ -79,7 +79,8 @@ void usage() {
        << endl
        */
        << " OPTIONS: (all are required, but -i and -p are mutually exclusive)" << endl
-       << "  -n, --nprotons N  \tNumber of coupled nuclei" << endl
+       << "  -n, --nprotons N  \tNumber of 1H nuclei" << endl
+       << "  -N, --nitrogens N \tNumber of 14N nuclei" << endl
        << "  -i, --intensity B_MIN-B_MAX:STEPS:MW" << endl
        << "                    \tCalculate intensity for given MW over B_0 range" << endl
        << "         example: -i 0.2-0.4:1024:9.5 \t200 to 400mT, 1024 steps, 9.5GHz micro wave" << endl
@@ -107,6 +108,7 @@ int main(int argc, char* argv[])
   Mode mode = Error;
 
   int nProtons = -1;
+  int nNitrogens = 0;
   QString outputPath;
 
   // peaks
@@ -161,6 +163,14 @@ int main(int argc, char* argv[])
           mode = Error;
           break;
         }
+      } else if (arg == "--nitrogens" || arg == "-N") {
+        if ((it+1) != end) {
+          ++it;
+          nNitrogens = it->toInt();
+        } else {
+          mode = Error;
+          break;
+        }
       } else if (arg == "--output" || arg == "-o") {
         if ((it+1) != end) {
           ++it;
@@ -174,10 +184,11 @@ int main(int argc, char* argv[])
     }
   }
 
-  ENSURE(nProtons >= 1 && nProtons <= 15, "nprotons")
+  ENSURE(nNitrogens >= 0, "nprotons")
+  ENSURE(nProtons >= 0, "nprotons")
 
-  Experiment exp(nProtons);
-
+  Experiment exp(nProtons, nNitrogens);
+  ENSURE(exp.dimension < pow(2, 16), "n, N")
 
   switch (mode) {
     case Error:

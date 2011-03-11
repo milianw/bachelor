@@ -27,6 +27,7 @@
 
 #include "constants.h"
 #include "experiment.h"
+#include "spins.h"
 
 using namespace Constants;
 using namespace Eigen;
@@ -42,31 +43,51 @@ const Matrix2c Z = (Matrix2c() << 0.5, 0, 0, -0.5).finished();
 SpinHamiltonian::SpinHamiltonian(const fp B, const Experiment& experiment)
 : m_B(B)
 , m_exp(experiment)
+, m_spins(1 + m_exp.nProtons, m_exp.nNitrogens)
 , m_staticBField(m_exp.staticBField(B))
 {
+  if (m_spins.states != m_exp.dimension) {
+    cerr << "spins states init error" << endl;
+    exit(1);
+  }
 }
 
 SpinHamiltonian::~SpinHamiltonian()
 {
 }
 
-inline Vector3c SpinHamiltonian::spinVector(int i, int j, int k) const
+inline Vector3c SpinHamiltonian::spinVector(int bra, int ket, int k) const
 {
+  return m_spins.spinVector(bra, ket, k);
+  /*
   const int a = spinState(i, k); //spin state of state k in row i
   const int b = spinState(j, k); //spin state of state k in column j
   return (Vector3c() << PauliMatrix::X(a, b), PauliMatrix::Y(a, b), PauliMatrix::Z(a, b)).finished();
+  */
 }
 
-inline bool SpinHamiltonian::spinState(int i, int k) const
+inline bool SpinHamiltonian::spinState(int state, int k) const
 {
+  return m_spins.spinInState(k, state);
+  /*
   // k-bit == 2^k = 0001000
   //                   ^k = 4
   const int kPow = (1 << k);
   return i & kPow;
+  */
 }
 
-inline bool SpinHamiltonian::stateContributes(int i, int j, int k, bool ignoreElectron) const
+inline bool SpinHamiltonian::stateContributes(int bra, int ket, int k, bool ignoreElectron) const
 {
+  for(int n = 0; n < m_spins.elements; ++n) {
+    if (n == k || (ignoreElectron && n == 0)) {
+      continue;
+    } else if (m_spins.spinInState(n, bra) != m_spins.spinInState(n, ket)) {
+      return false;
+    }
+  }
+  return true;
+  /*
   // states are equal if: all bits except for k-bit are equal
   // k-bit == 2^k = 0001000
   //                   ^k = 4
@@ -81,45 +102,7 @@ inline bool SpinHamiltonian::stateContributes(int i, int j, int k, bool ignoreEl
     j &= electronBit - 1;
   }
   return (i | kBit) == (j | kBit);
-}
-
-inline MatrixXc spinOperator(const Matrix2c& pauliMatrix, const int dimension)
-{
-  // see also: The Theory Of Magnetic Resonance (Poole, Farach), p. 20, p. 26f
-  // direct product expansion of PauliMatrix::X with identity to reach requested dimension
-  // i.e.: e.q. 2-77 with J_2 = 0
-  // pauli matrix dimension: 2x2
-  // requested dimension: dimension x dimension
-  // identity matrix: dimension / 2 x dimension / 2
-  MatrixXc op(dimension, dimension);
-  op.setZero();
-  const int halfDim = dimension / 2;
-  for(int i = 0; i < halfDim; ++i) {
-    // upper left corner
-    op(i, i) = pauliMatrix(0, 0);
-    // upper right corner
-    op(i + halfDim, i) = pauliMatrix(1, 0);
-    // lower left corner
-    op(i, i + halfDim) = pauliMatrix(0, 1);
-    // lower right corner
-    op(i + halfDim, i + halfDim) = pauliMatrix(1, 1);
-  }
-  return op;
-}
-
-MatrixXc SpinHamiltonian::spinXOperator() const
-{
-  return spinOperator(PauliMatrix::X, m_exp.dimension);
-}
-
-MatrixXc SpinHamiltonian::spinYOperator() const
-{
-  return spinOperator(PauliMatrix::Y, m_exp.dimension);
-}
-
-MatrixXc SpinHamiltonian::spinZOperator() const
-{
-  return spinOperator(PauliMatrix::Z, m_exp.dimension);
+  */
 }
 
 MatrixXc SpinHamiltonian::hamiltonian() const
@@ -130,30 +113,37 @@ MatrixXc SpinHamiltonian::hamiltonian() const
 MatrixXc SpinHamiltonian::nuclearZeeman() const
 {
   //Compute nZeeman============================================================  
-  MatrixXc nZeeman(m_exp.dimension, m_exp.dimension);
+  MatrixXc nZeeman(m_spins.states, m_spins.states);
   nZeeman.setZero();
   //to turn off: return nZeeman;
 
-  for (int i = 0; i < m_exp.dimension; ++i) {
-    for (int j = 0; j < m_exp.dimension; ++j) {
-      //m_exp.nProtons is always the index of the electronic spin state
-
-      if (spinState(i, m_exp.nProtons) != spinState(j, m_exp.nProtons)) {
-        continue;  //matrix elements between different e states are zero
+  for (int bra = 0; bra < m_spins.states; ++bra) {
+    for (int ket = 0; ket < m_spins.states; ++ket) {
+      if (spinState(bra, 0 /* = Electron */) != spinState(ket, 0 /* = Electron */)) {
+        continue;  //matrix elements between different electron states are zero
       }
 
-      for (int k = 0; k < m_exp.nProtons; ++k) {
-        if (!stateContributes(i, j, k)) {
+      // k = 1 to skip electron
+      for (int k = 1; k < m_spins.states; ++k) {
+        if (!stateContributes(bra, ket, k)) {
           continue;
         }
 
         // set cell to dot product of H_B and I
-        nZeeman(i, j) += m_staticBField.dot(spinVector(i, j, k));
+        c_fp val = m_staticBField.dot(spinVector(bra, ket, k));
+        if (k < m_spins.spinHalfs) {
+          // J = 1/2
+          val *= g_1H;
+        } else {
+          // J = 1
+          val *= g_14N;
+        }
+        nZeeman(bra, ket) += val;
       }
     }
   }
 
-  nZeeman *= (-1.0*g_1H*NUC_MAGNETON);
+  nZeeman *= -1.0 * NUC_MAGNETON;
 
   // DEBUG:
   // cout << nZeeman << endl;
@@ -164,22 +154,24 @@ MatrixXc SpinHamiltonian::nuclearZeeman() const
 MatrixXc SpinHamiltonian::hyperFine() const
 {
   //Compute Hyperfine couplings matrix=========================================
-  MatrixXc hyperfine(m_exp.dimension, m_exp.dimension);
+  MatrixXc hyperfine(m_spins.states, m_spins.states);
   hyperfine.setZero();
 
-  for (int i = 0; i < m_exp.dimension; ++i) {
-    for (int j = 0; j < m_exp.dimension; ++j) {
+  for (int bra = 0; bra < m_spins.states; ++bra) {
+    for (int ket = 0; ket < m_spins.states; ++ket) {
       //compute elements of s vector
-      const Vector3c s = spinVector(i, j, m_exp.nProtons);
+      const Vector3c s = spinVector(bra, ket, 0 /* = Electron */);
 
-      for (int k = 0; k < m_exp.nProtons; ++k) {    //loop over nuclei
-        if (!stateContributes(i, j, k)) {
+      // k = 1 to skip electron
+      for (int k = 1; k < m_spins.elements; ++k) {    //loop over nuclei
+        if (!stateContributes(bra, ket, k)) {
           continue;
         }
 
         //multiply atensor by I
         //multiply s by atensor_I
-        hyperfine(i, j) += s.dot(m_exp.aTensor * spinVector(i, j, k));
+        ///TODO: proper aTensor for different nuclei
+        hyperfine(bra, ket) += s.dot(m_exp.aTensor * spinVector(bra, ket, k));
       }
     }
   }
@@ -198,23 +190,21 @@ MatrixXc SpinHamiltonian::hyperFine() const
 // H: static B Field hamiltonian
 MatrixXc SpinHamiltonian::electronZeeman() const
 {
-  //first multiply the g tensor with the static magnetic field hamiltonian
-  const Vector3c gDotH_B = m_exp.gTensor * m_staticBField;
-  return Bohrm * (spinXOperator() * gDotH_B(0) + spinYOperator() * gDotH_B(1) + spinZOperator() * gDotH_B(2));
-  /*
   //Compute eZeeman============================================================  
-  MatrixXc eZeeman(m_exp.dimension, m_exp.dimension);
+  MatrixXc eZeeman(m_spins.states, m_spins.states);
   eZeeman.setZero();
 
+  //first multiply the g tensor with the static magnetic field hamiltonian
+  const Vector3c gDotH_B = m_exp.gTensor * m_staticBField;
   //depending on the convention, i might have to tranpose the gtensor here
-  for (int i = 0; i < m_exp.dimension; ++i) {
-    for (int j = 0; j < m_exp.dimension; ++j) {
-      //m_exp.nProtons is always the index of the electron spin
-      if (!stateContributes(i, j, m_exp.nProtons)) {
+  for (int bra = 0; bra < m_spins.states; ++bra) {
+    for (int ket = 0; ket < m_spins.states; ++ket) {
+      // 0 is always the index of the electron spin
+      if (!stateContributes(bra, ket, 0 /* = Electron */)) {
         continue;
       }
 
-      eZeeman(i,j) = gDotH_B.dot(spinVector(i, j, m_exp.nProtons));
+      eZeeman(bra, ket) = gDotH_B.dot(spinVector(bra, ket, 0 /* = Electron */));
     }
   }
   eZeeman *= Bohrm;
@@ -223,17 +213,16 @@ MatrixXc SpinHamiltonian::electronZeeman() const
   // cout << eZeeman << endl;
 
   return eZeeman;
-  */
 }
 
 MatrixXc SpinHamiltonian::magneticMoments() const
 {
-  MatrixXc moments(m_exp.dimension, m_exp.dimension);
+  MatrixXc moments(m_spins.states, m_spins.states);
 
-  for (int i = 0; i < m_exp.dimension; ++i) {
-    for (int j = 0; j < m_exp.dimension; ++j) {
+  for (int bra = 0; bra < m_spins.states; ++bra) {
+    for (int ket = 0; ket < m_spins.states; ++ket) {
       //m_exp.nProtons is always the index of the electronic spin state
-      moments(i, j) = magneticMoment(i, j);
+      moments(bra, ket) = magneticMoment(bra, ket);
 
 //       cout << i << '\t' << j << '\t' << "FINAL:" << '\t' << moments(i, j) << endl;
     }
@@ -243,22 +232,27 @@ MatrixXc SpinHamiltonian::magneticMoments() const
   return moments;
 }
 
-c_fp SpinHamiltonian::magneticMoment(const int i, const int j) const
+c_fp SpinHamiltonian::magneticMoment(const int bra, const int ket) const
 {
   c_fp ret = 0;
-  for (int k = 0; k < m_exp.nProtons+1; ++k) {
-    if (!stateContributes(i, j, k, IncludeElectron)) {
+  for (int k = 0; k < m_spins.elements; ++k) {
+    if (!stateContributes(bra, ket, k, IncludeElectron)) {
       continue;
     }
 
-    const int a = spinState(i, k);  //spin state of state k in row i
-    const int b = spinState(j, k);  //spin state of state k in column j
-    c_fp xMoment = PauliMatrix::X(a, b);
+    const int braSpin = spinState(bra, k);  //spin state of state k in row i
+    const int ketSpin = spinState(ket, k);  //spin state of state k in column j
+    c_fp xMoment = PauliMatrix::X(braSpin, ketSpin);
 
-    if (k != m_exp.nProtons) {
+    if (k == 0) {
+      // electron
+      xMoment *= 2.023 * Bohrm;
+    } else if (k < m_spins.spinHalfs) {
+      // J = 1/2 nucleus
       xMoment *= -1.0 * g_1H * NUC_MAGNETON;
     } else {
-      xMoment *= 2.023 * Bohrm;
+      // J = 1 nucleus
+      xMoment *= -1.0 * g_14N * NUC_MAGNETON;
     }
 
 //         cout << i << '\t' << j << '\t' << k << '\t' << xMoment << endl;
@@ -271,11 +265,11 @@ c_fp SpinHamiltonian::magneticMoment(const int i, const int j) const
 MatrixX SpinHamiltonian::intensityMatrix(const MatrixXc& eigenVectors) const {
   const MatrixXc moments = magneticMoments();
   ///TODO: take direction of B0 and B1 into account, integrate over plane
-  MatrixX intensities(m_exp.dimension, m_exp.dimension);
-  for(int i = 0; i < m_exp.dimension; ++i) {
+  MatrixX intensities(m_spins.states, m_spins.states);
+  for(int i = 0; i < m_spins.states; ++i) {
     /// right part: M | Psi_i >
     const MatrixXc mTimesPsiI = moments * eigenVectors.col(i);
-    for(int j = 0; j < m_exp.dimension; ++j) {
+    for(int j = 0; j < m_spins.states; ++j) {
       if (i != j) {
         /// left part with < Psi_j | and abs squared: |< Psi_j | M | Psi_i >|^2
         intensities(i, j) = (eigenVectors.col(j).adjoint() * mTimesPsiI).norm();

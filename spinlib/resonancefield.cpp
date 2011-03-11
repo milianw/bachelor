@@ -114,10 +114,13 @@ fp ResonanceField::calculateLambda() const
   Vector3c n = m_exp.staticBFieldDirection / m_exp.staticBFieldDirection.norm();
 
   // we assume only a single electron
+  // S = 0.5
   lambda += Bohrm * 0.5 * (n.transpose() * m_exp.gTensor).norm();
 
-  // we assume n protons
-  lambda += NUC_MAGNETON * m_exp.nProtons * g_1H * 0.4;
+  // I = 0.5
+  lambda += NUC_MAGNETON * m_exp.nProtons * g_1H * 0.5;
+  // I = 1
+  lambda += NUC_MAGNETON * m_exp.nNitrogens * g_14N * 1;
   return lambda;
 }
 

@@ -31,9 +31,10 @@
  * Experiment data / simulation parameters
  */
 struct Experiment {
-  Experiment(int _nProtons)
+  Experiment(int _nProtons, int _nNitrogens = 0)
   : nProtons(_nProtons)
-  , dimension(pow(2, nProtons + 1))
+  , nNitrogens(_nNitrogens)
+  , dimension(pow(2, nProtons + 1) * pow(3, nNitrogens))
   , mwFreqGHz(0)
   {
     gTensor = Matrix3c::Identity() * Constants::g_E;
@@ -42,6 +43,7 @@ struct Experiment {
   }
 
   const int nProtons;
+  const int nNitrogens;
   const int dimension;
 
   Matrix3c gTensor;

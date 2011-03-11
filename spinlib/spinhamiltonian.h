@@ -23,6 +23,7 @@
 #define MW_BACHELOR_SPINHAMILTONIAN_H
 
 #include "eigentypes.h"
+#include "spins.h"
 
 class Experiment;
 
@@ -77,10 +78,10 @@ class SpinHamiltonian {
 
   private:
     /// interprets @p i as binary number and returns the k-th bit of it
-    inline bool spinState(int i, int k) const;
+    inline bool spinState(int state, int k) const;
 
     /// return spin vector from pauli matrices
-    inline Vector3c spinVector(int i, int j, int k) const;
+    inline Vector3c spinVector(int bra, int ket, int k) const;
 
     /// all bits for states @p i, @p j, must match for nucleus @p k
     /// otherwise the integral will be zero anyways and we can skip
@@ -93,14 +94,7 @@ class SpinHamiltonian {
       IncludeElectron = 0,
       IgnoreElectron = 1
     };
-    inline bool stateContributes(int i, int j, int k, bool ignoreElectron = IgnoreElectron) const;
-
-    /// returns the spin operator matrix in X direction
-    inline MatrixXc spinXOperator() const;
-    /// returns the spin operator matrix in X direction
-    inline MatrixXc spinYOperator() const;
-    /// returns the spin operator matrix in X direction
-    inline MatrixXc spinZOperator() const;
+    inline bool stateContributes(int bra, int ket, int k, bool ignoreElectron = IgnoreElectron) const;
 
     /// moments
     /// TODO: better document
@@ -115,6 +109,7 @@ class SpinHamiltonian {
 
     const fp m_B;
     const Experiment& m_exp;
+    const Spins m_spins;
     const Vector3c m_staticBField;
 };
 
