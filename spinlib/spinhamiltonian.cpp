@@ -225,26 +225,9 @@ c_fp SpinHamiltonian::magneticMoment(const int bra, const int ket) const
   return ret;
 }
 
-///TODO: optimize!
 MatrixX SpinHamiltonian::intensityMatrix(const MatrixXc& eigenVectors) const {
-  const MatrixXc moments = magneticMoments();
   ///TODO: take direction of B0 and B1 into account, integrate over plane
-  MatrixX intensities(m_spins.states, m_spins.states);
-  for(int i = 0; i < m_spins.states; ++i) {
-    /// right part: M | Psi_i >
-    const MatrixXc mTimesPsiI = moments * eigenVectors.col(i);
-    for(int j = 0; j < m_spins.states; ++j) {
-      if (i != j) {
-        /// left part with < Psi_j | and abs squared: |< Psi_j | M | Psi_i >|^2
-        intensities(i, j) = (eigenVectors.col(j).adjoint() * mTimesPsiI).norm();
-        ///TODO: eq 3-24, p 52 says: |< j|M|i > dot H_1|^2
-        ///meaning: what about H_1?
-      } else {
-        intensities(i, j) = 0;
-      }
-    }
-  }
-  return intensities;
+  return eigenVectors.adjoint() * magneticMoments() * eigenVectors;
 }
 
 fp SpinHamiltonian::calculateIntensity() const
@@ -254,9 +237,8 @@ fp SpinHamiltonian::calculateIntensity() const
   const VectorX eigenValues = eigenSolver.eigenvalues();
   const MatrixXc eigenVectors = eigenSolver.eigenvectors();
 
+  ///TODO: compare performance to using intensityMatrix directly
   const MatrixXc moments = magneticMoments();
-  ///TODO: which is correct?
-//   const MatrixXc moments2 = eigenVectors.adjoint() * magneticMoments() * eigenVectors;
 
   const char* thresholdStr = getenv("FREQUENCY_THRESHOLD");
   float threshold = 5.0E-4;
@@ -275,12 +257,8 @@ fp SpinHamiltonian::calculateIntensity() const
       if (abs(freq - m_exp.mwFreqGHz) > threshold * m_exp.mwFreqGHz) {
         continue;
       }
-      ///TODO: compare performance of calculating eigenVectors.adjoint() * moments * eigenVectors to below
       /// < Psi_j | and abs squared: |< Psi_j | M | Psi_i >|^2 M | Psi_i >
-      intensity += (eigenVectors.col(j).adjoint() * moments * eigenVectors.col(i)).norm();
-      ///TODO: which is correct?
-//       intensity += norm(moments2(i, j));
-//       intensity += norm((moments * eigenVectors.col(i) * eigenVectors.col(j).adjoint()).trace());
+      intensity += (eigenVectors.col(j).adjoint() * moments * eigenVectors.col(i)).squaredNorm();
       ///TODO: eq 3-24, p 52 says: |< j|M|i > dot H_1|^2
       ///meaning: what about H_1?
     }
