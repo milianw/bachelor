@@ -259,6 +259,7 @@ fp SpinHamiltonian::calculateIntensity() const
   fp intensity = 0;
   ///TODO: take direction of B0 and B1 into account, integrate over plane
   for (int i = 0;i < m_exp.dimension; ++i) {
+    ///TODO: lower half - results x2?
     for (int j = i + 1; j < m_exp.dimension; ++j) {
       // transition frequency:
       const fp freq = (1.0/h/1.0E9 * abs(eigenValues(i) - eigenValues(j)));
@@ -266,6 +267,7 @@ fp SpinHamiltonian::calculateIntensity() const
       if (abs(m_exp.mwFreqGHz/freq - 1.0) > 5.0E-4) {
         continue;
       }
+      ///TODO: compare performance of calculating eigenVectors.adjoint() * moments * eigenVectors to below
       /// < Psi_j | and abs squared: |< Psi_j | M | Psi_i >|^2 M | Psi_i >
       intensity += (eigenVectors.col(j).adjoint() * moments * eigenVectors.col(i)).norm();
       ///TODO: eq 3-24, p 52 says: |< j|M|i > dot H_1|^2
