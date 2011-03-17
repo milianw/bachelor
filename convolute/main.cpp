@@ -41,6 +41,7 @@ const int DEFAULT_STEPS = 100;
 const fp DEFAULT_WIDTH = 0.001;
 const fp WIDTHS_TO_ZERO = 4.0; // = exp(-N^2 /2), with N = 4 this is approx. 0.033%
 const bool DEFAULT_DERIV = false;
+const bool DEFAULT_NORMALIZE = true;
 
 void usage()
 {
@@ -79,10 +80,15 @@ public:
     }
   }
 
+  void normalizeIntensity(const double maxValue)
+  {
+    m_intensity /= maxValue;
+  }
+
 private:
-  const double m_center;
-  const double m_intensity;
-  const double m_width;
+  double m_center;
+  double m_intensity;
+  double m_width;
 };
 
 int main(int argc, char* argv[]) {
@@ -164,8 +170,12 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  bool normalize = DEFAULT_NORMALIZE;
+
+
   // step 1: read data
   QMap<fp, Gaussian*> data;
+  fp maxI = 0;
 
   foreach(const QString& dataFile, dataFiles) {
     QFile file(dataFile);
@@ -177,7 +187,16 @@ int main(int argc, char* argv[]) {
       QStringList tuple = QString::fromLocal8Bit(file.readLine()).split(QLatin1Char('\t'));
       fp B = tuple.first().toDouble();
       fp I = tuple.last().toDouble();
+      if (I > maxI) {
+        maxI = I;
+      }
       data[B] = new Gaussian(B, I, width);
+    }
+  }
+
+  if (normalize) {
+    foreach(Gaussian* g, data) {
+      g->normalizeIntensity(maxI);
     }
   }
 
