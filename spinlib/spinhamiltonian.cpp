@@ -258,6 +258,12 @@ fp SpinHamiltonian::calculateIntensity() const
   ///TODO: which is correct?
 //   const MatrixXc moments2 = eigenVectors.adjoint() * magneticMoments() * eigenVectors;
 
+  const char* thresholdStr = getenv("FREQUENCY_THRESHOLD");
+  float threshold = 5.0E-4;
+  if (thresholdStr) {
+    threshold = atof(thresholdStr);
+  }
+
   fp intensity = 0;
   ///TODO: take direction of B0 and B1 into account, integrate over plane
   for (int i = 0;i < m_exp.dimension; ++i) {
@@ -266,7 +272,7 @@ fp SpinHamiltonian::calculateIntensity() const
       // transition frequency:
       const fp freq = (1.0/h/1.0E9 * abs(eigenValues(i) - eigenValues(j)));
       // assume it's only seen when energy is below frequency threshold
-      if (abs(m_exp.mwFreqGHz/freq - 1.0) > 5.0E-4) {
+      if (abs(freq - m_exp.mwFreqGHz) > threshold * m_exp.mwFreqGHz) {
         continue;
       }
       ///TODO: compare performance of calculating eigenVectors.adjoint() * moments * eigenVectors to below
