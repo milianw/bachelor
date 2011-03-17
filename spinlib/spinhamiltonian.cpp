@@ -255,6 +255,8 @@ fp SpinHamiltonian::calculateIntensity() const
   const MatrixXc eigenVectors = eigenSolver.eigenvectors();
 
   const MatrixXc moments = magneticMoments();
+  ///TODO: which is correct?
+//   const MatrixXc moments2 = eigenVectors.adjoint() * magneticMoments() * eigenVectors;
 
   fp intensity = 0;
   ///TODO: take direction of B0 and B1 into account, integrate over plane
@@ -270,6 +272,9 @@ fp SpinHamiltonian::calculateIntensity() const
       ///TODO: compare performance of calculating eigenVectors.adjoint() * moments * eigenVectors to below
       /// < Psi_j | and abs squared: |< Psi_j | M | Psi_i >|^2 M | Psi_i >
       intensity += (eigenVectors.col(j).adjoint() * moments * eigenVectors.col(i)).norm();
+      ///TODO: which is correct?
+//       intensity += norm(moments2(i, j));
+//       intensity += norm((moments * eigenVectors.col(i) * eigenVectors.col(j).adjoint()).trace());
       ///TODO: eq 3-24, p 52 says: |< j|M|i > dot H_1|^2
       ///meaning: what about H_1?
     }
