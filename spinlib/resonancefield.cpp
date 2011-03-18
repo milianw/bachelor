@@ -130,7 +130,12 @@ BisectNode ResonanceField::diagonalizeNode(const fp B) const
   SelfAdjointEigenSolver<MatrixXc> eigenSolver(H.hamiltonian());
   VectorX E = eigenSolver.eigenvalues();
   const MatrixXc eigenVectors = eigenSolver.eigenvectors();
-  const MatrixXc G = H.nuclearZeeman() + H.electronZeeman();
+
+  MatrixXc G(m_exp.dimension, m_exp.dimension);
+  G.setZero();
+  H.addNuclearZeeman(G);
+  H.addElectronZeeman(G);
+
   VectorX E_deriv(m_exp.dimension);
   for(int u = 0; u < m_exp.dimension; ++u) {
     // <u| G |u> => expectation value is always real

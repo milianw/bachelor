@@ -73,16 +73,16 @@ inline bool SpinHamiltonian::stateContributes(int bra, int ket, int k, bool igno
 
 MatrixXc SpinHamiltonian::hamiltonian() const
 {
-  return nuclearZeeman() + hyperFine() + electronZeeman();
+  MatrixXc H(m_spins.states, m_spins.states);
+  H.setZero();
+  addNuclearZeeman(H);
+  addHyperFine(H);
+  addElectronZeeman(H);
+  return H;
 }
 
-MatrixXc SpinHamiltonian::nuclearZeeman() const
+void SpinHamiltonian::addNuclearZeeman(MatrixXc& H) const
 {
-  //Compute nZeeman============================================================  
-  MatrixXc nZeeman(m_spins.states, m_spins.states);
-  nZeeman.setZero();
-  //to turn off: return nZeeman;
-
   for (int bra = 0; bra < m_spins.states; ++bra) {
     for (int ket = 0; ket < m_spins.states; ++ket) {
       if (spinState(bra, 0 /* = Electron */) != spinState(ket, 0 /* = Electron */)) {
@@ -90,6 +90,7 @@ MatrixXc SpinHamiltonian::nuclearZeeman() const
       }
 
       // k = 1 to skip electron
+      c_fp colVal = 0;
       for (int k = 1; k < m_spins.elements; ++k) {
         if (!stateContributes(bra, ket, k)) {
           continue;
@@ -104,30 +105,21 @@ MatrixXc SpinHamiltonian::nuclearZeeman() const
           // J = 1
           val *= g_14N;
         }
-        nZeeman(bra, ket) += val;
+        colVal += val;
       }
+      H(bra, ket) += colVal * -1.0 * NUC_MAGNETON;
     }
   }
-
-  nZeeman *= -1.0 * NUC_MAGNETON;
-
-  // DEBUG:
-  // cout << nZeeman << endl;
-
-  return nZeeman;
 }
 
-MatrixXc SpinHamiltonian::hyperFine() const
+void SpinHamiltonian::addHyperFine(MatrixXc& H) const
 {
-  //Compute Hyperfine couplings matrix=========================================
-  MatrixXc hyperfine(m_spins.states, m_spins.states);
-  hyperfine.setZero();
-
   for (int bra = 0; bra < m_spins.states; ++bra) {
     for (int ket = 0; ket < m_spins.states; ++ket) {
       //compute elements of s vector
       const Vector3c s = spinVector(bra, ket, 0 /* = Electron */);
 
+      c_fp colVal = 0;
       // k = 1 to skip electron
       for (int k = 1; k < m_spins.elements; ++k) {    //loop over nuclei
         if (!stateContributes(bra, ket, k)) {
@@ -137,16 +129,11 @@ MatrixXc SpinHamiltonian::hyperFine() const
         //multiply atensor by I
         //multiply s by atensor_I
         ///TODO: proper aTensor for different nuclei
-        hyperfine(bra, ket) += s.dot(m_exp.aTensor * spinVector(bra, ket, k));
+        colVal += s.dot(m_exp.aTensor * spinVector(bra, ket, k));
       }
+      H(bra, ket) += colVal * h * 1.0E6;
     }
   }
-  hyperfine *= h * 1.0E6;
-
-  // DEBUG:
-  // cout << hyperfine << endl;
-
-  return hyperfine;
 }
 
 // equation: \beta S * g * H
@@ -154,12 +141,8 @@ MatrixXc SpinHamiltonian::hyperFine() const
 // S: electron Spin Operator
 // g: g Tensor
 // H: static B Field hamiltonian
-MatrixXc SpinHamiltonian::electronZeeman() const
+void SpinHamiltonian::addElectronZeeman(MatrixXc& H) const
 {
-  //Compute eZeeman============================================================  
-  MatrixXc eZeeman(m_spins.states, m_spins.states);
-  eZeeman.setZero();
-
   //first multiply the g tensor with the static magnetic field hamiltonian
   const Vector3c gDotH_B = m_exp.gTensor * m_staticBField;
   //depending on the convention, i might have to tranpose the gtensor here
@@ -170,15 +153,9 @@ MatrixXc SpinHamiltonian::electronZeeman() const
         continue;
       }
 
-      eZeeman(bra, ket) = gDotH_B.dot(spinVector(bra, ket, 0 /* = Electron */));
+      H(bra, ket) += gDotH_B.dot(spinVector(bra, ket, 0 /* = Electron */)) * Bohrm;
     }
   }
-  eZeeman *= Bohrm;
-
-  // DEBUG
-  // cout << eZeeman << endl;
-
-  return eZeeman;
 }
 
 MatrixXc SpinHamiltonian::magneticMoments() const
@@ -238,6 +215,8 @@ fp SpinHamiltonian::calculateIntensity() const
   const MatrixXc eigenVectors = eigenSolver.eigenvectors();
 
   ///TODO: compare performance to using intensityMatrix directly
+  ///      esp. considering that we could save sizeof(MatrixXc) then
+  ///      peak mem consumption will probably be the same though
   const MatrixXc moments = magneticMoments();
 
   const char* thresholdStr = getenv("FREQUENCY_THRESHOLD");

@@ -28,8 +28,7 @@
 class Experiment;
 
 /**
- * TODO: check whether inlining some parts is noticeable
- * TODO: avoid temporaries in ret vals, see Eigen::ReturnByValue
+ * TODO: check whether inlining some parts is noticeables
  *
  * NOTE: size of MatrixXc is (4 bytes * (2^(nProtons + 1))^2 * 2), 2^(nProtons + 1) being the dimension of the problem
  *
@@ -67,14 +66,14 @@ class SpinHamiltonian {
 
     VectorX calculateEigenValues() const;
 
-    /// the complete hamiltonian
+    /// return the complete spin hamiltonian
     MatrixXc hamiltonian() const;
-    /// nuclear Zeeman Hamiltonian component
-    MatrixXc nuclearZeeman() const;
-    /// hyper fine Hamiltonian component
-    MatrixXc hyperFine() const;
-    /// electron Zeeman Hamiltonian component
-    MatrixXc electronZeeman() const;
+    /// add the nuclear Zeeman Hamiltonian component to @p H
+    void addNuclearZeeman(MatrixXc& H) const;
+    /// add the hyper fine Hamiltonian component to @p H
+    void addHyperFine(MatrixXc& H) const;
+    /// electron Zeeman Hamiltonian component to @p H
+    void addElectronZeeman(MatrixXc& H) const;
 
   private:
     /// interprets @p i as binary number and returns the k-th bit of it
