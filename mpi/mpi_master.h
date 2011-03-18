@@ -43,13 +43,15 @@ public:
   void startBisect(const fp from, const fp to);
 
   template<typename InputT, typename OutputT>
-  void runCommand(MPIJob* job, Commands cmd,
-                  Tags inputTag, const InputT& input,
-                  Tags outputTag, OutputT& output);
+  int runCommand(MPIJob* job, Commands cmd,
+                 Tags inputTag, const InputT& input,
+                 Tags outputTag, OutputT& output);
 
   void enqueueJob(MPIJob *job);
 
   std::ofstream& intensityOutputFile();
+
+  int availableSlaves() const;
 
 private:
   const mpi::communicator& m_comm;
@@ -74,9 +76,9 @@ private:
 };
 
 template<typename InputT, typename OutputT>
-void MPIMaster::runCommand(MPIJob* job, Commands cmd,
-                           Tags inputTag, const InputT& input,
-                           Tags outputTag, OutputT& output)
+int MPIMaster::runCommand(MPIJob* job, Commands cmd,
+                          Tags inputTag, const InputT& input,
+                          Tags outputTag, OutputT& output)
 {
   const int slave = m_availableSlaves.back();
 //   std::cout << "running job " << job << " on slave " << slave << std::endl;
@@ -86,6 +88,8 @@ void MPIMaster::runCommand(MPIJob* job, Commands cmd,
   m_comm.isend(slave, TAG_CMD, cmd);
   m_comm.isend(slave, inputTag, input);
   m_pendingRequests.push_back(m_comm.irecv(slave, outputTag, output));
+
+  return slave;
 }
 
 #endif // MW_MPI_MASTER_H

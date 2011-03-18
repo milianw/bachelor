@@ -34,7 +34,7 @@ public:
   virtual ~MPIJob();
 
   virtual void start() = 0;
-  virtual void handleResult() = 0;
+  virtual void handleResult(const int slave) = 0;
 
 protected:
   MPIMaster* const m_master;
@@ -46,14 +46,15 @@ public:
   virtual ~BisectStartJob();
 
   virtual void start();
-  virtual void handleResult();
+  virtual void handleResult(const int slave);
 
 private:
   const fp m_from;
   const fp m_to;
-  BisectNode m_fromAnswer;
-  BisectNode m_toAnswer;
-  int m_handledResults;
+  std::vector<BisectNode> m_results;
+  // slaves might be randomly sorted
+  // this maps them to an index for the result vector
+  std::map<int, int> m_slaveToResult;
 };
 
 class BisectJob : public MPIJob {
@@ -62,7 +63,7 @@ public:
   virtual ~BisectJob();
 
   virtual void start();
-  virtual void handleResult();
+  virtual void handleResult(const int slave);
 
 private:
   const BisectNode m_from;
@@ -76,7 +77,7 @@ public:
   virtual ~FindRootsJob();
 
   virtual void start();
-  virtual void handleResult();
+  virtual void handleResult(const int slave);
 
 private:
   const BisectNode m_from;
@@ -90,7 +91,7 @@ public:
   virtual ~IntensityJob();
 
   virtual void start();
-  virtual void handleResult();
+  virtual void handleResult(const int slave);
 
 private:
   const fp m_B;

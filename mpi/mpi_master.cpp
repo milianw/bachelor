@@ -114,7 +114,7 @@ void MPIMaster::handleResponse(const ResponsePair& response)
   m_availableSlaves.push_back(slave);
 
   MPIJob* job = m_runningJobs.at(slave);
-  job->handleResult();
+  job->handleResult(slave);
   m_runningJobs.erase(slave);
 
   bool stillRunning = false;
@@ -136,4 +136,9 @@ void MPIMaster::handleResponse(const ResponsePair& response)
 ofstream& MPIMaster::intensityOutputFile()
 {
   return m_intensityOutput;
+}
+
+int MPIMaster::availableSlaves() const
+{
+  return m_availableSlaves.size();
 }

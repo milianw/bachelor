@@ -48,7 +48,6 @@ BisectStartJob::BisectStartJob(MPIMaster* master, const fp from, const fp to)
 : MPIJob(master)
 , m_from(from)
 , m_to(to)
-, m_handledResults(0)
 {
   DEBUG_FUNC
 }
@@ -60,19 +59,40 @@ BisectStartJob::~BisectStartJob()
 
 void BisectStartJob::start()
 {
-  m_master->runCommand(this, CMD_DIAGONALIZE,
-                       TAG_DIAGONALIZE_INPUT, m_from,
-                       TAG_DIAGONALIZE_RESULT, m_fromAnswer);
-  m_master->runCommand(this, CMD_DIAGONALIZE,
-                       TAG_DIAGONALIZE_INPUT, m_to,
-                       TAG_DIAGONALIZE_RESULT, m_toAnswer);
+  const int slavesToUse = m_master->availableSlaves();
+  if (slavesToUse < 2) {
+    cerr << "need at least two slaves to work properly" << endl;
+    exit(1);
+  }
+
+  // use as many slaves as possible from the start
+  m_results.resize(slavesToUse);
+  const fp stepSize = (m_to - m_from) / slavesToUse;
+  fp B = m_from;
+  for(int i = 0; i < slavesToUse; ++i) {
+    int slave = m_master->runCommand(this, CMD_DIAGONALIZE,
+                                     TAG_DIAGONALIZE_INPUT, B,
+                                     TAG_DIAGONALIZE_RESULT, m_results.at(i));
+    m_slaveToResult[slave] = i;
+    B += stepSize;
+  }
 }
 
-void BisectStartJob::handleResult()
+void BisectStartJob::handleResult(const int slave)
 {
-  ++m_handledResults;
-  if (m_handledResults == 2) {
-    m_master->enqueueJob(new BisectJob(m_master, m_fromAnswer, m_toAnswer));
+  DEBUG_FUNC
+
+  const int idx = m_slaveToResult.at(slave);
+
+  // check previous result
+  if (idx > 0 && m_results.at(idx - 1).E.size()) {
+    // previous has also finished, we can bisect this segment further
+    m_master->enqueueJob(new BisectJob(m_master, m_results.at(idx - 1), m_results.at(idx)));
+  }
+  // check next result
+  if (idx + 1 < m_results.size() && m_results.at(idx + 1).E.size()) {
+    // next has also finished, we can bisect this segment further
+    m_master->enqueueJob(new BisectJob(m_master, m_results.at(idx), m_results.at(idx + 1)));
   }
 }
 
@@ -98,7 +118,7 @@ void BisectJob::start()
                        TAG_BISECT_RESULT, m_answer);
 }
 
-void BisectJob::handleResult()
+void BisectJob::handleResult(const int /*slave*/)
 {
   switch (m_answer.status) {
     case BisectAnswer::Continue:
@@ -137,7 +157,7 @@ void FindRootsJob::start()
                        TAG_FINDROOTS_RESULT, m_answer);
 }
 
-void FindRootsJob::handleResult()
+void FindRootsJob::handleResult(const int /*slave*/)
 {
   ResonanceField::cleanupResonancyField(m_answer);
   for(int i = 0, c = m_answer.size(); i < c; ++i) {
@@ -166,7 +186,7 @@ void IntensityJob::start()
                        TAG_INTENSITY_RESULT, m_answer);
 }
 
-void IntensityJob::handleResult()
+void IntensityJob::handleResult(const int /*slave*/)
 {
   m_master->intensityOutputFile() << m_B << '\t' << m_answer << endl;
 }
