@@ -41,7 +41,8 @@ const int DEFAULT_STEPS = 100;
 const fp DEFAULT_WIDTH = 0.001;
 const fp WIDTHS_TO_ZERO = 4.0; // = exp(-N^2 /2), with N = 4 this is approx. 0.033%
 const bool DEFAULT_DERIV = false;
-const bool DEFAULT_NORMALIZE = true;
+///NOTE: disabled for now as it would prevent comparing of non-normalized data with the spectrum
+const bool DEFAULT_NORMALIZE = false;
 
 void usage()
 {
@@ -215,11 +216,7 @@ int main(int argc, char* argv[]) {
     for(fp x = max(lastMax, center - width * WIDTHS_TO_ZERO); x <= center + width * WIDTHS_TO_ZERO; x += stepSize) {
       fp y = 0;
       foreach(Gaussian* g, data) {
-        if (deriv) {
-          y += g->yDeriv(x);
-        } else {
-          y += g->y(x);
-        }
+        y = qMax(deriv ? g->yDeriv(x) : g->y(x), y);
       }
       cout << x << '\t' << y << endl;
     }
