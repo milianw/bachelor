@@ -40,13 +40,13 @@ int main(int argc, char* argv[]) {
   // Declare the supported options.
   po::options_description desc("OPTIONS");
   desc.add_options()
-    ("help", "show help message")
-    ("protons", po::value<int>()->default_value(0), "number of protons in system")
-    ("nitrogens", po::value<int>()->default_value(0), "number of nitrogens in system")
-    ("from", po::value<fp>()->default_value(0), "minimum B range in Tesla")
-    ("to", po::value<fp>()->default_value(1), "maximum B range in Tesla")
-    ("mwFreq", po::value<fp>()->required(), "micro wave frequency in GHz")
-    ("outputDir", po::value<string>()->required(), "path for writing intensity data to")
+    ("help,h", "show help message")
+    ("protons,p", po::value<int>()->default_value(0), "number of protons in system")
+    ("nitrogens,n", po::value<int>()->default_value(0), "number of nitrogens in system")
+    ("from,f", po::value<fp>()->default_value(0), "minimum B range in Tesla")
+    ("to,t", po::value<fp>()->default_value(1), "maximum B range in Tesla")
+    ("mwFreq,m", po::value<fp>()->required(), "micro wave frequency in GHz")
+    ("outputDir,o", po::value<string>()->required(), "path for writing intensity data to")
   ;
 
   po::variables_map vm;
