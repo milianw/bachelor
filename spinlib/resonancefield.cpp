@@ -153,8 +153,8 @@ void ResonanceField::cleanupResonancyField(vector< fp >& field)
   sort(field.begin(), field.end());
   vector<fp>::iterator it = field.begin();
   while(it != field.end() - 1) {
-    if (abs(*it / *(it+1) - 1) < 1E-05) {
-      it = field.erase(it);
+    if (abs(*it / *(it+1) - 1) < 0.001) {
+      field.erase(it + 1);
     } else {
       ++it;
     }
