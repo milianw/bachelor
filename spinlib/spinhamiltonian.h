@@ -30,7 +30,8 @@ class Experiment;
 /**
  * TODO: check whether inlining some parts is noticeables
  *
- * NOTE: size of MatrixXc is (4 bytes * (2^(nProtons + 1))^2 * 2), 2^(nProtons + 1) being the dimension of the problem
+ * NOTE: size of MatrixXc is (sizeof(complex< fp >) bytes * (2^(nProtons + 1)*3^(nNitrogens))^2)
+ *                            ^ == 8 for float, 16 for double
  *
  * notes on porting:
  *

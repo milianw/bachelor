@@ -92,6 +92,20 @@ void usage() {
        ;
 }
 
+string formatSize(quint64 size)
+{
+  QChar prefix[5] = {' ', 'K', 'M', 'G', 'T'};
+  int i = 0;
+  for(i; i < 4; ++i) {
+    if (size > 1024) {
+      size /= 1024;
+    } else {
+      break;
+    }
+  }
+  return QString("%1 %2B").arg(size).arg(prefix[i]).toStdString();
+}
+
 #define ENSURE(cond, param) \
   if(!(cond)) { cerr << "ERROR: invalid parameter:" param << "\t" # cond << endl; return 1; }
 
@@ -215,6 +229,9 @@ int main(int argc, char* argv[])
            << "gTensor:\n" << exp.gTensor << endl
            << "B direction:\n" << exp.staticBFieldDirection << endl;
       cerr << "max OMP threads:\t" << omp_get_max_threads() << endl;
+
+      cerr << endl
+           << "peak mem consumption at least:" << formatSize(3 * (sizeof(complex<fp>) * exp.dimension * exp.dimension)) << endl;
 
       QDir outputDir(outputPath);
       ENSURE(outputDir.exists(), "--output")
