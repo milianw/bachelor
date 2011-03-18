@@ -93,7 +93,7 @@ void MPIMaster::startBisect(const fp from, const fp to)
       handleResponse(mpi::wait_any(m_pendingRequests.begin(), m_pendingRequests.end()));
     }
 
-    if (!m_jobQueue.empty()) {
+    while (!m_jobQueue.empty() && !m_availableSlaves.empty()) {
       MPIJob* job = m_jobQueue.front();
       m_jobQueue.pop();
       job->start();
