@@ -204,7 +204,7 @@ c_fp SpinHamiltonian::magneticMoment(const int bra, const int ket) const
 
 MatrixX SpinHamiltonian::intensityMatrix(const MatrixXc& eigenVectors) const {
   ///TODO: take direction of B0 and B1 into account, integrate over plane
-  return eigenVectors.adjoint() * magneticMoments() * eigenVectors;
+  return (eigenVectors.adjoint() * magneticMoments() * eigenVectors).cwiseAbs2();
 }
 
 fp SpinHamiltonian::calculateIntensity() const
