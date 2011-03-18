@@ -41,8 +41,8 @@ int main(int argc, char* argv[]) {
   po::options_description desc("OPTIONS");
   desc.add_options()
     ("help", "show help message")
-    ("protons", po::value<int>()->required(), "number of protons in system")
-    ("nitrogens", po::value<int>()->required(), "number of nitrogens in system")
+    ("protons", po::value<int>()->default_value(0), "number of protons in system")
+    ("nitrogens", po::value<int>()->default_value(0), "number of nitrogens in system")
     ("from", po::value<fp>()->default_value(0), "minimum B range in Tesla")
     ("to", po::value<fp>()->default_value(1), "maximum B range in Tesla")
     ("mwFreq", po::value<fp>()->required(), "micro wave frequency in GHz")
@@ -66,6 +66,10 @@ int main(int argc, char* argv[]) {
   }
 
   Experiment exp(vm["protons"].as<int>(), vm["nitrogens"].as<int>());
+  if (!exp.nNitrogens && !exp.nProtons) {
+    cerr << "either protons or nitrogens must be set" << endl;
+    return 1;
+  }
   exp.mwFreqGHz = vm["mwFreq"].as<fp>();
 
   if (world.rank() == MASTER_RANK) {
