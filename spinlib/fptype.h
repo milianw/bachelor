@@ -24,10 +24,10 @@
 
 #include <complex>
 
-// typedef double fp;
+typedef double fp;
 // typedef long double fp;
-///NOTE: float only seems to work in RelWithDebInfo or Release mode...
-typedef float fp;
+///NOTE: float only seems to work in RelWithDebInfo or Release mode on 32 bit machines...
+// typedef float fp;
 
 typedef std::complex<fp> c_fp;
 
