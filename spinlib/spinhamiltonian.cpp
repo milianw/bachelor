@@ -211,8 +211,8 @@ fp SpinHamiltonian::calculateIntensity() const
 {
   //Diagonalize the total Hamiltonian matrix===================================
   SelfAdjointEigenSolver<MatrixXc> eigenSolver(hamiltonian());
-  const VectorX eigenValues = eigenSolver.eigenvalues();
-  const MatrixXc eigenVectors = eigenSolver.eigenvectors();
+  const VectorX& eigenValues = eigenSolver.eigenvalues();
+  const MatrixXc& eigenVectors = eigenSolver.eigenvectors();
 
   ///TODO: compare performance to using intensityMatrix directly
   ///      esp. considering that we could save sizeof(MatrixXc) then
