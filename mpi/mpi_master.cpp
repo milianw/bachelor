@@ -88,7 +88,7 @@ void MPIMaster::startBisect(const fp from, const fp to)
       }
     }
 
-    if (m_availableSlaves.empty() || m_jobQueue.empty()) {
+    if ((m_availableSlaves.empty() || m_jobQueue.empty()) && !m_pendingRequests.empty()) {
 //       cout << "all slaves working, waiting for any to finish before assigning new work..." << endl;
       handleResponse(mpi::wait_any(m_pendingRequests.begin(), m_pendingRequests.end()));
     }
