@@ -51,6 +51,12 @@ int main(int argc, char* argv[]) {
 
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
+
+  if (vm.count("help")) {
+    cout << desc << endl;
+    return 0;
+  }
+
   try {
     po::notify(vm);
   } catch(boost::program_options::required_option e) {
@@ -58,11 +64,6 @@ int main(int argc, char* argv[]) {
       cerr << e.what() << endl;
     }
     return 1;
-  }
-
-  if (vm.count("help")) {
-    cout << desc << endl;
-    return 0;
   }
 
   Experiment exp(vm["protons"].as<int>(), vm["nitrogens"].as<int>());
