@@ -128,8 +128,8 @@ BisectNode ResonanceField::diagonalizeNode(const fp B) const
 {
   SpinHamiltonian H(B, m_exp);
   SelfAdjointEigenSolver<MatrixXc> eigenSolver(H.hamiltonian());
-  VectorX E = eigenSolver.eigenvalues();
-  const MatrixXc eigenVectors = eigenSolver.eigenvectors();
+  const VectorX& E = eigenSolver.eigenvalues();
+  const MatrixXc& eigenVectors = eigenSolver.eigenvectors();
 
   MatrixXc G(m_exp.dimension, m_exp.dimension);
   G.setZero();
