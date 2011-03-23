@@ -39,7 +39,7 @@ namespace PauliMatrix_J_one {
   const Matrix3c X = sqrt(0.5) * (Matrix3c() << 0, 1, 0,
                                                 1, 0, 1,
                                                 0, 1, 0).finished();
-  const Matrix3c Y = sqrt(c_fp(0, 0.5)) * (Matrix3c() << 0, 1, 0,
+  const Matrix3c Y = c_fp(0, -sqrt(0.5)) * (Matrix3c() << 0, 1, 0,
                                                          -1, 0, 1,
                                                          0, -1, 0).finished();
   const Matrix3c Z = (Matrix3c() << 1, 0, 0,
