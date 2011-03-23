@@ -24,6 +24,7 @@
 #include <iostream>
 #include <string>
 #include <cmath>
+#include <map>
 
 #include "constants.h"
 #include "experiment.h"
@@ -250,29 +251,35 @@ void SpinHamiltonian::calculateTransitions() const
   SelfAdjointEigenSolver<MatrixXc> eigenSolver(hamiltonian());
   const VectorX eigenValues = eigenSolver.eigenvalues();
   const MatrixXc eigenVectors = eigenSolver.eigenvectors();
-
   MatrixX probabilities = intensityMatrix(eigenVectors);
   probabilities /= probabilities.maxCoeff();
-  
+
+  multimap<fp, fp> intensities;
+  for (int i = 0; i < m_exp.dimension; ++i) {
+    for (int j = i + 1; j < m_exp.dimension; ++j) {
+      const fp probability = probabilities(i, j);
+      if (probability > 1.0E-6) {
+        intensities.insert(pair<fp, fp>((1.0/h/1.0E9 * abs(eigenValues(i) - eigenValues(j))), probability));
+      }
+    }
+  }
+
   cout << "\n\nAllowed Transitions: \t\t\tB= " << fixed << m_B << endl;
   cout << "---------------------------------------------------\n";
   cout << "Transition\tFrequency (GHz)\t\tProbability" << endl;
   cout << "---------------------------------------------------\n";
-  int transitions = 1;
-  for (int i = 0;i < m_exp.dimension; ++i) {
-    for (int j = i + 1; j < m_exp.dimension; ++j) {
-      const fp probability = probabilities(i, j);
-      if (probability > 1.0E-6) {
-        cout.width(10);
-        cout << right << transitions++ << '\t';
-        cout.width(14);
-        cout.precision(5);
-        // transition frequency:
-        cout << right << (1.0/h/1.0E9 * abs(eigenValues(i) - eigenValues(j))) << "\t\t";
-        cout.precision(8);
-        cout << probability << endl;
-      }
-    }
+  multimap< fp, fp >::const_iterator it = intensities.begin();
+  multimap< fp, fp >::const_iterator end = intensities.end();
+  int transitions = 0;
+  while(it != end) {
+    cout.width(10);
+    cout << right << ++transitions << '\t';
+    cout.width(14);
+    cout.precision(5);
+    cout << right << it->first << "\t\t";
+    cout.precision(8);
+    cout << it->second << endl;
+    ++it;
   }
   cout << "---------------------------------------------------\n";
   cout << transitions << " transitions in total" << endl;
