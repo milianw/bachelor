@@ -36,12 +36,12 @@ namespace PauliMatrix_J_half {
 }
 // pauli matrices for J = 1
 namespace PauliMatrix_J_one {
-  const Matrix3c X = (Matrix3c() << 0, 0.5 * sqrt(2), 0,
-                                    0.5 * sqrt(2), 0, 0.5 * sqrt(2),
-                                    0, 0.5 * sqrt(2), 0).finished();
-  const Matrix3c Y = (Matrix3c() << 0, c_fp(0, -0.5 * sqrt(2)), 0,
-                                    c_fp(0, 0.5 * sqrt(2)), 0, c_fp(0, -0.5 * sqrt(2)),
-                                    0, c_fp(0, 0.5 * sqrt(2)), 0).finished();
+  const Matrix3c X = sqrt(0.5) * (Matrix3c() << 0, 1, 0,
+                                                1, 0, 1,
+                                                0, 1, 0).finished();
+  const Matrix3c Y = sqrt(c_fp(0, 0.5)) * (Matrix3c() << 0, 1, 0,
+                                                         -1, 0, 1,
+                                                         0, -1, 0).finished();
   const Matrix3c Z = (Matrix3c() << 1, 0, 0,
                                     0, 0, 0,
                                     0, 0, -1).finished();
