@@ -254,11 +254,16 @@ void SpinHamiltonian::calculateTransitions() const
   MatrixX probabilities = intensityMatrix(eigenVectors);
   probabilities /= probabilities.maxCoeff();
 
+  float threshold = 1.0E-6;
+  if (const char* thresholdStr = getenv("PROBABILITY_THRESHOLD")) {
+    threshold = atof(thresholdStr);
+  }
+
   multimap<fp, fp> intensities;
   for (int i = 0; i < m_exp.dimension; ++i) {
     for (int j = i + 1; j < m_exp.dimension; ++j) {
       const fp probability = probabilities(i, j);
-      if (probability > 1.0E-6) {
+      if (probability > threshold) {
         intensities.insert(pair<fp, fp>((1.0/h/1.0E9 * abs(eigenValues(i) - eigenValues(j))), probability));
       }
     }
