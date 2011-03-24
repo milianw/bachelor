@@ -225,7 +225,7 @@ fp SpinHamiltonian::calculateIntensity() const
   const MatrixXc moments = magneticMoments();
 
   const char* thresholdStr = getenv("FREQUENCY_THRESHOLD");
-  float threshold = 5.0E-4;
+  float threshold = 5.0E-3;
   if (thresholdStr) {
     threshold = atof(thresholdStr);
   }
