@@ -78,6 +78,8 @@ void MPIMaster::startBisect(const fp from, const fp to)
   enqueueJob(new BisectStartJob(this, from, to));
 
   while(!m_jobQueue.empty() || !m_pendingRequests.empty()) {
+    cout << "available slaves: " << m_availableSlaves.size() << ", available jobs:" << m_jobQueue.size() << endl;
+
     // check for finished requests
     while(!m_pendingRequests.empty()) {
       boost::optional<ResponsePair> status = mpi::test_any(m_pendingRequests.begin(), m_pendingRequests.end());
