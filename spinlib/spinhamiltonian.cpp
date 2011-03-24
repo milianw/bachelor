@@ -98,6 +98,7 @@ void SpinHamiltonian::addNuclearZeeman(MatrixXc& H) const
         }
 
         // set cell to dot product of H_B and I
+        ///TODO: .dot i.e. with adjoint or cwiseProduct (should not be a difference since B field is never complex?)
         c_fp val = m_staticBField.dot(spinVector(bra, ket, k));
         if (k < m_spins.spinHalfs) {
           // J = 1/2
@@ -130,7 +131,9 @@ void SpinHamiltonian::addHyperFine(MatrixXc& H) const
         //multiply atensor by I
         //multiply s by atensor_I
         ///TODO: proper aTensor for different nuclei
-        colVal += s.dot(m_exp.aTensor * spinVector(bra, ket, k));
+        ///NOTE: don't use .dot() as that would do s.adjoint() * ...
+        ///      but for operators this is wrong
+        colVal += s.cwiseProduct(m_exp.aTensor * spinVector(bra, ket, k)).sum();
       }
       H(bra, ket) += colVal * h * 1.0E6;
     }
@@ -154,7 +157,9 @@ void SpinHamiltonian::addElectronZeeman(MatrixXc& H) const
         continue;
       }
 
-      H(bra, ket) += gDotH_B.dot(spinVector(bra, ket, 0 /* = Electron */)) * Bohrm;
+      ///NOTE: don't use .dot() as that would do s.adjoint() * ...
+      ///      but for operators this is wrong
+      H(bra, ket) += spinVector(bra, ket, 0 /* = Electron */).cwiseProduct(gDotH_B).sum() * Bohrm;
     }
   }
 }

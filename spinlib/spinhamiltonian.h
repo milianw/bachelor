@@ -33,25 +33,10 @@ class Experiment;
  * NOTE: size of MatrixXc is (sizeof(complex< fp >) bytes * (2^(nProtons + 1)*3^(nNitrogens))^2)
  *                            ^ == 8 for float, 16 for double
  *
- * notes on porting:
- *
- * ~~~~~~~~~~~
- * gsl_blas_zdotu (x, y, dotu)
- * => eigen: dotu = x.conjugate().dot(y)
- *
- * from eigen docs about .dot():
- * Note: If the scalar type is complex numbers, then this function returns the hermitian (sesquilinear) dot product,
- *       conjugate-linear in the first variable and linear in the second variable.
- *       but gsl_blas_zdotu seems to differ from this, hence use a.conjugate().dot(b) instead of a.dot(b)
- * NOTE: <orzel> in this very specific case, it might be that (a.transpose()*b)(0,0) is faster (taking the only element of the 1x1 matrix x^T.y
- * ~~~~~~~~~~~
- * gsl_blas_zgemv(CblasTrans, gsl_complex_rect(1,0), atensor, I, gsl_complex_rect(0,0), atensor_I);
- * => eigen: atensor_I = atensor.transpose() * I
- * ~~~~~~~~~~~
- * gsl_blas_zgemm(CblasConjTrans, CblasNoTrans, gsl_complex_rect(1,0),
- *                eigenvectors, moments, gsl_complex_rect(1,0), intermediate);
- * docs: C = \alpha op(A) op(B) + \beta C
- * => eigen: intermediate = eigenvectors.adjoint() * moments + intermediate
+ * NOTE: if you have a dot product between two (spin-)operators, it is *not* the same as
+ *       the dot product between two (complex) vectors!
+ *       complex vectors: a . b = a.adjoint() * b
+ *       spin operators: a . b = a.transpose() * b
  */
 class SpinHamiltonian {
   public:
@@ -81,6 +66,7 @@ class SpinHamiltonian {
     inline bool spinState(int state, int k) const;
 
     /// return spin vector from pauli matrices
+    /// NOTE: don't .dot() them, use .cwiseProduct().sum()!
     inline Vector3c spinVector(int bra, int ket, int k) const;
 
     /// all bits for states @p i, @p j, must match for nucleus @p k
