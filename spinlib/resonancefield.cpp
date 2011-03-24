@@ -29,6 +29,7 @@
 #include <cmath>
 
 #define GNUPLOT_DEBUG(x)
+#define DEBUG(x)
 
 namespace {
 
@@ -95,12 +96,14 @@ ResonanceField::ResonanceField(const Experiment& exp)
 , m_loopingResonanceCanOccur(checkForLoopingResonance())
 , m_lambda(calculateLambda())
 {
+  DEBUG(cout << (m_loopingResonanceCanOccur ? "looping resonance can occur" : "no looping resonance can occur") << endl;)
 }
 
 bool ResonanceField::checkForLoopingResonance() const
 {
   ///TODO: make sure they are always sorted in the correct order...
   VectorX eVals = SpinHamiltonian(0, m_exp).calculateEigenValues();
+  DEBUG(cout << "maximum splitting at zero field: " << (eVals(m_exp.dimension - 1) - eVals(0))/1E6/h << "MHz" << endl;)
   return (eVals(m_exp.dimension - 1) - eVals(0)) >= m_mwFreq;
 }
 
@@ -172,6 +175,8 @@ vector< fp > ResonanceField::calculate(fp B_min, fp B_max)
   }
 
   cleanupResonancyField(field);
+
+  DEBUG(cout << "cleaned resonance field contains " << field.size() << " roots" << endl;)
 
   m_eVals.clear();
   return field;
@@ -270,6 +275,8 @@ map< fp, fp > ResonanceField::resonantSegments(fp B_minStart, fp B_maxStart)
     cerr << "ATTENTION: no resonant segments found in range [" << B_minStart << ", " << B_maxStart << "] for mwFreq = " << (m_exp.mwFreqGHz) << endl;
   }
 
+  DEBUG(cout << "segmentation finished, " << resonantSegments.size() << " segments" << endl;)
+
   return resonantSegments;
 }
 
@@ -304,7 +311,7 @@ vector<fp> ResonanceField::findRoots(const map<fp, fp>& resonantSegments)
     copy(roots.begin(), roots.end(), back_inserter(resonanceField));
     ++it;
   }
-
+  DEBUG(cout << "found " << resonanceField.size() << " roots in resonant segments" << endl;)
   return resonanceField;
 }
 
