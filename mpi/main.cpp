@@ -75,12 +75,12 @@ int main(int argc, char* argv[]) {
 
   if (world.rank() == MASTER_RANK) {
     cout << "protons:" << exp.nProtons << endl
+         << "nitrogens:" << exp.nNitrogens << endl
          << "mwFreq:" << exp.mwFreqGHz << " GHz" << endl;
     // master
     MPIMaster master(world, exp, vm["outputDir"].as<string>());
 
     master.startBisect(vm["from"].as<fp>(), vm["to"].as<fp>());
-    cout << vm["outputDir"].as<string>();
   } else {
     MPISlave slave(world, exp);
     slave.work();
