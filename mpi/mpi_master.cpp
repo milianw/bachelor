@@ -28,6 +28,7 @@
 #include <boost/foreach.hpp>
 
 #include <sstream>
+#include <typeinfo>
 
 using namespace std;
 
@@ -97,6 +98,7 @@ void MPIMaster::startBisect(const fp from, const fp to)
 
     while (!m_jobQueue.empty() && !m_availableSlaves.empty()) {
       MPIJob* job = m_jobQueue.front();
+//       cout << "starting job: " << typeid(*job).name() << endl;
       m_jobQueue.pop();
       job->start();
     }
@@ -116,6 +118,7 @@ void MPIMaster::handleResponse(const ResponsePair& response)
   m_availableSlaves.push_back(slave);
 
   MPIJob* job = m_runningJobs.at(slave);
+//   cout << "response to job " << typeid(*job).name() << " from slave:" << slave << endl;
   job->handleResult(slave);
   m_runningJobs.erase(slave);
 
