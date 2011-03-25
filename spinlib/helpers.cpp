@@ -63,8 +63,8 @@ void printExperiment(ostream& out, const Experiment& exp)
 {
   out << "nuclei:------" << endl << endl;
   BOOST_FOREACH(const Nucleus& nucleus, exp.nuclei) {
-    out << "  " << nucleus.name << ", J = " << (nucleus.twoJ / 2) << ", g = " << (nucleus.g) << endl;
-    out << "  A = " << nucleus.A << endl;
+    out << "  " << nucleus.name << " (Isotope: " << nucleus.isotope << "), J = " << (nucleus.twoJ / 2) << ", g = " << (nucleus.g) << endl;
+    out << "  A = " << nucleus.A << endl << endl;
   }
   out << "------/nuclei" << endl;
   out << "gTensor:\n" << exp.gTensor << endl

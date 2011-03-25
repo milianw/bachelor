@@ -53,6 +53,11 @@ vector<Nucleus> OrcaParser::nuclei() const
   return m_nuclei;
 }
 
+map<string, OrcaParser::AnglePrincipalPair> OrcaParser::eulerRotation() const
+{
+  return m_euler;
+}
+
 void OrcaParser::parseFile(const string& file)
 {
   ifstream stream(file.data(), ios::in);
@@ -74,9 +79,10 @@ void OrcaParser::parseFile(const string& file)
       }
     } else if (boost::starts_with(line, " Nucleus")) {
       static boost::regex pattern("\\s*Nucleus\\s*([^:]+) :"
-                                  " A:ISTP=\\s*\\d+"
+                                  " A:ISTP=\\s*(\\d+)"
                                   " I=\\s*([0-9]+\\.[0-9]+)"
                                   " P=\\s*([0-9]+\\.[0-9]+) (.+)$");
+      ///TODO: quadrupole on next line
       boost::smatch matches;
       if (!boost::regex_match(line, matches, pattern)) {
         cerr << "could not parse line:" << line << endl;
@@ -84,13 +90,16 @@ void OrcaParser::parseFile(const string& file)
       }
 
       string nucleus(matches.str(1));
-      fp spin = boost::lexical_cast<fp>(matches.str(2));
-      fp P = boost::lexical_cast<fp>(matches.str(3));
-      string pUnit(matches.str(4));
+      int isotope = boost::lexical_cast<int>(matches.str(2));
+      fp spin = boost::lexical_cast<fp>(matches.str(3));
+      /*
+      fp P = boost::lexical_cast<fp>(matches.str(4));
+      string pUnit(matches.str(5));
       if (pUnit != "MHz/au**3") {
         cerr << "unhandled unit for g of nucleus in line:" << line << endl;
         throw "parser error";
       }
+      */
       fp g;
       ///TODO: calculate g out of P?
       switch(*(nucleus.end() - 1)) {
@@ -108,10 +117,8 @@ void OrcaParser::parseFile(const string& file)
       Matrix3c A;
       while(!stream.eof()) {
         getline(stream, line);
-        if(boost::starts_with(line, " Orientation:")) {
-          string devZero;
+        if(boost::starts_with(line, " Raw HFC matrix (all values in MHz):")) {
           for(int i = 0; i < 3; ++i) {
-            stream >> devZero; // X,Y,Z
             for(int j = 0; j < 3; ++j) {
               stream >> A(i, j);
             }
@@ -119,7 +126,28 @@ void OrcaParser::parseFile(const string& file)
           break;
         }
       }
-      m_nuclei.push_back(Nucleus(nucleus, spin * 2, A, g));
+      m_nuclei.push_back(Nucleus(nucleus, spin * 2, isotope, A, g));
+    } else if (boost::contains(line, "Euler rotation of hyperfine tensor to g-tensor")) {
+      getline(stream, line); // ---...
+      getline(stream, line); //
+      getline(stream, line); // ---...
+      getline(stream, line); // Atom | ...
+      getline(stream, line); //      | [degrees] ...
+      getline(stream, line); // ---...
+      while (true) {
+        getline(stream, line);
+        if (boost::starts_with(line, "---")) {
+          break;
+        }
+        stringstream ls(line);
+        string nucleus;
+        ls >> nucleus;
+        Vector3 angles;
+        ls >> angles(0); ls >> angles(1); ls >> angles(2);
+        Vector3 principals;
+        ls >> principals(0); ls >> principals(1); ls >> principals(2);
+        m_euler[nucleus] = AnglePrincipalPair(angles, principals);
+      }
     }
   }
 }

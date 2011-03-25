@@ -25,6 +25,7 @@
 #include "eigentypes.h"
 
 #include <vector>
+#include <map>
 
 class Nucleus;
 
@@ -41,12 +42,22 @@ public:
 
   std::vector<Nucleus> nuclei() const;
 
+  /**
+   * map key: nucleus name
+   * map value:
+   *   first: euler angles
+   *   second: principal values of hyperfine tensor
+   */
+  typedef std::pair<Vector3, Vector3> AnglePrincipalPair;
+  std::map<std::string, AnglePrincipalPair> eulerRotation() const;
+
 private:
   void parseFile(const std::string& file);
 
   ///TODO: complex data?
   Matrix3c m_gMatrix;
   std::vector<Nucleus> m_nuclei;
+  std::map<std::string, AnglePrincipalPair> m_euler;
 };
 
 #endif // MW_BACHELOR_ORCAPARSER_H

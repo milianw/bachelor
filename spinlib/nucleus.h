@@ -31,13 +31,14 @@
  */
 struct Nucleus {
   Nucleus() {}
-  Nucleus(const std::string& name_, const int twoJ_,
+  Nucleus(const std::string& name_, const int twoJ_, const int isotope_,
           const Matrix3c& A_, const fp g_)
-  : name(name_), twoJ(twoJ_), A(A_), g(g_)
+  : name(name_), twoJ(twoJ_), isotope(isotope_), A(A_), g(g_)
   { }
 
   std::string name;
   int twoJ;
+  int isotope;
   ///TODO: complex data
   Matrix3c A;
   fp g;

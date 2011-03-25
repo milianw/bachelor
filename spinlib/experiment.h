@@ -23,9 +23,10 @@
 #define MW_BACHELOR_EXPERIMENT_H
 
 #include "eigentypes.h"
+#include "nucleus.h"
+
 #include <vector>
 
-class Nucleus;
 class Spins;
 
 /**

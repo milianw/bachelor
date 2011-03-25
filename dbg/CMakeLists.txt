@@ -1,11 +1,11 @@
-add_library(orca orca.cpp)
-OptimizeForArchitecture(orca hslib)
+MACRO(add_dbg_exe name files)
+  add_executable(${name} ${files})
+  target_link_libraries(${name} hslib)
+  OptimizeForArchitecture(${name})
+ENDMACRO(add_dbg_exe)
 
-add_library(memcheck memcheck.cpp)
-OptimizeForArchitecture(memcheck hslib)
-
-add_library(resfield resfield.cpp)
-OptimizeForArchitecture(resfield hslib)
-
-add_library(hamiltonian orca.cpp)
-OptimizeForArchitecture(hamiltonian hslib)
+add_dbg_exe(memcheck memcheck.cpp)
+add_dbg_exe(resfield resfield.cpp)
+add_dbg_exe(hamiltonian hamiltonian.cpp)
+add_dbg_exe(orca orca.cpp)
+add_dbg_exe(orca2easy orca2easy.cpp)

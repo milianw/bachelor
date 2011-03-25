@@ -51,7 +51,6 @@ QDebug& operator<<(QDebug& out, long double d)
 #include "spinlib/spinhamiltonian.h"
 #include "spinlib/experiment.h"
 #include "spinlib/helpers.h"
-#include "spinlib/nucleus.h"
 
 QTextStream qout(stdout);
 QTextStream qerr(stderr);
