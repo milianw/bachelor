@@ -11,7 +11,7 @@ fi
 
 ./convolute/convolute $1 > ${plt_base}conv
 a=($(basename $1 | tr ":" "\n"))
-t="Spectrum for ${a[0]} 1H, ${a[1]} 14H, mwFreq = ${a[4]} GHz, B-Range: ${a[2]} (${a[3]} steps) ${a[5]}"
+t="Spectrum for ${a[2]} 1H, ${a[3]} 14H, mwFreq = ${a[4]} GHz, B-Range: ${a[0]} (${a[1]} steps) ${a[5]}"
 echo "$GNUPLOT_CMD set title '$t';
       set xlabel 'static B-field in Tesla';
       set ylabel 'intensity in a.u.';

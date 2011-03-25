@@ -19,7 +19,7 @@ find_package(Qt4 REQUIRED)
 include_directories(${QT_INCLUDE_DIR})
 
 set(Boost_USE_STATIC_LIBS ON)
-find_package(Boost 1.42.0 COMPONENTS mpi serialization program_options REQUIRED )
+find_package(Boost 1.42.0 COMPONENTS mpi serialization program_options regex REQUIRED )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -32,4 +32,4 @@ add_subdirectory(convolute)
 
 add_executable(test test.cpp)
 OptimizeForArchitecture(test)
-target_link_libraries(test hslib)
+target_link_libraries(test hslib ${Boost_LIBRARIES})

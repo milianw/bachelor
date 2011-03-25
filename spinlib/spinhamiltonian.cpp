@@ -29,6 +29,7 @@
 #include "constants.h"
 #include "experiment.h"
 #include "spins.h"
+#include "nucleus.h"
 
 using namespace Constants;
 using namespace Eigen;
@@ -37,13 +38,9 @@ using namespace std;
 SpinHamiltonian::SpinHamiltonian(const fp B, const Experiment& experiment)
 : m_B(B)
 , m_exp(experiment)
-, m_spins(1 + m_exp.nProtons, m_exp.nNitrogens)
+, m_spins(m_exp.spinSystem())
 , m_staticBField(m_exp.staticBField(B))
 {
-  if (m_spins.states != m_exp.dimension) {
-    cerr << "spins states init error" << endl;
-    exit(1);
-  }
 }
 
 SpinHamiltonian::~SpinHamiltonian()
@@ -133,7 +130,7 @@ void SpinHamiltonian::addHyperFine(MatrixXc& H) const
         ///TODO: proper aTensor for different nuclei
         ///NOTE: don't use .dot() as that would do s.adjoint() * ...
         ///      but for operators this is wrong
-        colVal += s.cwiseProduct(m_exp.aTensor * spinVector(bra, ket, k)).sum();
+        colVal += s.cwiseProduct(m_exp.nuclei.at(k - 1).A * spinVector(bra, ket, k)).sum();
       }
       H(bra, ket) += colVal * h * 1.0E6;
     }

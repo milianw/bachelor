@@ -24,8 +24,10 @@
 #include "mpi_job.h"
 
 #include "spinlib/experiment.h"
+#include "spinlib/helpers.h"
 
 #include <boost/foreach.hpp>
+
 
 #include <sstream>
 #include <typeinfo>
@@ -35,7 +37,7 @@ using namespace std;
 string intensityOutputFile(const Experiment& exp, const string& outputDir, const fp from, const fp to)
 {
   stringstream stream;
-  stream << outputDir << '/' << exp.nProtons << ':' << exp.nNitrogens << ':' << from << '-' << to << ":auto:" << exp.mwFreqGHz << ":mpi";
+  stream << outputDir << "/" << from << '-' << to << ":-1:" << identifierForExperiment(exp) << ":mpi";
   return stream.str();
 }
 

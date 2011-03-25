@@ -50,6 +50,8 @@ QDebug& operator<<(QDebug& out, long double d)
 #include "spinlib/resonancefield.h"
 #include "spinlib/spinhamiltonian.h"
 #include "spinlib/experiment.h"
+#include "spinlib/helpers.h"
+#include "spinlib/nucleus.h"
 
 QTextStream qout(stdout);
 QTextStream qerr(stderr);
@@ -59,25 +61,6 @@ using namespace std;
 void usage() {
   cout << "hs-N OPTIONS" << endl
        << endl
-       /* TODO
-       << " PARAMFILE:" << endl
-       << "  a file that contains the parameters for the simulation" << endl
-       << "  it should be structured as follows:" << endl
-       << endl
-       ///TODO: dynamic size of coupled nuclei? would require bitset alternative
-//        << "  \tnatoms: n    # int, number of coupled nuclei" << endl
-       << "  \tfield: x y z # 3x double vector, direction of static field" << endl
-       << "  \tg:           # 3x3 double matrix, g tensor" << endl
-       << "  \t  xx xy xz" << endl
-       << "  \t  yx yy yz" << endl
-       << "  \t  zx zy zz" << endl
-       ///TODO: A tensor for H, N, ...
-       << "  \tA:           # 3x3 double matrix, A tensor" << endl
-       << "  \t  xx xy xz" << endl
-       << "  \t  yx yy yz" << endl
-       << "  \t  zx zy zz" << endl
-       << endl
-       */
        << " OPTIONS: (all are required, but -i and -p are mutually exclusive)" << endl
        << "  -n, --nprotons N  \tNumber of 1H nuclei" << endl
        << "  -N, --nitrogens N \tNumber of 14N nuclei" << endl
@@ -88,22 +71,9 @@ void usage() {
        << "         example: -p 0.2 \tpeaks at 0.2T" << endl
        << "  -o, --output DIR  \tOutput file path, each run creates a folder from timestamp" << endl
        << "                    \tand in there one file per thread gets created" << endl
+       << "  -s, --system FILE \tOrca input file to use for system setup" << endl
        << "  -h, --help        \tDisplay help" << endl
        ;
-}
-
-string formatSize(quint64 size)
-{
-  QChar prefix[5] = {' ', 'K', 'M', 'G', 'T'};
-  int i = 0;
-  for(i; i < 4; ++i) {
-    if (size > 1024) {
-      size /= 1024;
-    } else {
-      break;
-    }
-  }
-  return QString("%1 %2B").arg(size).arg(prefix[i]).toStdString();
 }
 
 #define ENSURE(cond, param) \
@@ -124,6 +94,7 @@ int main(int argc, char* argv[])
   int nProtons = 0;
   int nNitrogens = 0;
   QString outputPath;
+  QString orcaInput;
 
   // peaks
   double B = 0;
@@ -193,16 +164,22 @@ int main(int argc, char* argv[])
           mode = Error;
           break;
         }
+      } else if (arg == "--system" || arg == "-s") {
+        if ((it+1) != end) {
+          ++it;
+          orcaInput = *it;
+        } else {
+          mode = Error;
+          break;
+        }
       }
       ++it;
     }
   }
 
-  ENSURE(nNitrogens >= 0, "nprotons")
-  ENSURE(nProtons >= 0, "nprotons")
+  Experiment exp = getExperiment(orcaInput.toStdString(), nProtons, nNitrogens);
 
-  Experiment exp(nProtons, nNitrogens);
-  ENSURE(exp.dimension < pow(2, 16), "n, N")
+  ENSURE(!exp.nuclei.empty(), "nitrogens/protons/system")
 
   switch (mode) {
     case Error:
@@ -219,23 +196,18 @@ int main(int argc, char* argv[])
       ENSURE(mwFreq > 0, "intensity")
       exp.mwFreqGHz = mwFreq;
       const double B_stepSize = (B_max - B_min) / steps;
-      cerr << "calculating intensity:" << endl
-           << "mwFreq:\t" << exp.mwFreqGHz << "GHz" << endl
-           << "B:\t" << B_min << "T to " << B_max << "T" << endl
+      cout << "calculating intensity:" << endl
+           << "B range:\t" << B_min << "T to " << B_max << "T" << endl
            << "steps:\t" << steps << endl;
-      cerr << "nProtons:\t" << exp.nProtons << endl
-           << "nNitrogens:\t" << exp.nNitrogens << endl
-           << "aTensor:\n" << exp.aTensor << endl
-           << "gTensor:\n" << exp.gTensor << endl
-           << "B direction:\n" << exp.staticBFieldDirection << endl;
+      printExperiment(cout, exp);
       cerr << "max OMP threads:\t" << omp_get_max_threads() << endl;
 
       cerr << endl
-           << "peak mem consumption at least:" << formatSize(3 * (sizeof(complex<fp>) * exp.dimension * exp.dimension)) << endl;
+           << "peak mem consumption at least:" << guessPeakMemConsumption(exp) << endl;
 
       QDir outputDir(outputPath);
       ENSURE(outputDir.exists(), "--output")
-      QString base = QString("%1:%2:%3").arg(QString::number(exp.nProtons), QString::number(exp.nNitrogens), intensityArg);
+      QString base = QString("%1-%2:%3:%4").arg(B_min).arg(B_max).arg(steps).arg(QString::fromStdString(identifierForExperiment(exp)));
       ENSURE(outputDir.exists(base) || outputDir.mkdir(base), "--output");
       const QString outputFileTpl(outputDir.canonicalPath() + QDir::separator() + base + QDir::separator() + "%1");
 
@@ -276,12 +248,9 @@ int main(int argc, char* argv[])
     case CalculatePeaks:
     {
       ENSURE(B > 0, "peaks")
-      cerr << "calculating peaks:" << endl
+      cout << "calculating peaks:" << endl
            << "B:\t" << B << endl;
-      cerr << "nProtons:\t" << exp.nProtons << endl
-           << "aTensor:\n" << exp.aTensor << endl
-           << "gTensor:\n" << exp.gTensor << endl
-           << "B direction:\n" << exp.staticBFieldDirection << endl;
+      printExperiment(cout, exp);
 
       SpinHamiltonian(B, exp).calculateTransitions();
       return 0;

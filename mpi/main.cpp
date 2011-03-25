@@ -23,12 +23,16 @@
 #include <string>
 
 #include <boost/program_options.hpp>
+#include <boost/foreach.hpp>
 
 #include "mpi_master.h"
 #include "mpi_slave.h"
 #include "mpi_iface.h"
 
 #include "spinlib/experiment.h"
+#include "spinlib/orcaparser.h"
+#include "spinlib/nucleus.h"
+#include "spinlib/helpers.h"
 
 using namespace std;
 namespace po = boost::program_options;
@@ -43,6 +47,7 @@ int main(int argc, char* argv[]) {
     ("help,h", "show help message")
     ("protons,p", po::value<int>()->default_value(0), "number of protons in system")
     ("nitrogens,n", po::value<int>()->default_value(0), "number of nitrogens in system")
+    ("system,s", po::value<string>()->default_value(string()), "ORCA data file describing the system")
     ("from,f", po::value<fp>()->default_value(0), "minimum B range in Tesla")
     ("to,t", po::value<fp>()->default_value(1), "maximum B range in Tesla")
     ("mwFreq,m", po::value<fp>()->required(), "micro wave frequency in GHz")
@@ -53,7 +58,9 @@ int main(int argc, char* argv[]) {
   po::store(po::parse_command_line(argc, argv, desc), vm);
 
   if (vm.count("help")) {
-    cout << desc << endl;
+    cout << desc << endl << endl
+         << "NOTE: -s is mutually exclusive with -p -n, but either one must be given" << endl
+    ;
     return 0;
   }
 
@@ -66,21 +73,24 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  Experiment exp(vm["protons"].as<int>(), vm["nitrogens"].as<int>());
-  if (!exp.nNitrogens && !exp.nProtons) {
-    cerr << "either protons or nitrogens must be set" << endl;
+  Experiment exp = getExperiment(vm["system"].as<string>(), vm["protons"].as<int>(), vm["nitrogens"].as<int>());
+  if (exp.nuclei.empty()) {
+    cerr << "either protons, nitrogens or system must be set" << endl;
     return 1;
   }
   exp.mwFreqGHz = vm["mwFreq"].as<fp>();
 
   if (world.rank() == MASTER_RANK) {
-    cout << "protons:" << exp.nProtons << endl
-         << "nitrogens:" << exp.nNitrogens << endl
-         << "mwFreq:" << exp.mwFreqGHz << " GHz" << endl;
-    // master
-    MPIMaster master(world, exp, vm["outputDir"].as<string>());
+    const fp from = vm["from"].as<fp>();
+    const fp to = vm["to"].as<fp>();
+    cout << "calculating intensity in range B = \t" << from << "T to " << to << "T" << endl;
+    printExperiment(cout, exp);
+    cout << "worker slaves:" << (world.size() - 1) << endl;
+    cout << endl
+         << "peak mem consumption (on slaves) at least:" << guessPeakMemConsumption(exp) << endl;
 
-    master.startBisect(vm["from"].as<fp>(), vm["to"].as<fp>());
+    MPIMaster master(world, exp, vm["outputDir"].as<string>());
+    master.startBisect(from, to);
   } else {
     MPISlave slave(world, exp);
     slave.work();

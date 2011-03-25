@@ -22,33 +22,56 @@
 #ifndef MW_BACHELOR_EXPERIMENT_H
 #define MW_BACHELOR_EXPERIMENT_H
 
-#include <cmath>
-
-#include "constants.h"
 #include "eigentypes.h"
+#include <vector>
+
+class Nucleus;
+class Spins;
 
 /**
  * Experiment data / simulation parameters
+ *
+ * so far assumes a single unpaired electron
  */
 struct Experiment {
-  Experiment(int _nProtons, int _nNitrogens = 0)
-  : nProtons(_nProtons)
-  , nNitrogens(_nNitrogens)
-  , dimension(pow(2, nProtons + 1) * pow(3, nNitrogens))
-  , mwFreqGHz(0)
-  {
-    gTensor = Matrix3c::Identity() * Constants::g_E;
-    aTensor = Matrix3c::Identity() * 1420;
-    staticBFieldDirection << 0, 0, 1;
-  }
+  /**
+   * construct experiment out of list of nuclei
+   *
+   * electron gTensor defaults to Constants::g_E * Matrix3c::Identity();
+   * static B Field direction defaults to [0 0 1], i.E. only in z-Direction
+   * mwFreqGHz defaults to zero
+   */
+  explicit Experiment(const std::vector<Nucleus>& nuclei);
 
-  const int nProtons;
-  const int nNitrogens;
+  /**
+   * generate experiment with dummy data
+   *
+   * all nuclei will have an A-Tensor of 1420 * Matrix3c::Identity()
+   * for the other defaults see the Experiment() ctor
+   *
+   * @p protons number of 1H nuclei (J = 0.5, g = Constants::g_1H)
+   * @p nitrogens number of 14N nuclei (J = 0.5, g = Constants::g_14N)
+   */
+  static Experiment generateDummy(int protons, int nitrogens);
+
+  /**
+   * generate spin system for this experiment
+   */
+  Spins spinSystem() const;
+
+  // nuclei in the experiment
+  // guaranteed sort order by Nucleus.twoJ (ascending)
+  const std::vector<Nucleus> nuclei;
+  // dimensionality of the experiment, basically this is:
+  // \Pi_k (2J_k + 1)
+  // in our case: 2^protons * 3^nitrogens
   const int dimension;
 
+  // electron g Tensor
   Matrix3c gTensor;
-  Matrix3c aTensor;
+  // direction of static B field
   Vector3c staticBFieldDirection;
+  // incident micro wave frequency in GHz
   fp mwFreqGHz;
 
   /**

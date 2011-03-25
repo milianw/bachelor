@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
   cout << "number of J = 0.5: " << spinHalf << " + 1 electron" << endl;
   cout << "number of J = 1: " << spinOne << endl;
 
-  Experiment exp(spinHalf, spinOne);
+  Experiment exp = Experiment::generateDummy(spinHalf, spinOne);
   exp.mwFreqGHz = 9.5;
 
   ResonanceField f(exp);

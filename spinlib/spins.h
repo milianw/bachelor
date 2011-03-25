@@ -85,7 +85,7 @@ struct Spins
   }
 
   /// @return spin of @p spinId in @p state
-  int spinInState(const int spinId, const int state) const
+  inline int spinInState(const int spinId, const int state) const
   {
     /// decide which spin this spinId has
     /// actually we calc 2J
@@ -125,7 +125,7 @@ struct Spins
   }
 
   /// @return spin vector for @p spinId in @p bra and @p ket configuration
-  Vector3c spinVector(const int bra, const int ket, const int spinId) const
+  inline Vector3c spinVector(const int bra, const int ket, const int spinId) const
   {
     const int braSpin = spinInState(spinId, bra);
     const int ketSpin = spinInState(spinId, ket);

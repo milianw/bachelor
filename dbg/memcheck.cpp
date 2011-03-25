@@ -23,12 +23,22 @@ string formatSize(long long unsigned int size) {
   return stream.str();
 }
 
-int main() {
-  Experiment exp(4, 1);
+int main(int argc, char** argv) {
+  int spinHalf = 1;
+  int spinOne = 0;
+  if (argc > 1) {
+    spinHalf = atoi(argv[1]);
+  }
+  if (argc > 2) {
+    spinOne = atoi(argv[2]);
+  }
+
+  Experiment exp = Experiment::generateDummy(spinHalf, spinOne);
+  cout << "peak mem consumption at least:" << formatSize(2 * (sizeof(complex<fp>) * exp.dimension * exp.dimension)) << endl;
+
   exp.mwFreqGHz = 9.5;
   {
   SpinHamiltonian H(0.3, exp);
-  cout << "peak mem consumption at least:" << formatSize(2 * (sizeof(complex<fp>) * exp.dimension * exp.dimension)) << endl;
   cout << H.calculateIntensity() << endl;
   }
   {

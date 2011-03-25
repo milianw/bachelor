@@ -23,10 +23,14 @@
 
 #include "experiment.h"
 #include "spinhamiltonian.h"
+#include "constants.h"
+#include "nucleus.h"
 
 #include <stack>
 #include <iostream>
 #include <cmath>
+
+#include <boost/foreach.hpp>
 
 #define GNUPLOT_DEBUG(x)
 #define DEBUG(x)
@@ -120,10 +124,9 @@ fp ResonanceField::calculateLambda() const
   // S = 0.5
   lambda += Bohrm * 0.5 * (n.transpose() * m_exp.gTensor).norm();
 
-  // I = 0.5
-  lambda += NUC_MAGNETON * m_exp.nProtons * g_1H * 0.5;
-  // I = 1
-  lambda += NUC_MAGNETON * m_exp.nNitrogens * g_14N * 1;
+  BOOST_FOREACH(const Nucleus& nucleus, m_exp.nuclei) {
+    lambda += NUC_MAGNETON * nucleus.g * (nucleus.twoJ / 2);
+  }
   return lambda;
 }
 
