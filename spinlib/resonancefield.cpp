@@ -152,14 +152,17 @@ BisectNode ResonanceField::diagonalizeNode(const fp B) const
 
 void ResonanceField::cleanupResonancyField(vector< fp >& field)
 {
-  if (field.size() < 2) {
+  static const fp threshold = getenv("RESFIELD_CLEANUP_THRESHOLD") ? atof(getenv("RESFIELD_CLEANUP_THRESHOLD")) : 0.001;
+
+  if (field.size() < 2 || !threshold) {
     return;
   }
 
   sort(field.begin(), field.end());
   vector<fp>::iterator it = field.begin();
+
   while(it != field.end() - 1) {
-    if (abs(*it / *(it+1) - 1) < 0.001) {
+    if (abs(*it / *(it+1) - 1) < threshold) {
       field.erase(it + 1);
     } else {
       ++it;
