@@ -3,6 +3,7 @@
 #include "spinlib/resonancefield.h"
 #include "spinlib/spins.h"
 #include "spinlib/constants.h"
+#include "spinlib/helpers.h"
 
 #include <string>
 #include <iostream>
@@ -42,7 +43,8 @@ int main(int argc, char** argv) {
   cout << "number of J = 1: " << spinOne << endl;
   cout << "B = " << B << "T" << endl;
 
-  Experiment exp = Experiment::generateDummy(spinHalf, spinOne);
+  Experiment exp = getExperiment(getenv("ORCA_FILE") ? getenv("ORCA_FILE") : "", spinHalf, spinOne);
+  printExperiment(cout, exp);
   SpinHamiltonian H(B, exp);
   {
     MatrixXc m = H.hamiltonian();
