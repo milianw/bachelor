@@ -100,3 +100,26 @@ Spins Experiment::spinSystem() const
   return s;
 }
 
+Vector3c Experiment::staticBField(const fp B) const
+{
+  if (getenv("USE_LABOR_Z")) {
+    return (Vector3c() << 0, 0, B).finished();
+  }
+  Vector3c gz;
+  Eigen::EigenSolver<Matrix3> solver(gTensor.real());
+  const Vector3 &E = solver.eigenvalues().real();
+  const Matrix3c &V = solver.eigenvectors();
+  // |g_z> has the largest eigen value
+  if (E(0) > E(1)) {
+    if (E(0) > E(2)) {
+      gz = V.col(0);
+    } else {
+      gz = V.col(2);
+    }
+  } else if (E(1) > E(2)) {
+    gz = V.col(1);
+  } else {
+    gz = V.col(2);
+  }
+  return gz * B / gz.norm();
+}

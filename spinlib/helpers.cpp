@@ -68,7 +68,7 @@ void printExperiment(ostream& out, const Experiment& exp)
   }
   out << "------/nuclei" << endl;
   out << "gTensor:\n" << exp.gTensor << endl
-      << "B direction:\n" << exp.staticBFieldDirection << endl;
+      << "B direction:\n" << exp.staticBField(1).transpose() << endl;
   out << "mwFreq: " << exp.mwFreqGHz << "GHz" << endl;
 }
 

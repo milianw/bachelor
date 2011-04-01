@@ -76,14 +76,11 @@ struct Experiment {
   fp mwFreqGHz;
 
   /**
-   * static field of given strength in direction of @c staticBFieldDirection
+   * static field of given strength in direction of |g_z>
    *
    * @p B field strength in tesla
    */
-  inline Vector3c staticBField(const fp B) const
-  {
-    return staticBFieldDirection * B / staticBFieldDirection.norm();
-  }
+  Vector3c staticBField(const fp B) const;
 };
 
 #endif // MW_BACHELOR_EXPERIMENT_H
