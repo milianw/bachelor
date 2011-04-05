@@ -17,8 +17,6 @@ using namespace std;
 using namespace Eigen;
 using namespace boost::filesystem;
 
-#include "spinlib/operatorsum_p.h"
-
 void dbg(const MatrixXc &m)
 {
   SelfAdjointEigenSolver<MatrixXc> eigenSolver(m, EigenvaluesOnly);
@@ -51,6 +49,7 @@ int main(int argc, char** argv) {
   Experiment exp = getExperiment(orcaFile, spinHalf, spinOne);
   printExperiment(cout, exp);
   SpinHamiltonian H(B, exp);
+  cout << "B-field:" << exp.staticBField(B).transpose() << endl;
   {
     MatrixXc m = H.hamiltonian();
     m /= (Constants::h * 1E09);

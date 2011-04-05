@@ -154,11 +154,16 @@ void ResonanceField::cleanupResonancyField(vector< fp >& field)
 {
   static const fp threshold = getenv("RESFIELD_CLEANUP_THRESHOLD") ? atof(getenv("RESFIELD_CLEANUP_THRESHOLD")) : 0.001;
 
-  if (field.size() < 2 || !threshold) {
+  if (field.size() < 2) {
     return;
   }
 
   sort(field.begin(), field.end());
+
+  if (!threshold) {
+    return;
+  }
+
   vector<fp>::iterator it = field.begin();
 
   while(it != field.end() - 1) {
