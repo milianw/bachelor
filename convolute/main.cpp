@@ -188,6 +188,9 @@ int main(int argc, char* argv[]) {
       QStringList tuple = QString::fromLocal8Bit(file.readLine()).split(QLatin1Char('\t'));
       fp B = tuple.first().toDouble();
       fp I = tuple.last().toDouble();
+      if (!I) {
+        continue;
+      }
       if (I > maxI) {
         maxI = I;
       }
