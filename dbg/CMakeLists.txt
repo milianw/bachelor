@@ -1,6 +1,6 @@
 MACRO(add_dbg_exe name files)
   add_executable(${name} ${files})
-  target_link_libraries(${name} hslib)
+  target_link_libraries(${name} hslib ${Boost_LIBRARIES})
   OptimizeForArchitecture(${name})
 ENDMACRO(add_dbg_exe)
 

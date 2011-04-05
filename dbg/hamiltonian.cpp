@@ -9,10 +9,13 @@
 #include <iostream>
 #include <sstream>
 
+#include <boost/filesystem.hpp>
+
 #include <Eigen/Dense>
 
 using namespace std;
 using namespace Eigen;
+using namespace boost::filesystem;
 
 #include "spinlib/operatorsum_p.h"
 
@@ -39,11 +42,13 @@ int main(int argc, char** argv) {
     B = atof(argv[3]);
   }
 
-  cout << "number of J = 0.5: " << spinHalf << " + 1 electron" << endl;
-  cout << "number of J = 1: " << spinOne << endl;
-  cout << "B = " << B << "T" << endl;
+  path orcaFilePath(argv[1]);
+  string orcaFile;
+  if (exists(orcaFilePath)) {
+    orcaFile = argv[1];
+  }
 
-  Experiment exp = getExperiment(getenv("ORCA_FILE") ? getenv("ORCA_FILE") : "", spinHalf, spinOne);
+  Experiment exp = getExperiment(orcaFile, spinHalf, spinOne);
   printExperiment(cout, exp);
   SpinHamiltonian H(B, exp);
   {
