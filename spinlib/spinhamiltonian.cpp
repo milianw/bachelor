@@ -181,12 +181,13 @@ MatrixXc SpinHamiltonian::magneticMoments() const
 c_fp SpinHamiltonian::magneticMoment(const int bra, const int ket) const
 {
   c_fp ret = 0;
+  const Vector3c g_x = m_exp.gTensorEigenVectors().col(0) / m_exp.gTensorEigenVectors().col(0).norm();
   for (int k = 0; k < m_spins.elements; ++k) {
     if (!stateContributes(bra, ket, k, IncludeElectron)) {
       continue;
     }
 
-    c_fp xMoment = spinVector(bra, ket, k)(0);
+    c_fp xMoment = g_x.dot(spinVector(bra, ket, k));
 
     if (k == 0) {
       // electron
