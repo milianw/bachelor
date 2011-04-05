@@ -16,7 +16,7 @@ if [[ "$NOPLOT_RAW" == "1" ]]; then
   pltraw=""
 fi
 echo "$GNUPLOT_CMD set title '$t';
-      set xlabel 'static B-field in Tesla';
+      set xlabel 'static B-field in mT';
       set ylabel 'intensity in a.u.';
       set grid;
       plot '${f}.conv' w lines notitle$pltraw" | gnuplot -persist
