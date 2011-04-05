@@ -8,7 +8,7 @@ matlab -nojvm -nosplash -r "run('/tmp/test.m');" || exit
 
 echo "plotting files from: $f"
 
-CONVOLUTE_WIDTH=1 ./convolute/convolute $f > ${f}.conv
+./convolute/convolute $f > ${f}.conv
 
 t="Spectrum for $f, mwFreq = 9.5 GHz (EasySpin)"
 pltraw=", '$f' w impulses notitle";
