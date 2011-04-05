@@ -78,10 +78,10 @@ void OrcaParser::parseFile(const string& file)
         }
       }
     } else if (boost::starts_with(line, " Nucleus")) {
-      static boost::regex pattern("\\s*Nucleus\\s*([^:]+) :"
-                                  " A:ISTP=\\s*(\\d+)"
-                                  " I=\\s*([0-9]+\\.[0-9]+)"
-                                  " P=\\s*([0-9]+\\.[0-9]+) (.+)$");
+      static boost::regex pattern("\\s*Nucleus\\s*([^: ]+)\\s*:"
+                                  "\\s*A:ISTP=\\s*(\\d+)"
+                                  "\\s+I=\\s*([0-9]+\\.[0-9]+)"
+                                  "\\s+P=\\s*([0-9]+\\.[0-9]+)\\s+(.+)$");
       ///TODO: quadrupole on next line
       boost::smatch matches;
       if (!boost::regex_match(line, matches, pattern)) {
