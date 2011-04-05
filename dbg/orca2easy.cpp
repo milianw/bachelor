@@ -66,6 +66,7 @@ int main(int argc, char** argv) {
     cout << '\'' << id.str() << '\'';
     cout << ", A, Apa);" << endl;
   }
+  cout << "[B, Spec] = pepper(Sys, Exp, Opt);" << endl;
   /*
   // Sys.Nucs = '1H,1H,...';
   stringstream nuclei;
