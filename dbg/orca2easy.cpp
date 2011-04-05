@@ -54,24 +54,14 @@ int main(int argc, char** argv) {
   cout << "Sys = struct();" << endl;
   cout << "Sys.g = "; printMatlab(parser.electronGMatrix()); cout << ";" << endl;
 
-  cout << "Sys2 = Sys;";
-  const map<string, OrcaParser::AnglePrincipalPair>& euler = parser.eulerRotation();
   BOOST_FOREACH(const Nucleus& nuc, parser.nuclei()) {
     stringstream id;
     id << nuc.isotope << *(nuc.name.end() - 1);
-    cout << "Sys = nucspinadd(Sys,";
-    cout << '\'' << id.str() << '\'';
-    cout << ", ";
-    printMatlab(euler.at(nuc.name).second);
-    cout << ", ";
-    printMatlab(euler.at(nuc.name).first);
-    cout << "* degree);" << endl;
-    // Sys2:
     cout << "A_full = ";
     printMatlab(nuc.A);
     cout << ";" << endl;
     cout << "[A, Apa] = euler(Sys2.g, A_full, 1);" << endl;
-    cout << "Sys2 = nucspinadd(Sys2,";
+    cout << "Sys = nucspinadd(Sys,";
     cout << '\'' << id.str() << '\'';
     cout << ", A, Apa);" << endl;
   }
