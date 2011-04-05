@@ -81,7 +81,13 @@ public:
 
   void setGTensor(const Matrix3& gTensor);
   inline const Matrix3& gTensor() const { return m_gTensor; }
+  /**
+   * sorted |g_x> |g_y> |g_z> vectors
+   */
   const Matrix3c& gTensorEigenVectors() const;
+  /**
+   * sorted g_x, g_y, g_z eigen values
+   */
   const Vector3& gTensorEigenValues() const;
 
 private:

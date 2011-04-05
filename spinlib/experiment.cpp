@@ -26,10 +26,12 @@
 #include "spins.h"
 
 #include <algorithm>
+#include <map>
 
 #include <boost/foreach.hpp>
 
 using namespace std;
+using namespace Eigen;
 
 int dimensionForNuclei(const vector<Nucleus>& nuclei)
 {
@@ -104,30 +106,31 @@ Vector3c Experiment::staticBField(const fp B) const
   if (getenv("USE_LABOR_Z")) {
     return (Vector3c() << 0, 0, B).finished();
   }
-  Vector3c gz;
-  const Vector3& E = m_gTensorEigenValues;
-  const Matrix3c& V = m_gTensorEigenVectors;
-  // |g_z> has the largest eigen value
-  if (E(0) > E(1)) {
-    if (E(0) > E(2)) {
-      gz = V.col(0);
-    } else {
-      gz = V.col(2);
-    }
-  } else if (E(1) > E(2)) {
-    gz = V.col(1);
-  } else {
-    gz = V.col(2);
-  }
+  const Vector3c& gz = m_gTensorEigenVectors.col(2);
   return gz * B / gz.norm();
 }
 
 void Experiment::setGTensor(const Matrix3& gTensor)
 {
   m_gTensor = gTensor;
-  Eigen::EigenSolver<Matrix3> solver(gTensor);
-  m_gTensorEigenValues = solver.eigenvalues().real();
-  m_gTensorEigenVectors = solver.eigenvectors();
+
+  EigenSolver<Matrix3> solver(gTensor);
+
+  multimap<double, int> sortedKeys;
+  sortedKeys.insert(pair<double, int>(solver.eigenvalues()(0).real(), 0));
+  sortedKeys.insert(pair<double, int>(solver.eigenvalues()(1).real(), 1));
+  sortedKeys.insert(pair<double, int>(solver.eigenvalues()(2).real(), 2));
+
+  multimap<double, int>::iterator it = sortedKeys.begin();
+  m_gTensorEigenVectors.col(0) = solver.eigenvectors().col(it->second);
+  m_gTensorEigenValues(0) = it->first;
+  ++it;
+  m_gTensorEigenVectors.col(1) = solver.eigenvectors().col(it->second);
+  m_gTensorEigenValues(1) = it->first;
+  ++it;
+  m_gTensorEigenVectors.col(2) = solver.eigenvectors().col(it->second);
+  m_gTensorEigenValues(2) = it->first;
+
 }
 
 const Matrix3c& Experiment::gTensorEigenVectors() const
