@@ -235,7 +235,7 @@ BisectAnswer ResonanceField::checkSegment(const BisectNode& from, const BisectNo
     }
     epsilon *= 2;
 
-    static const float threshold = getenv("RESFIELD_THRESHOLD") ? atof(getenv("RESFIELD_THRESHOLD")) : 1.0E-4;
+    static const float threshold = getenv("RESFIELD_THRESHOLD") ? atof(getenv("RESFIELD_THRESHOLD")) : 1.0E-6;
 
     if (epsilon > threshold * m_mwFreq) {
       return continueAnswer(from.B, to.B, mid);
