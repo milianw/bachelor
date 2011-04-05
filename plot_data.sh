@@ -12,8 +12,12 @@ fi
 ./convolute/convolute $1 > ${plt_base}conv
 a=($(basename $1 | tr ":" "\n"))
 t="Spectrum for ${a[2]} 1H, ${a[3]} 14H, mwFreq = ${a[4]} GHz, B-Range: ${a[0]} (${a[1]} steps) ${a[5]}"
+pltraw=", '${plt_base}raw' w impulses notitle";
+if [[ "$NOPLOT_RAW" == "1" ]]; then
+  pltraw=""
+fi
 echo "$GNUPLOT_CMD set title '$t';
       set xlabel 'static B-field in Tesla';
       set ylabel 'intensity in a.u.';
       set grid;
-      plot '${plt_base}conv' w lines notitle, '${plt_base}raw' w impulses notitle" | gnuplot -persist
+      plot '${plt_base}conv' w lines notitle$pltraw" | gnuplot -persist
