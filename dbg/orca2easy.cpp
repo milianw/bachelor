@@ -4,9 +4,14 @@
 
 #include "spinlib/orcaparser.h"
 #include "spinlib/nucleus.h"
+#include "spinlib/helpers.h"
+#include "spinlib/experiment.h"
+
+#include <boost/filesystem.hpp>
 
 using namespace std;
 using namespace Eigen;
+using namespace boost::filesystem;
 
 template<class T>
 void printMatlab(const T& m)
@@ -38,13 +43,27 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  OrcaParser parser(argv[1]);
+  int spinHalf = 0;
+  int spinOne = 0;
+  if (argc > 1) {
+    spinHalf = atoi(argv[1]);
+  }
+  if (argc > 2) {
+    spinOne = atoi(argv[2]);
+  }
+  path orcaFilePath(argv[1]);
+  string orcaFile;
+  if (exists(orcaFilePath)) {
+    orcaFile = argv[1];
+  }
+
+  Experiment exp = getExperiment(orcaFile, spinHalf, spinOne);
 
   cout << "[Exp, Opt] = setupEasy();" << endl;
   cout << "Sys = struct();" << endl;
-  cout << "Sys.g = "; printMatlab(parser.electronGMatrix()); cout << ";" << endl;
+  cout << "Sys.g = "; printMatlab(exp.gTensor()); cout << ";" << endl;
 
-  BOOST_FOREACH(const Nucleus& nuc, parser.nuclei()) {
+  BOOST_FOREACH(const Nucleus& nuc, exp.nuclei) {
     stringstream id;
     id << nuc.isotope << *(nuc.name.end() - 1);
     cout << "A_full = ";
@@ -55,6 +74,9 @@ int main(int argc, char** argv) {
     cout << '\'' << id.str() << '\'';
     cout << ", A, Apa);" << endl;
   }
+  cout << "B_direction = ";
+  printMatlab((exp.gTensorEigenVectors().col(2) / exp.gTensorEigenVectors().col(2).norm()).transpose());
+  cout << ";" << endl;
   cout << "[B, Spec] = pepper(Sys, Exp, Opt);" << endl;
   /*
   // Sys.Nucs = '1H,1H,...';
