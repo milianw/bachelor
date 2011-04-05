@@ -51,6 +51,7 @@ int main(int argc, char** argv) {
 
   OrcaParser parser(argv[1]);
 
+  cout << "[Exp, Opt] = setupEasy();" << endl;
   cout << "Sys = struct();" << endl;
   cout << "Sys.g = "; printMatlab(parser.electronGMatrix()); cout << ";" << endl;
 
@@ -60,7 +61,7 @@ int main(int argc, char** argv) {
     cout << "A_full = ";
     printMatlab(nuc.A);
     cout << ";" << endl;
-    cout << "[A, Apa] = euler(Sys2.g, A_full, 1);" << endl;
+    cout << "[A, Apa] = euler(Sys.g, A_full, 1);" << endl;
     cout << "Sys = nucspinadd(Sys,";
     cout << '\'' << id.str() << '\'';
     cout << ", A, Apa);" << endl;
