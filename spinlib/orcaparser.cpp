@@ -43,7 +43,7 @@ OrcaParser::~OrcaParser()
 
 }
 
-Matrix3c OrcaParser::electronGMatrix() const
+Matrix3 OrcaParser::electronGMatrix() const
 {
   return m_gMatrix;
 }

@@ -8,39 +8,28 @@
 using namespace std;
 using namespace Eigen;
 
-void printMatlab(const Matrix3c& m)
+template<class T>
+void printMatlab(const T& m)
 {
-  for(int i = 0; i < 3; ++i) {
+  for(int i = 0; i < m.rows(); ++i) {
     if (i == 0) {
       cout << "[ ";
     } else {
       cout << "  ";
     }
-    for(int j = 0; j < 3; ++j) {
-      cout << m(i, j).real();
-      if (m(i, j).imag()) {
-        cout << " + " << m(i, j).imag() << 'i';
+    for(int j = 0; j < m.cols(); ++j) {
+      cout << c_fp(m(i, j)).real();
+      if (c_fp(m(i, j)).imag()) {
+        cout << " + " << c_fp(m(i, j)).imag() << 'i';
       }
       cout << ' ';
     }
-    if (i < 2) {
+    if (i < m.rows() - 1) {
       cout << endl;
     } else {
       cout << "]";
     }
   }
-}
-
-void printMatlab(const Vector3& v)
-{
-  cout << "[ ";
-  for(int i = 0; i < 3; ++i) {
-    cout << v(i);
-    if (i + 1 < 3) {
-      cout << ' ';
-    }
-  }
-  cout << "]";
 }
 
 int main(int argc, char** argv) {

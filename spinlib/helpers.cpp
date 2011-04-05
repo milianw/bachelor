@@ -37,7 +37,7 @@ Experiment getExperiment(const string& orcaInput, int protons, int nitrogens)
   if (!orcaInput.empty()) {
     OrcaParser parser(orcaInput);
     Experiment exp(parser.nuclei());
-    exp.gTensor = parser.electronGMatrix();
+    exp.setGTensor(parser.electronGMatrix());
     return exp;
   } else {
     return Experiment::generateDummy(protons, nitrogens);
@@ -67,7 +67,8 @@ void printExperiment(ostream& out, const Experiment& exp)
     out << "  A = " << nucleus.A << endl << endl;
   }
   out << "------/nuclei" << endl;
-  out << "gTensor:\n" << exp.gTensor << endl
+  out << "gTensor:\n" << exp.gTensor() << endl
+      << "gTensor eigen values:" << exp.gTensorEigenValues().transpose() << endl
       << "B direction:\n" << exp.staticBField(1).transpose() << endl;
   out << "mwFreq: " << exp.mwFreqGHz << "GHz" << endl;
 }

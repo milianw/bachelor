@@ -34,7 +34,8 @@ class Spins;
  *
  * so far assumes a single unpaired electron
  */
-struct Experiment {
+class Experiment {
+public:
   /**
    * construct experiment out of list of nuclei
    *
@@ -68,10 +69,6 @@ struct Experiment {
   // in our case: 2^protons * 3^nitrogens
   const int dimension;
 
-  // electron g Tensor
-  Matrix3c gTensor;
-  // direction of static B field
-  Vector3c staticBFieldDirection;
   // incident micro wave frequency in GHz
   fp mwFreqGHz;
 
@@ -81,6 +78,17 @@ struct Experiment {
    * @p B field strength in tesla
    */
   Vector3c staticBField(const fp B) const;
+
+  void setGTensor(const Matrix3& gTensor);
+  inline const Matrix3& gTensor() const { return m_gTensor; }
+  const Matrix3c& gTensorEigenVectors() const;
+  const Vector3& gTensorEigenValues() const;
+
+private:
+  // electron g Tensor
+  Matrix3 m_gTensor;
+  Matrix3c m_gTensorEigenVectors;
+  Vector3 m_gTensorEigenValues;
 };
 
 #endif // MW_BACHELOR_EXPERIMENT_H

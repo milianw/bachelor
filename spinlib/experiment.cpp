@@ -57,8 +57,7 @@ Experiment::Experiment(const vector<Nucleus>& nuclei_)
 , dimension(dimensionForNuclei(nuclei))
 , mwFreqGHz(0)
 {
-  gTensor = Matrix3c::Identity() * Constants::g_E;
-  staticBFieldDirection << 0, 0, 1;
+  setGTensor(Matrix3::Identity() * Constants::g_E);
 }
 
 Experiment Experiment::generateDummy(int protons, int nitrogens)
@@ -106,9 +105,8 @@ Vector3c Experiment::staticBField(const fp B) const
     return (Vector3c() << 0, 0, B).finished();
   }
   Vector3c gz;
-  Eigen::EigenSolver<Matrix3> solver(gTensor.real());
-  const Vector3 &E = solver.eigenvalues().real();
-  const Matrix3c &V = solver.eigenvectors();
+  const Vector3& E = m_gTensorEigenValues;
+  const Matrix3c& V = m_gTensorEigenVectors;
   // |g_z> has the largest eigen value
   if (E(0) > E(1)) {
     if (E(0) > E(2)) {
@@ -122,4 +120,22 @@ Vector3c Experiment::staticBField(const fp B) const
     gz = V.col(2);
   }
   return gz * B / gz.norm();
+}
+
+void Experiment::setGTensor(const Matrix3& gTensor)
+{
+  m_gTensor = gTensor;
+  Eigen::EigenSolver<Matrix3> solver(gTensor);
+  m_gTensorEigenValues = solver.eigenvalues().real();
+  m_gTensorEigenVectors = solver.eigenvectors();
+}
+
+const Matrix3c& Experiment::gTensorEigenVectors() const
+{
+  return m_gTensorEigenVectors;
+}
+
+const Vector3& Experiment::gTensorEigenValues() const
+{
+  return m_gTensorEigenValues;
 }

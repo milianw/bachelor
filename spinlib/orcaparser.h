@@ -37,8 +37,7 @@ public:
   explicit OrcaParser(const std::string& file);
   ~OrcaParser();
 
-  ///TODO: complex data allowed?
-  Matrix3c electronGMatrix() const;
+  Matrix3 electronGMatrix() const;
 
   std::vector<Nucleus> nuclei() const;
 
@@ -54,8 +53,7 @@ public:
 private:
   void parseFile(const std::string& file);
 
-  ///TODO: complex data?
-  Matrix3c m_gMatrix;
+  Matrix3 m_gMatrix;
   std::vector<Nucleus> m_nuclei;
   std::map<std::string, AnglePrincipalPair> m_euler;
 };

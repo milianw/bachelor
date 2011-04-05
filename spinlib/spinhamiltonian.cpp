@@ -145,7 +145,7 @@ void SpinHamiltonian::addHyperFine(MatrixXc& H) const
 void SpinHamiltonian::addElectronZeeman(MatrixXc& H) const
 {
   //first multiply the g tensor with the static magnetic field hamiltonian
-  const Vector3c gDotH_B = m_exp.gTensor * m_staticBField;
+  const Vector3c gDotH_B = m_exp.gTensor() * m_staticBField;
   //depending on the convention, i might have to tranpose the gtensor here
   for (int bra = 0; bra < m_spins.states; ++bra) {
     for (int ket = 0; ket < m_spins.states; ++ket) {

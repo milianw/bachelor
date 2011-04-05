@@ -114,19 +114,19 @@ bool ResonanceField::checkForLoopingResonance() const
 fp ResonanceField::calculateLambda() const
 {
   //implementation of eq 14
-  ///FIXME: generalize this once we support multiple electrons or nuclei with I != 1/2
   fp lambda = 0;
 
   ///TODO: is this correct?
-  Vector3c n = m_exp.staticBFieldDirection / m_exp.staticBFieldDirection.norm();
+  Vector3c n = m_exp.staticBField(1) / m_exp.staticBField(1).norm();
 
   // we assume only a single electron
   // S = 0.5
-  lambda += Bohrm * 0.5 * (n.transpose() * m_exp.gTensor).norm();
+  lambda += Bohrm * 0.5 * (n.transpose() * m_exp.gTensor()).norm();
 
   BOOST_FOREACH(const Nucleus& nucleus, m_exp.nuclei) {
     lambda += NUC_MAGNETON * nucleus.g * (nucleus.twoJ / 2);
   }
+  ///FIXME: /h ?
   return lambda;
 }
 
