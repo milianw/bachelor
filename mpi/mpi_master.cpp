@@ -81,8 +81,13 @@ void MPIMaster::calculateIntensity(const fp from, const fp to, const int steps)
   while(it != end) {
     if (fs::is_regular_file(it->status())) {
       if (boost::ends_with(it->path().filename(), ".job")) {
-        continuingJobs = true;
-        readdJob(it->path().file_string());
+        if (!fs::file_size(it->path())) {
+          cout << "skipping empty job file:" << it->path() << endl;
+          fs::remove(it->path());
+        } else {
+          continuingJobs = true;
+          readdJob(it->path().file_string());
+        }
       }
     }
     ++it;
