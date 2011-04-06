@@ -32,9 +32,11 @@
 #include <boost/lexical_cast.hpp>
 
 using namespace std;
+using namespace Eigen;
 
 OrcaParser::OrcaParser(const string& file)
 {
+  m_gMatrix = Matrix3::Identity() * Constants::g_E;
   parseFile(file);
 }
 
