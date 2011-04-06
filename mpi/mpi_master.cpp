@@ -34,10 +34,10 @@
 
 using namespace std;
 
-string intensityOutputFile(const Experiment& exp, const string& outputDir, const fp from, const fp to)
+string intensityOutputFile(const Experiment& exp, const string& outputDir, const fp from, const fp to, const int steps)
 {
   stringstream stream;
-  stream << outputDir << "/" << from << '-' << to << ":-1:" << identifierForExperiment(exp) << ":mpi";
+  stream << outputDir << "/" << from << '-' << to << ':' << steps << ':' << identifierForExperiment(exp) << ":mpi";
   return stream.str();
 }
 
@@ -73,12 +73,21 @@ MPIMaster::~MPIMaster()
   cout << "intensity data written to file:" << endl << m_intensityOutputFile  << endl;
 }
 
-void MPIMaster::startBisect(const fp from, const fp to)
+void MPIMaster::calculateIntensity(const fp from, const fp to, const int steps)
 {
-  m_intensityOutputFile = ::intensityOutputFile(m_exp, m_outputDir, from, to);
+  m_intensityOutputFile = ::intensityOutputFile(m_exp, m_outputDir, from, to, steps);
   m_intensityOutput.open(m_intensityOutputFile.data());
 
-  enqueueJob(new BisectStartJob(this, from, to));
+  if (steps > 0) {
+    const fp stepSize = (to - from) / steps;
+    fp B = from;
+    for(int i = 0; i < steps; ++i) {
+      enqueueJob(new IntensityJob(this, B));
+      B += stepSize;
+    }
+  } else {
+    enqueueJob(new BisectStartJob(this, from, to));
+  }
 
   while(!m_jobQueue.empty() || !m_pendingRequests.empty()) {
     cout << "available slaves: " << m_availableSlaves.size() << ", available jobs:" << m_jobQueue.size() << endl;

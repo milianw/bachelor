@@ -40,7 +40,7 @@ public:
             const std::string& outputDir);
   ~MPIMaster();
 
-  void startBisect(const fp from, const fp to);
+  void calculateIntensity(const fp from, const fp to, const int steps);
 
   template<typename InputT, typename OutputT>
   int runCommand(MPIJob* job, Commands cmd,

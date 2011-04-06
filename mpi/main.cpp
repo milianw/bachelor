@@ -51,6 +51,7 @@ int main(int argc, char* argv[]) {
     ("to,t", po::value<fp>()->default_value(1), "maximum B range in Tesla")
     ("mwFreq,m", po::value<fp>()->required(), "micro wave frequency in GHz")
     ("outputDir,o", po::value<string>()->required(), "path for writing intensity data to")
+    ("steps,i", po::value<int>()->default_value(-1), "number of B-steps, the default is auto-adapted segmentation")
   ;
 
   po::variables_map vm;
@@ -89,7 +90,7 @@ int main(int argc, char* argv[]) {
          << "peak mem consumption (on slaves) at least:" << guessPeakMemConsumption(exp) << endl;
 
     MPIMaster master(world, exp, vm["outputDir"].as<string>());
-    master.startBisect(from, to);
+    master.calculateIntensity(from, to, vm["steps"].as<int>());
   } else {
     MPISlave slave(world, exp);
     slave.work();
