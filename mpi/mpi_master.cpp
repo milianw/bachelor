@@ -27,25 +27,24 @@
 #include "spinlib/helpers.h"
 
 #include <boost/foreach.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
-
-#include <sstream>
 #include <typeinfo>
+#include <sstream>
 
 using namespace std;
-
-string intensityOutputFile(const Experiment& exp, const string& outputDir, const fp from, const fp to, const int steps)
-{
-  stringstream stream;
-  stream << outputDir << "/" << from << '-' << to << ':' << steps << ':' << identifierForExperiment(exp) << ":mpi";
-  return stream.str();
-}
+namespace ar = boost::archive;
+namespace fs = boost::filesystem;
 
 MPIMaster::MPIMaster(const mpi::communicator& comm, const Experiment& exp,
                      const string& outputDir)
 : m_comm(comm)
 , m_exp(exp)
 , m_outputDir(outputDir)
+, m_lastJobId(0)
 {
   if (comm.rank() != MASTER_RANK) {
     cerr << "MPIMaster created outside of master rank!" << endl;
@@ -75,22 +74,42 @@ MPIMaster::~MPIMaster()
 
 void MPIMaster::calculateIntensity(const fp from, const fp to, const int steps)
 {
-  m_intensityOutputFile = ::intensityOutputFile(m_exp, m_outputDir, from, to, steps);
-  m_intensityOutput.open(m_intensityOutputFile.data());
+  fs::path outputPath(m_outputDir);
+  fs::directory_iterator it(outputPath);
+  fs::directory_iterator end;
+  bool continuingJobs = false;
+  while(it != end) {
+    if (fs::is_regular_file(it->status())) {
+      if (boost::ends_with(it->path().filename(), ".job")) {
+        continuingJobs = true;
+        readdJob(it->path().file_string());
+      }
+    }
+    ++it;
+  }
+
+  if (!continuingJobs) {
+    if (steps > 0) {
+      const fp stepSize = (to - from) / steps;
+      fp B = from;
+      for(int i = 0; i < steps; ++i) {
+        enqueueJob(new IntensityJob(this, B));
+        B += stepSize;
+      }
+    } else {
+      enqueueJob(new BisectStartJob(this, from, to));
+    }
+    cout << "starting jobs from scratch" << endl;
+  } else {
+    cout << "continuing with " << m_jobQueue.size() << " jobs from last run" << endl;
+  }
+
+  m_intensityOutputFile = m_outputDir + "/intensity.data";
+  // truncate data file if we start from scratch
+  m_intensityOutput.open(m_intensityOutputFile.data(), ios_base::out | (continuingJobs ? ios_base::app : ios_base::trunc));
   if (!m_intensityOutput.is_open()) {
     cerr << "could not open output file" << m_intensityOutputFile << endl;
     m_comm.abort(3);
-  }
-
-  if (steps > 0) {
-    const fp stepSize = (to - from) / steps;
-    fp B = from;
-    for(int i = 0; i < steps; ++i) {
-      enqueueJob(new IntensityJob(this, B));
-      B += stepSize;
-    }
-  } else {
-    enqueueJob(new BisectStartJob(this, from, to));
   }
 
   while(!m_jobQueue.empty() || !m_pendingRequests.empty()) {
@@ -120,9 +139,77 @@ void MPIMaster::calculateIntensity(const fp from, const fp to, const int steps)
   }
 }
 
+string MPIMaster::jobFile(unsigned int jobId) const
+{
+  stringstream stream;
+  stream << m_outputDir << '/' << jobId << ".job";
+  return stream.str();
+}
+
 void MPIMaster::enqueueJob(MPIJob* job)
 {
+  unsigned int id = ++m_lastJobId;
+  job->setJobId(id);
+
+  // make jobs restartable, save their data
+  const string file = jobFile(id);
+  ofstream stream(file.c_str());
+  if (!stream.is_open()) {
+    cerr << "could not open job file for writing: " << file << endl;
+    m_comm.abort(4);
+    return;
+  }
+  ar::binary_oarchive archive(stream);
+  int type = static_cast<int>(job->type());
+  archive << type;
+  archive << id;
+  job->saveTo(archive);
+
   m_jobQueue.push(job);
+}
+
+void MPIMaster::readdJob(const std::string& jobFile)
+{
+  ifstream stream(jobFile.c_str());
+  if (!stream.is_open()) {
+    cerr << "could not open job file for reading: " << jobFile << endl;
+    m_comm.abort(5);
+    return;
+  }
+
+  try {
+    ar::binary_iarchive archive(stream);
+    int type;
+    unsigned int id;
+    archive >> type;
+    archive >> id;
+
+    MPIJob* job = 0;
+    switch(static_cast<MPIJob::JobType>(type)) {
+      case MPIJob::BisectStart:
+        job = BisectStartJob::constructFrom(archive, this);
+        break;
+      case MPIJob::Bisect:
+        job = BisectJob::constructFrom(archive, this);
+        break;
+      case MPIJob::FindRoots:
+        job = FindRootsJob::constructFrom(archive, this);
+        break;
+      case MPIJob::Intensity:
+        job = IntensityJob::constructFrom(archive, this);
+        break;
+    }
+
+    // reuse last id
+    job->setJobId(id);
+    m_lastJobId = max(id, m_lastJobId);
+
+    m_jobQueue.push(job);
+  } catch(boost::archive::archive_exception e) {
+    cerr << "could not load job file:" << jobFile << endl << e.what() << endl;
+    m_comm.abort(7);
+    return;
+  }
 }
 
 void MPIMaster::handleResponse(const ResponsePair& response)
@@ -148,6 +235,11 @@ void MPIMaster::handleResponse(const ResponsePair& response)
     ++it;
   }
   if (!stillRunning) {
+    if (!fs::remove(jobFile(job->jobId()))) {
+      cout << "could not remove job file: " << jobFile(job->jobId()) << endl;
+      m_comm.abort(6);
+      return;
+    }
     delete job;
   }
 //   cout << "slave " << slave << " finished work on job " << job << (stillRunning ? ", job still running" : "") << endl;

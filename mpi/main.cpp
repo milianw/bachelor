@@ -85,6 +85,7 @@ int main(int argc, char* argv[]) {
   if (world.rank() == MASTER_RANK) {
     const fp from = vm["from"].as<fp>();
     const fp to = vm["to"].as<fp>();
+    const int steps = vm["steps"].as<int>();
     cout << "calculating intensity in range B = \t" << from << "T to " << to << "T" << endl;
     printExperiment(cout, exp);
     cout << "worker slaves:" << (world.size() - 1) << endl;
@@ -93,20 +94,30 @@ int main(int argc, char* argv[]) {
 
     string outputDir = vm["outputDir"].as<string>();
     if (outputDir.empty()) {
+      // fallback to current work dir
       outputDir = fs::current_path().directory_string();
     }
+
+    // append info about the experiment
+    stringstream stream;
+    stream << outputDir << "/" << from << '-' << to << ':' << steps << ':' << identifierForExperiment(exp) << ":mpi";
+    outputDir = stream.str();
+
+    // make sure the path exists
     fs::path oPath(outputDir);
     outputDir = fs::system_complete(oPath).directory_string();
-    if (!fs::exists(oPath) && !fs::create_directory(oPath)) {
-      cerr << "could not create output path:" << oPath << endl;
+    if (!fs::exists(oPath) && !fs::create_directories(oPath)) {
+      cerr << "could not create output path: " << oPath << endl;
+      world.abort(2);
       return 2;
     } else if (!fs::is_directory(oPath)) {
-      cerr << "file exists under name of output path:" << oPath << endl;
+      cerr << "file exists under name of output path: " << oPath << endl;
+      world.abort(3);
       return 3;
     }
 
     MPIMaster master(world, exp, outputDir);
-    master.calculateIntensity(from, to, vm["steps"].as<int>());
+    master.calculateIntensity(from, to, steps);
   } else {
     MPISlave slave(world, exp);
     slave.work();

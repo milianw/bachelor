@@ -26,6 +26,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace boost::archive;
 
 #define DEBUG_FUNC
 // #define DEBUG_FUNC cout << __FUNCTION__ << '\t' << this << endl;
@@ -33,7 +34,7 @@ using namespace std;
 //BEGIN MPIJob
 
 MPIJob::MPIJob(MPIMaster* master)
-: m_master(master)
+: m_master(master), m_id(0)
 {
 
 }
@@ -41,6 +42,16 @@ MPIJob::MPIJob(MPIMaster* master)
 MPIJob::~MPIJob()
 {
 
+}
+
+void MPIJob::setJobId(unsigned int id)
+{
+  m_id = id;
+}
+
+unsigned int MPIJob::jobId() const
+{
+  return m_id;
 }
 
 //BEGIN BisectStartJob
@@ -96,6 +107,23 @@ void BisectStartJob::handleResult(const int slave)
   }
 }
 
+void BisectStartJob::saveTo(binary_oarchive& archive) const
+{
+  archive << m_from << m_to;
+}
+
+MPIJob* BisectStartJob::constructFrom(boost::archive::binary_iarchive& archive, MPIMaster* master)
+{
+  fp from, to;
+  archive >> from >> to;
+  return new BisectStartJob(master, from, to);
+}
+
+MPIJob::JobType BisectStartJob::type() const
+{
+  return BisectStart;
+}
+
 //BEGIN BisectJob
 
 BisectJob::BisectJob(MPIMaster* master, const BisectNode& from, const BisectNode& to)
@@ -135,6 +163,23 @@ void BisectJob::handleResult(const int /*slave*/)
   }
 }
 
+void BisectJob::saveTo(binary_oarchive& archive) const
+{
+  archive << m_from << m_to;
+}
+
+MPIJob* BisectJob::constructFrom(boost::archive::binary_iarchive& archive, MPIMaster* master)
+{
+  BisectNode from, to;
+  archive >> from >> to;
+  return new BisectJob(master, from, to);
+}
+
+MPIJob::JobType BisectJob::type() const
+{
+  return Bisect;
+}
+
 //BEGIN FindRootsJob
 
 FindRootsJob::FindRootsJob(MPIMaster* master, const BisectNode& from, const BisectNode& to)
@@ -165,6 +210,23 @@ void FindRootsJob::handleResult(const int /*slave*/)
   }
 }
 
+void FindRootsJob::saveTo(binary_oarchive& archive) const
+{
+  archive << m_from << m_to;
+}
+
+MPIJob* FindRootsJob::constructFrom(boost::archive::binary_iarchive& archive, MPIMaster* master)
+{
+  BisectNode from, to;
+  archive >> from >> to;
+  return new FindRootsJob(master, from, to);
+}
+
+MPIJob::JobType FindRootsJob::type() const
+{
+  return FindRoots;
+}
+
 //BEGIN IntensityJob
 
 IntensityJob::IntensityJob(MPIMaster* master, const fp B)
@@ -189,4 +251,21 @@ void IntensityJob::start()
 void IntensityJob::handleResult(const int /*slave*/)
 {
   m_master->intensityOutputFile() << m_B << '\t' << m_answer << endl;
+}
+
+void IntensityJob::saveTo(binary_oarchive& archive) const
+{
+  archive << m_B;
+}
+
+MPIJob* IntensityJob::constructFrom(boost::archive::binary_iarchive& archive, MPIMaster* master)
+{
+  fp B;
+  archive >> B;
+  return new IntensityJob(master, B);
+}
+
+MPIJob::JobType IntensityJob::type() const
+{
+  return Intensity;
 }

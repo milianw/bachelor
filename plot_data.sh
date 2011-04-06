@@ -10,8 +10,21 @@ else
 fi
 
 ./convolute/convolute $1 > ${plt_base}conv
-a=($(basename $1 | tr ":" "\n"))
-t="Spectrum for ${a[2]} 1H, ${a[3]} 14H, mwFreq = ${a[4]} GHz, B-Range: ${a[0]} (${a[1]} steps) ${a[5]}"
+if [[ "$(basename $1)" == "intensity.data" ]]; then
+  # mpi
+  a=($(basename $(dirname $1) | tr ":" "\n"))
+else
+  # non-mpi
+  a=($(basename $1 | tr ":" "\n"))
+fi
+
+if [[ "${a[1]}" == "-1" ]]; then
+  steps="auto"
+else
+  steps=${a[1]}
+fi
+
+t="Spectrum for ${a[2]} 1H, ${a[3]} 14H, mwFreq = ${a[4]} GHz, B-Range: ${a[0]} ($steps steps) ${a[5]}"
 pltraw=", '${plt_base}raw' w impulses notitle";
 if [[ "$NOPLOT_RAW" == "1" ]]; then
   pltraw=""

@@ -26,18 +26,35 @@
 
 #include "spinlib/resonancefield.h"
 
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+
 class MPIMaster;
 
 class MPIJob {
 public:
-  MPIJob(MPIMaster *master);
+  MPIJob(MPIMaster* master);
   virtual ~MPIJob();
 
   virtual void start() = 0;
   virtual void handleResult(const int slave) = 0;
 
+  void setJobId(unsigned int id);
+  unsigned int jobId() const;
+
+  virtual void saveTo(boost::archive::binary_oarchive& archive) const = 0;
+
+  enum JobType {
+    BisectStart,
+    Bisect,
+    FindRoots,
+    Intensity
+  };
+  virtual JobType type() const = 0;
+
 protected:
   MPIMaster* const m_master;
+  unsigned int m_id;
 };
 
 class BisectStartJob : public MPIJob {
@@ -47,6 +64,11 @@ public:
 
   virtual void start();
   virtual void handleResult(const int slave);
+
+  virtual void saveTo(boost::archive::binary_oarchive& archive) const;
+  static MPIJob* constructFrom(boost::archive::binary_iarchive& archive, MPIMaster* master);
+
+  virtual JobType type() const;
 
 private:
   const fp m_from;
@@ -65,6 +87,11 @@ public:
   virtual void start();
   virtual void handleResult(const int slave);
 
+  virtual void saveTo(boost::archive::binary_oarchive& archive) const;
+  static MPIJob* constructFrom(boost::archive::binary_iarchive& archive, MPIMaster* master);
+
+  virtual JobType type() const;
+
 private:
   const BisectNode m_from;
   const BisectNode m_to;
@@ -79,6 +106,11 @@ public:
   virtual void start();
   virtual void handleResult(const int slave);
 
+  virtual void saveTo(boost::archive::binary_oarchive& archive) const;
+  static MPIJob* constructFrom(boost::archive::binary_iarchive& archive, MPIMaster* master);
+
+  virtual JobType type() const;
+
 private:
   const BisectNode m_from;
   const BisectNode m_to;
@@ -92,6 +124,11 @@ public:
 
   virtual void start();
   virtual void handleResult(const int slave);
+
+  virtual void saveTo(boost::archive::binary_oarchive& archive) const;
+  static MPIJob* constructFrom(boost::archive::binary_iarchive& archive, MPIMaster* master);
+
+  virtual JobType type() const;
 
 private:
   const fp m_B;

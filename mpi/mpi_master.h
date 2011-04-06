@@ -54,6 +54,9 @@ public:
   int availableSlaves() const;
 
 private:
+  std::string jobFile(unsigned int jobId) const;
+  void readdJob(const std::string& jobFile);
+
   const mpi::communicator& m_comm;
   const Experiment& m_exp;
   std::vector<int> m_slaves;
@@ -61,6 +64,7 @@ private:
   const std::string& m_outputDir;
 
   std::queue<MPIJob *> m_jobQueue;
+  unsigned int m_lastJobId;
 
   std::string m_intensityOutputFile;
   std::ofstream m_intensityOutput;
