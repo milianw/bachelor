@@ -77,6 +77,10 @@ void MPIMaster::calculateIntensity(const fp from, const fp to, const int steps)
 {
   m_intensityOutputFile = ::intensityOutputFile(m_exp, m_outputDir, from, to, steps);
   m_intensityOutput.open(m_intensityOutputFile.data());
+  if (!m_intensityOutput.is_open()) {
+    cerr << "could not open output file" << m_intensityOutputFile << endl;
+    m_comm.abort(3);
+  }
 
   if (steps > 0) {
     const fp stepSize = (to - from) / steps;

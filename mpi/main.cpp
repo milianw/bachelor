@@ -23,6 +23,7 @@
 #include <string>
 
 #include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 
 #include "mpi_master.h"
@@ -35,6 +36,7 @@
 
 using namespace std;
 namespace po = boost::program_options;
+namespace fs = boost::filesystem;
 
 int main(int argc, char* argv[]) {
   mpi::environment env(argc, argv);
@@ -50,7 +52,7 @@ int main(int argc, char* argv[]) {
     ("from,f", po::value<fp>()->default_value(0), "minimum B range in Tesla")
     ("to,t", po::value<fp>()->default_value(1), "maximum B range in Tesla")
     ("mwFreq,m", po::value<fp>()->required(), "micro wave frequency in GHz")
-    ("outputDir,o", po::value<string>()->required(), "path for writing intensity data to")
+    ("outputDir,o", po::value<string>()->default_value(string()), "path for writing intensity data to, defaults to current working directory")
     ("steps,i", po::value<int>()->default_value(-1), "number of B-steps, the default is auto-adapted segmentation")
   ;
 
@@ -89,7 +91,21 @@ int main(int argc, char* argv[]) {
     cout << endl
          << "peak mem consumption (on slaves) at least:" << guessPeakMemConsumption(exp) << endl;
 
-    MPIMaster master(world, exp, vm["outputDir"].as<string>());
+    string outputDir = vm["outputDir"].as<string>();
+    if (outputDir.empty()) {
+      outputDir = fs::current_path().directory_string();
+    }
+    fs::path oPath(outputDir);
+    outputDir = fs::system_complete(oPath).directory_string();
+    if (!fs::exists(oPath) && !fs::create_directory(oPath)) {
+      cerr << "could not create output path:" << oPath << endl;
+      return 2;
+    } else if (!fs::is_directory(oPath)) {
+      cerr << "file exists under name of output path:" << oPath << endl;
+      return 3;
+    }
+
+    MPIMaster master(world, exp, outputDir);
     master.calculateIntensity(from, to, vm["steps"].as<int>());
   } else {
     MPISlave slave(world, exp);
