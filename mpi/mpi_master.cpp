@@ -31,6 +31,7 @@
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <typeinfo>
 #include <sstream>
@@ -81,13 +82,9 @@ void MPIMaster::calculateIntensity(const fp from, const fp to, const int steps)
   while(it != end) {
     if (fs::is_regular_file(it->status())) {
       if (boost::ends_with(it->path().filename(), ".job")) {
-        if (!fs::file_size(it->path())) {
-          cout << "skipping empty job file:" << it->path() << endl;
-          fs::remove(it->path());
-        } else {
-          continuingJobs = true;
-          readdJob(it->path().file_string());
-        }
+        m_lastJobId = max(boost::lexical_cast<unsigned int>(it->path().stem()), m_lastJobId);
+        bool added = readdJob(it->path().file_string());
+        continuingJobs = continuingJobs || added;
       }
     }
     ++it;
@@ -173,13 +170,12 @@ void MPIMaster::enqueueJob(MPIJob* job)
   m_jobQueue.push(job);
 }
 
-void MPIMaster::readdJob(const std::string& jobFile)
+bool MPIMaster::readdJob(const std::string& jobFile)
 {
   ifstream stream(jobFile.c_str());
   if (!stream.is_open()) {
-    cerr << "could not open job file for reading: " << jobFile << endl;
-    m_comm.abort(5);
-    return;
+    cerr << "could not open job file for reading, skipping: " << jobFile << endl;
+    return false;
   }
 
   try {
@@ -210,10 +206,10 @@ void MPIMaster::readdJob(const std::string& jobFile)
     m_lastJobId = max(id, m_lastJobId);
 
     m_jobQueue.push(job);
+    return true;
   } catch(boost::archive::archive_exception e) {
-    cerr << "could not load job file:" << jobFile << endl << e.what() << endl;
-    m_comm.abort(7);
-    return;
+    cerr << "could not load job file, skipping:" << jobFile << endl << e.what() << endl;
+    return false;
   }
 }
 

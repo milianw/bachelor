@@ -55,7 +55,7 @@ public:
 
 private:
   std::string jobFile(unsigned int jobId) const;
-  void readdJob(const std::string& jobFile);
+  bool readdJob(const std::string& jobFile);
 
   const mpi::communicator& m_comm;
   const Experiment& m_exp;
