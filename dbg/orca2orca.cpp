@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include <boost/foreach.hpp>
+#include <boost/regex.hpp>
 
 #include <spinlib/orcaparser.h>
 #include <spinlib/nucleus.h>
@@ -17,9 +18,9 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  vector<string> allowedNuclei;
+  vector<boost::regex> allowedNuclei;
   for(int i = 2; i < argc; ++i) {
-    allowedNuclei.push_back(string(argv[i]));
+    allowedNuclei.push_back(boost::regex(argv[i]));
   }
 
   OrcaParser parser(argv[1]);
@@ -37,8 +38,17 @@ int main(int argc, char** argv) {
   cout << endl;
 
   BOOST_FOREACH(const Nucleus& nuc, parser.nuclei()) {
-    if (!allowedNuclei.empty() && find(allowedNuclei.begin(), allowedNuclei.end(), nuc.name) == allowedNuclei.end()) {
-      continue;
+    if (!allowedNuclei.empty()) {
+      bool found = false;
+      BOOST_FOREACH(const boost::regex& pattern, allowedNuclei) {
+        if (boost::regex_match(nuc.name, pattern)) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        continue;
+      }
     }
     cout << "-----------------------------------------------------------" << endl;
     cout << " Nucleus  " << nuc.name << "  : A:ISTP=    " << nuc.isotope << " I=  " << float(nuc.twoJ)/2.0 << " P=0.0 MHz/au**3" << endl;
