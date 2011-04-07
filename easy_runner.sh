@@ -2,6 +2,10 @@
 ./dbg/orca2easy $1 > /tmp/test.m || exit
 t=$(basename $1);
 f="/tmp/$t.easy.dat";
+if [[ "$2" != "" ]]; then
+  echo "Exp.mwFreq = $2;" >> /tmp/test.m
+fi
+echo "[B, Spec] = pepper(Sys, Exp, Opt);" >> /tmp/test.m
 echo "saveSpec(B, Spec, '$f');" >> /tmp/test.m
 echo "exit;" >> /tmp/test.m
 matlab -nojvm -nosplash -r "run('/tmp/test.m');" || exit

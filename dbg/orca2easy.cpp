@@ -77,7 +77,6 @@ int main(int argc, char** argv) {
   cout << "B_direction = ";
   printMatlab((exp.gTensorEigenVectors().col(2) / exp.gTensorEigenVectors().col(2).norm()).transpose());
   cout << ";" << endl;
-  cout << "[B, Spec] = pepper(Sys, Exp, Opt);" << endl;
   /*
   // Sys.Nucs = '1H,1H,...';
   stringstream nuclei;
