@@ -78,7 +78,7 @@ void BisectStartJob::start()
 
   // use as many slaves as possible from the start
   m_results.resize(slavesToUse);
-  const fp stepSize = (m_to - m_from) / slavesToUse;
+  const fp stepSize = (m_to - m_from) / (slavesToUse-1);
   fp B = m_from;
   for(int i = 0; i < slavesToUse; ++i) {
     int slave = m_master->runCommand(this, CMD_DIAGONALIZE,
