@@ -238,7 +238,7 @@ int main(int argc, char* argv[])
         #pragma omp parallel
         {
           #pragma omp for
-          for(int i = 0; i < resonanceField.size(); ++i) {
+          for(unsigned int i = 0; i < resonanceField.size(); ++i) {
             const fp B = resonanceField.at(i);
             *outputStreams.at(omp_get_thread_num()) << B << '\t' << SpinHamiltonian(B, exp).calculateIntensity() << endl;
           }

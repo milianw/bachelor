@@ -48,7 +48,7 @@ Experiment getExperiment(const string& orcaInput, int protons, int nitrogens)
 string formatSize(long unsigned int size) {
   const char prefix[5] = {' ', 'K', 'M', 'G', 'T'};
   int i = 0;
-  for(i; i < 4; ++i) {
+  for(/*i = above*/; i < 4; ++i) {
     if (size > 1024) {
       size /= 1024;
     } else {

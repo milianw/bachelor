@@ -30,6 +30,7 @@ using namespace boost::archive;
 
 #define DEBUG_FUNC(args)
 // #define DEBUG_FUNC(args) cout << this << ' ' << __PRETTY_FUNCTION__ << '\t' args << endl;
+#define UNUSED(x) (void) x
 
 //BEGIN MPIJob
 
@@ -94,7 +95,7 @@ void BisectStartJob::handleResult(const int slave)
 {
   DEBUG_FUNC(<< slave)
 
-  const int idx = m_slaveToResult.at(slave);
+  const unsigned int idx = m_slaveToResult.at(slave);
 
   // check previous result
   if (idx > 0 && m_results.at(idx - 1).E.size()) {
@@ -147,11 +148,13 @@ void BisectJob::start()
                                    TAG_BISECT_RESULT, m_answer);
 
   DEBUG_FUNC(<< slave << '\t' << m_from.B << '\t' << m_to.B)
+  UNUSED(slave);
 }
 
 void BisectJob::handleResult(const int slave)
 {
   DEBUG_FUNC(<< slave << '\t' << m_from.B << '\t' << m_to.B << '\t' << m_answer.status)
+  UNUSED(slave);
   switch (m_answer.status) {
     case BisectAnswer::Continue:
       m_master->enqueueJob(new BisectJob(m_master, m_from, m_answer.mid));
@@ -206,11 +209,13 @@ void FindRootsJob::start()
                                    TAG_FINDROOTS_RESULT, m_answer);
 
   DEBUG_FUNC(<< slave << '\t' << m_from.B << '\t' << m_to.B)
+  UNUSED(slave);
 }
 
 void FindRootsJob::handleResult(const int slave)
 {
   DEBUG_FUNC(<< slave << '\t' << m_from.B << '\t' << m_to.B << '\t' << m_answer.size())
+  UNUSED(slave);
 
   ResonanceField::cleanupResonancyField(m_answer);
   for(int i = 0, c = m_answer.size(); i < c; ++i) {
@@ -256,11 +261,13 @@ void IntensityJob::start()
                                    TAG_INTENSITY_RESULT, m_answer);
 
   DEBUG_FUNC(<< slave << m_B)
+  UNUSED(slave);
 }
 
 void IntensityJob::handleResult(const int slave)
 {
   DEBUG_FUNC(<< slave << '\t' << m_B << '\t' << m_answer)
+  UNUSED(slave);
   m_master->intensityOutputFile() << m_B << '\t' << m_answer << endl;
 }
 

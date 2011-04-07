@@ -19,7 +19,6 @@ using namespace boost::filesystem;
 int main(int argc, char** argv) {
   int spinHalf = 1;
   int spinOne = 0;
-  float B = 0.3;
   if (argc > 1) {
     spinHalf = atoi(argv[1]);
   }
@@ -37,8 +36,11 @@ int main(int argc, char** argv) {
   exp.mwFreqGHz = 9.5;
 
   ResonanceField f(exp);
-  vector< fp > field = f.calculate(0, 1);
-  for(int i = 0; i < field.size(); ++i) {
+  fp from;
+  fp to;
+  guessBRange(exp, from, to);
+  vector< fp > field = f.calculate(from, to);
+  for(unsigned int i = 0; i < field.size(); ++i) {
     cout << field.at(i);
     if (i + 1 < field.size())
       cout << ", ";
