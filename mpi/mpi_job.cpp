@@ -28,8 +28,8 @@
 using namespace std;
 using namespace boost::archive;
 
-#define DEBUG_FUNC
-// #define DEBUG_FUNC cout << __FUNCTION__ << '\t' << this << endl;
+#define DEBUG_FUNC(args)
+// #define DEBUG_FUNC(args) cout << this << ' ' << __PRETTY_FUNCTION__ << '\t' args << endl;
 
 //BEGIN MPIJob
 
@@ -60,12 +60,12 @@ BisectStartJob::BisectStartJob(MPIMaster* master, const fp from, const fp to)
 , m_from(from)
 , m_to(to)
 {
-  DEBUG_FUNC
+  DEBUG_FUNC(<< from << '\t' << to)
 }
 
 BisectStartJob::~BisectStartJob()
 {
-  DEBUG_FUNC
+  DEBUG_FUNC(<< m_from << '\t' << m_to)
 }
 
 void BisectStartJob::start()
@@ -84,6 +84,7 @@ void BisectStartJob::start()
     int slave = m_master->runCommand(this, CMD_DIAGONALIZE,
                                      TAG_DIAGONALIZE_INPUT, B,
                                      TAG_DIAGONALIZE_RESULT, m_results.at(i));
+    DEBUG_FUNC(<< slave << '\t' << B)
     m_slaveToResult[slave] = i;
     B += stepSize;
   }
@@ -91,7 +92,7 @@ void BisectStartJob::start()
 
 void BisectStartJob::handleResult(const int slave)
 {
-  DEBUG_FUNC
+  DEBUG_FUNC(<< slave)
 
   const int idx = m_slaveToResult.at(slave);
 
@@ -131,23 +132,26 @@ BisectJob::BisectJob(MPIMaster* master, const BisectNode& from, const BisectNode
 , m_from(from)
 , m_to(to)
 {
-  DEBUG_FUNC
+  DEBUG_FUNC(<< from.B << '\t' << to.B)
 }
 
 BisectJob::~BisectJob()
 {
-  DEBUG_FUNC
+  DEBUG_FUNC(<< m_from.B << '\t' << m_to.B)
 }
 
 void BisectJob::start()
 {
-  m_master->runCommand(this, CMD_BISECT,
-                       TAG_BISECT_INPUT, BisectInput(m_from, m_to),
-                       TAG_BISECT_RESULT, m_answer);
+  int slave = m_master->runCommand(this, CMD_BISECT,
+                                   TAG_BISECT_INPUT, BisectInput(m_from, m_to),
+                                   TAG_BISECT_RESULT, m_answer);
+
+  DEBUG_FUNC(<< slave << '\t' << m_from.B << '\t' << m_to.B)
 }
 
-void BisectJob::handleResult(const int /*slave*/)
+void BisectJob::handleResult(const int slave)
 {
+  DEBUG_FUNC(<< slave << '\t' << m_from.B << '\t' << m_to.B << '\t' << m_answer.status)
   switch (m_answer.status) {
     case BisectAnswer::Continue:
       m_master->enqueueJob(new BisectJob(m_master, m_from, m_answer.mid));
@@ -187,23 +191,27 @@ FindRootsJob::FindRootsJob(MPIMaster* master, const BisectNode& from, const Bise
 , m_from(from)
 , m_to(to)
 {
-  DEBUG_FUNC
+  DEBUG_FUNC(<< from.B << '\t' << to.B)
 }
 
 FindRootsJob::~FindRootsJob()
 {
-  DEBUG_FUNC
+  DEBUG_FUNC(<< m_from.B << '\t' << m_to.B)
 }
 
 void FindRootsJob::start()
 {
-  m_master->runCommand(this, CMD_FINDROOTS,
-                       TAG_FINDROOTS_INPUT, BisectInput(m_from, m_to),
-                       TAG_FINDROOTS_RESULT, m_answer);
+  int slave = m_master->runCommand(this, CMD_FINDROOTS,
+                                   TAG_FINDROOTS_INPUT, BisectInput(m_from, m_to),
+                                   TAG_FINDROOTS_RESULT, m_answer);
+
+  DEBUG_FUNC(<< slave << '\t' << m_from.B << '\t' << m_to.B)
 }
 
-void FindRootsJob::handleResult(const int /*slave*/)
+void FindRootsJob::handleResult(const int slave)
 {
+  DEBUG_FUNC(<< slave << '\t' << m_from.B << '\t' << m_to.B << '\t' << m_answer.size())
+
   ResonanceField::cleanupResonancyField(m_answer);
   for(int i = 0, c = m_answer.size(); i < c; ++i) {
     m_master->enqueueJob(new IntensityJob(m_master, m_answer.at(i)));
@@ -233,23 +241,26 @@ IntensityJob::IntensityJob(MPIMaster* master, const fp B)
 : MPIJob(master)
 , m_B(B)
 {
-  DEBUG_FUNC
+  DEBUG_FUNC(<< B)
 }
 
 IntensityJob::~IntensityJob()
 {
-  DEBUG_FUNC
+  DEBUG_FUNC(<< m_B)
 }
 
 void IntensityJob::start()
 {
-  m_master->runCommand(this, CMD_INTENSITY,
-                       TAG_INTENSITY_INPUT, m_B,
-                       TAG_INTENSITY_RESULT, m_answer);
+  int slave = m_master->runCommand(this, CMD_INTENSITY,
+                                   TAG_INTENSITY_INPUT, m_B,
+                                   TAG_INTENSITY_RESULT, m_answer);
+
+  DEBUG_FUNC(<< slave << m_B)
 }
 
-void IntensityJob::handleResult(const int /*slave*/)
+void IntensityJob::handleResult(const int slave)
 {
+  DEBUG_FUNC(<< slave << '\t' << m_B << '\t' << m_answer)
   m_master->intensityOutputFile() << m_B << '\t' << m_answer << endl;
 }
 
