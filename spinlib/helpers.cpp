@@ -25,6 +25,7 @@
 #include "orcaparser.h"
 #include "nucleus.h"
 #include "spins.h"
+#include "constants.h"
 
 #include <string>
 
@@ -86,3 +87,18 @@ string guessPeakMemConsumption(const Experiment& exp)
   return formatSize(2 * (sizeof(complex<fp>) * exp.dimension * exp.dimension));
 }
 
+void guessBRange(const Experiment& exp, fp& from, fp& to)
+{
+  fp g = (exp.gTensorEigenValues().sum() / 3.0);
+  fp B = exp.mwFreqGHz * 1E09 * Constants::h / (Constants::Bohrm * g);
+  cout << "guessing B-range center from electron zeeman splitting, B = " << B << endl;
+  fp A = 0;
+  BOOST_FOREACH(const Nucleus& nuc, exp.nuclei) {
+    A += nuc.A.eigenvalues().sum().real() / 3.0;
+  }
+  // A in MHz
+  A *= 1E06 * Constants::h / (Constants::Bohrm * g);
+  cout << "guessing B-range width from A tensors, sum(A) = " << A << endl;
+  from = B - A;
+  to = B + A;
+}

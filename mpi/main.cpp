@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
     ("nitrogens,n", po::value<int>()->default_value(0), "number of nitrogens in system")
     ("system,s", po::value<string>()->default_value(string()), "ORCA data file describing the system")
     ("from,f", po::value<fp>()->default_value(0), "minimum B range in Tesla")
-    ("to,t", po::value<fp>()->default_value(1), "maximum B range in Tesla")
+    ("to,t", po::value<fp>()->default_value(0), "maximum B range in Tesla")
     ("mwFreq,m", po::value<fp>()->required(), "micro wave frequency in GHz")
     ("outputDir,o", po::value<string>()->default_value(string()), "path for writing intensity data to, defaults to current working directory")
     ("steps,i", po::value<int>()->default_value(-1), "number of B-steps, the default is auto-adapted segmentation")
@@ -83,8 +83,12 @@ int main(int argc, char* argv[]) {
   exp.mwFreqGHz = vm["mwFreq"].as<fp>();
 
   if (world.rank() == MASTER_RANK) {
-    const fp from = vm["from"].as<fp>();
-    const fp to = vm["to"].as<fp>();
+    fp from = vm["from"].as<fp>();
+    fp to = vm["to"].as<fp>();
+    if (!to) {
+      guessBRange(exp, from, to);
+    }
+
     const int steps = vm["steps"].as<int>();
     cout << "calculating intensity in range B = \t" << from << "T to " << to << "T" << endl;
     printExperiment(cout, exp);

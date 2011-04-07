@@ -189,11 +189,14 @@ int main(int argc, char* argv[])
     }
     case CalculateIntensity:
     {
-      ENSURE(steps > 0 || steps == -1, "intensity")
-      ENSURE(B_min >= 0, "intensity")
-      ENSURE(B_max > B_min, "intensity")
       ENSURE(mwFreq > 0, "intensity")
       exp.mwFreqGHz = mwFreq;
+      if (!B_max) {
+        guessBRange(exp, B_min, B_max);
+      }
+      ENSURE(B_min >= 0, "intensity")
+      ENSURE(B_max > B_min, "intensity")
+      ENSURE(steps > 0 || steps == -1, "intensity")
       const double B_stepSize = (B_max - B_min) / steps;
       cout << "calculating intensity:" << endl
            << "B range:\t" << B_min << "T to " << B_max << "T" << endl

@@ -24,6 +24,8 @@
 
 #include <ostream>
 
+#include "fptype.h"
+
 class Experiment;
 
 Experiment getExperiment(const std::string& orcaInput, int protons, int nitrogens);
@@ -35,5 +37,7 @@ void printExperiment(std::ostream& out, const Experiment& exp);
 std::string identifierForExperiment(const Experiment& exp);
 
 std::string guessPeakMemConsumption(const Experiment& exp);
+
+void guessBRange(const Experiment& exp, fp& from, fp& to);
 
 #endif // MW_BACHELOR_HELPERS_H
