@@ -77,6 +77,8 @@ private:
   // running requests
   typedef std::vector<mpi::request> RequestList;
   RequestList m_pendingRequests;
+  typedef std::pair<mpi::request, mpi::request> SendRequestPair;
+  std::map<int, SendRequestPair> m_sendRequests;
   typedef std::pair<mpi::status, RequestList::iterator> ResponsePair;
   void handleResponse(const ResponsePair& response);
 };
@@ -91,9 +93,13 @@ int MPIMaster::runCommand(MPIJob* job, Commands cmd,
   m_availableSlaves.pop_back();
   m_runningJobs[slave] = job;
 
-  ///NOTE: isend can/will lead to crashes, the slave will get corrupted data
-  m_comm.send(slave, TAG_CMD, cmd);
-  m_comm.send(slave, inputTag, input);
+  ///NOTE: if we don't store the isend requests, we can/will encounter crashes for custom (non-MPI) data types
+  ///      since the parameter passed to the MPI call is actually a reference to a member of that request.
+  ///      Hence we need to store it and clean it up afterwards!
+  /// reproducible on my machine with: mpirun -np 3 ./mpi/hs-mpi -p 5 -n 1 -f 0 -t 1 -m 9.5
+  mpi::request cmdReq = m_comm.isend(slave, TAG_CMD, cmd);
+  mpi::request inputReq = m_comm.isend(slave, inputTag, input);
+  m_sendRequests[slave] = SendRequestPair(cmdReq, inputReq);
   m_pendingRequests.push_back(m_comm.irecv(slave, outputTag, output));
 
   return slave;

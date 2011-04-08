@@ -222,6 +222,8 @@ void MPIMaster::handleResponse(const ResponsePair& response)
   const int slave = response.first.source();
   m_availableSlaves.push_back(slave);
 
+  m_sendRequests.erase(slave);
+
   MPIJob* job = m_runningJobs.at(slave);
   cout << timeStamp() << "RESPONSE: " << job->name() << ", slave:" << slave << endl;
   job->handleResult(slave);
