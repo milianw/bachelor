@@ -94,7 +94,7 @@ void guessBRange(const Experiment& exp, fp& from, fp& to)
   cout << "guessing B-range center from electron zeeman splitting, B = " << B << endl;
   fp A = 0;
   BOOST_FOREACH(const Nucleus& nuc, exp.nuclei) {
-    A += nuc.A.eigenvalues().sum().real() * nuc.twoJ / 3.0;
+    A += nuc.A.eigenvalues().array().abs().sum() * nuc.twoJ / 3.0;
   }
   // A in MHz
   A *= 1E06 * Constants::h / (Constants::Bohrm * g);
