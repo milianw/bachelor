@@ -91,9 +91,6 @@ Vector3d tryAngles(const Matrix3cd& ref, const Matrix3cd& other, int i, int j, i
 }
 
 int main() {
-  const double alpha = 30;
-  const double beta = 70;
-  const double gamma = 80;
   const Matrix3d base = (Matrix3d() <<
 //                           1, 1, 6,
 //                           1, 1, 7,
@@ -104,6 +101,9 @@ int main() {
                         ).finished();
 
 /*
+  const double alpha = 30;
+  const double beta = 70;
+  const double gamma = 80;
   const Matrix3d rot = RotZ(alpha * degree) * RotY(beta * degree) * RotZ(gamma * degree);
   cout << "rotation matrix: R = " << endl << rot << endl;
   cout << "euler angles:" << eulerAngles(rot).transpose() * radians << endl;
