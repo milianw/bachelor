@@ -91,8 +91,9 @@ int MPIMaster::runCommand(MPIJob* job, Commands cmd,
   m_availableSlaves.pop_back();
   m_runningJobs[slave] = job;
 
-  m_comm.isend(slave, TAG_CMD, cmd);
-  m_comm.isend(slave, inputTag, input);
+  ///NOTE: isend can/will lead to crashes, the slave will get corrupted data
+  m_comm.send(slave, TAG_CMD, cmd);
+  m_comm.send(slave, inputTag, input);
   m_pendingRequests.push_back(m_comm.irecv(slave, outputTag, output));
 
   return slave;
