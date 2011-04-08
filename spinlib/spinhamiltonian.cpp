@@ -165,45 +165,40 @@ MatrixXc SpinHamiltonian::magneticMoments() const
 {
   MatrixXc moments(m_spins.states, m_spins.states);
 
+  const Vector3c g_x = m_exp.gTensorEigenVectors().col(0) / m_exp.gTensorEigenVectors().col(0).norm();
+
   for (int bra = 0; bra < m_spins.states; ++bra) {
     for (int ket = 0; ket < m_spins.states; ++ket) {
-      //m_exp.nProtons is always the index of the electronic spin state
-      moments(bra, ket) = magneticMoment(bra, ket);
+      c_fp moment = 0;
 
-//       cout << i << '\t' << j << '\t' << "FINAL:" << '\t' << moments(i, j) << endl;
+      // sum x-moments of nuclei and electron in system
+      for (int k = 0; k < m_spins.elements; ++k) {
+        if (!stateContributes(bra, ket, k, IncludeElectron)) {
+          continue;
+        }
+
+        c_fp xMoment = g_x.dot(spinVector(bra, ket, k));
+
+        if (k == 0) {
+          // electron
+          ///TODO: anisotropic gTensor?
+          xMoment *= g_E * Bohrm;
+        } else if (k < m_spins.spinHalfs) {
+          // J = 1/2 nucleus
+          xMoment *= -1.0 * g_1H * NUC_MAGNETON;
+        } else {
+          // J = 1 nucleus
+          xMoment *= -1.0 * g_14N * NUC_MAGNETON;
+        }
+
+        moment += xMoment;
+      }
+
+      moments(bra, ket) = moment;
     }
   }
 
-  //cout << moments << endl;
   return moments;
-}
-
-c_fp SpinHamiltonian::magneticMoment(const int bra, const int ket) const
-{
-  c_fp ret = 0;
-  const Vector3c g_x = m_exp.gTensorEigenVectors().col(0) / m_exp.gTensorEigenVectors().col(0).norm();
-  for (int k = 0; k < m_spins.elements; ++k) {
-    if (!stateContributes(bra, ket, k, IncludeElectron)) {
-      continue;
-    }
-
-    c_fp xMoment = g_x.dot(spinVector(bra, ket, k));
-
-    if (k == 0) {
-      // electron
-      xMoment *= g_E * Bohrm;
-    } else if (k < m_spins.spinHalfs) {
-      // J = 1/2 nucleus
-      xMoment *= -1.0 * g_1H * NUC_MAGNETON;
-    } else {
-      // J = 1 nucleus
-      xMoment *= -1.0 * g_14N * NUC_MAGNETON;
-    }
-
-//         cout << i << '\t' << j << '\t' << k << '\t' << xMoment << endl;
-    ret += xMoment;
-  }
-  return ret;
 }
 
 MatrixX SpinHamiltonian::intensityMatrix(const MatrixXc& eigenVectors) const {

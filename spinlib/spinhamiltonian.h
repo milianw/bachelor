@@ -82,11 +82,8 @@ class SpinHamiltonian {
     };
     inline bool stateContributes(int bra, int ket, int k, bool ignoreElectron = IgnoreElectron) const;
 
-    /// moments
-    /// TODO: better document
+    /// @return matrix of the |g_x> components of the magnetic moments in the system
     MatrixXc magneticMoments() const;
-
-    inline c_fp magneticMoment(const int i, const int j) const;
 
     /// intensitiy matrix with coefficients (i, j) = |< psi_j | M | psi_i>|^2
     /// psi_i being the i-th eigen vector
