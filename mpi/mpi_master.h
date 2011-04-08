@@ -53,6 +53,8 @@ public:
 
   int availableSlaves() const;
 
+  std::string timeStamp() const;
+
 private:
   std::string jobFile(unsigned int jobId) const;
   bool readdJob(const std::string& jobFile);
@@ -85,7 +87,7 @@ int MPIMaster::runCommand(MPIJob* job, Commands cmd,
                           Tags outputTag, OutputT& output)
 {
   const int slave = m_availableSlaves.back();
-//   std::cout << "running job " << job << " on slave " << slave << std::endl;
+  std::cout << timeStamp() << "RUN: " << stringifyCommand(cmd) << ", slave: " << slave << std::endl;
   m_availableSlaves.pop_back();
   m_runningJobs[slave] = job;
 

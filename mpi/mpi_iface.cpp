@@ -19,31 +19,21 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef MW_MPI_IFACE_H
-#define MW_MPI_IFACE_H
+#include "mpi_iface.h"
 
-const int MASTER_RANK = 0;
-
-enum Commands {
-  CMD_CLOSE,
-  CMD_BISECT,
-  CMD_DIAGONALIZE,
-  CMD_FINDROOTS,
-  CMD_INTENSITY
-};
-
-const char* stringifyCommand(Commands cmd);
-
-enum Tags {
-  TAG_CMD,
-  TAG_DIAGONALIZE_INPUT,
-  TAG_DIAGONALIZE_RESULT,
-  TAG_BISECT_INPUT,
-  TAG_BISECT_RESULT,
-  TAG_FINDROOTS_INPUT,
-  TAG_FINDROOTS_RESULT,
-  TAG_INTENSITY_INPUT,
-  TAG_INTENSITY_RESULT
-};
-
-#endif // MW_MPI_IFACE_H
+const char* stringifyCommand(Commands cmd)
+{
+  switch(cmd) {
+    case CMD_CLOSE:
+      return "Close";
+    case CMD_BISECT:
+      return "Bisect";
+    case CMD_DIAGONALIZE:
+      return "Diagonalize";
+    case CMD_FINDROOTS:
+      return "Findroots";
+    case CMD_INTENSITY:
+      return "Intensity";
+  }
+  return "UNKNOWN COMMAND";
+}

@@ -32,6 +32,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <typeinfo>
 #include <sstream>
@@ -39,6 +40,7 @@
 using namespace std;
 namespace ar = boost::archive;
 namespace fs = boost::filesystem;
+namespace pt = boost::posix_time;
 
 MPIMaster::MPIMaster(const mpi::communicator& comm, const Experiment& exp,
                      const string& outputDir)
@@ -48,12 +50,12 @@ MPIMaster::MPIMaster(const mpi::communicator& comm, const Experiment& exp,
 , m_lastJobId(0)
 {
   if (comm.rank() != MASTER_RANK) {
-    cerr << "MPIMaster created outside of master rank!" << endl;
+    cerr << timeStamp() << "MPIMaster created outside of master rank!" << endl;
     comm.abort(1);
     return;
   }
   if (comm.size() - 1 < 2) {
-    cerr << "need at least two slaves to operate properly" << endl;
+    cerr << timeStamp() << "need at least two slaves to operate properly" << endl;
     comm.abort(2);
     return;
   }
@@ -70,7 +72,7 @@ MPIMaster::~MPIMaster()
   BOOST_FOREACH(int slave, m_slaves) {
     m_comm.isend(slave, TAG_CMD, CMD_CLOSE);
   }
-  cout << "intensity data written to file:" << endl << m_intensityOutputFile  << endl;
+  cout << timeStamp() << "intensity data written to file:" << endl << m_intensityOutputFile  << endl;
 }
 
 void MPIMaster::calculateIntensity(const fp from, const fp to, const int steps)
@@ -101,21 +103,21 @@ void MPIMaster::calculateIntensity(const fp from, const fp to, const int steps)
     } else {
       enqueueJob(new BisectStartJob(this, from, to));
     }
-    cout << "starting jobs from scratch" << endl;
+    cout << timeStamp() << "starting jobs from scratch" << endl;
   } else {
-    cout << "continuing with " << m_jobQueue.size() << " jobs from last run" << endl;
+    cout << timeStamp() << "continuing with " << m_jobQueue.size() << " jobs from last run" << endl;
   }
 
   m_intensityOutputFile = m_outputDir + "/intensity.data";
   // truncate data file if we start from scratch
   m_intensityOutput.open(m_intensityOutputFile.data(), ios_base::out | (continuingJobs ? ios_base::app : ios_base::trunc));
   if (!m_intensityOutput.is_open()) {
-    cerr << "could not open output file" << m_intensityOutputFile << endl;
+    cerr << timeStamp() << "could not open output file" << m_intensityOutputFile << endl;
     m_comm.abort(3);
   }
 
   while(!m_jobQueue.empty() || !m_pendingRequests.empty()) {
-    cout << "available slaves: " << m_availableSlaves.size() << ", available jobs:" << m_jobQueue.size() << endl;
+    cout << timeStamp() << "QUEUE: free slaves: " << m_availableSlaves.size() << ", pending jobs: " << m_jobQueue.size() << endl;
 
     // check for finished requests
     while(!m_pendingRequests.empty()) {
@@ -128,13 +130,13 @@ void MPIMaster::calculateIntensity(const fp from, const fp to, const int steps)
     }
 
     if ((m_availableSlaves.empty() || m_jobQueue.empty()) && !m_pendingRequests.empty()) {
-//       cout << "all slaves working, waiting for any to finish before assigning new work..." << endl;
+//       cout << timeStamp() << "all slaves working, waiting for any to finish before assigning new work..." << endl;
       handleResponse(mpi::wait_any(m_pendingRequests.begin(), m_pendingRequests.end()));
     }
 
     while (!m_jobQueue.empty() && !m_availableSlaves.empty()) {
       MPIJob* job = m_jobQueue.front();
-//       cout << "starting job: " << typeid(*job).name() << endl;
+      cout << timeStamp() << "START: " << job->name() << endl;
       m_jobQueue.pop();
       job->start();
     }
@@ -157,7 +159,7 @@ void MPIMaster::enqueueJob(MPIJob* job)
   const string file = jobFile(id);
   ofstream stream(file.c_str());
   if (!stream.is_open()) {
-    cerr << "could not open job file for writing: " << file << endl;
+    cerr << timeStamp() << "could not open job file for writing: " << file << endl;
     m_comm.abort(4);
     return;
   }
@@ -174,7 +176,7 @@ bool MPIMaster::readdJob(const std::string& jobFile)
 {
   ifstream stream(jobFile.c_str());
   if (!stream.is_open()) {
-    cerr << "could not open job file for reading, skipping: " << jobFile << endl;
+    cerr << timeStamp() << "could not open job file for reading, skipping: " << jobFile << endl;
     return false;
   }
 
@@ -208,7 +210,7 @@ bool MPIMaster::readdJob(const std::string& jobFile)
     m_jobQueue.push(job);
     return true;
   } catch(boost::archive::archive_exception e) {
-    cerr << "could not load job file, skipping:" << jobFile << endl << e.what() << endl;
+    cerr << timeStamp() << "could not load job file, skipping:" << jobFile << endl << e.what() << endl;
     return false;
   }
 }
@@ -221,7 +223,7 @@ void MPIMaster::handleResponse(const ResponsePair& response)
   m_availableSlaves.push_back(slave);
 
   MPIJob* job = m_runningJobs.at(slave);
-//   cout << "response to job " << typeid(*job).name() << " from slave:" << slave << endl;
+  cout << timeStamp() << "RESPONSE: " << job->name() << ", slave:" << slave << endl;
   job->handleResult(slave);
   m_runningJobs.erase(slave);
 
@@ -237,13 +239,11 @@ void MPIMaster::handleResponse(const ResponsePair& response)
   }
   if (!stillRunning) {
     if (!fs::remove(jobFile(job->jobId()))) {
-      cout << "could not remove job file: " << jobFile(job->jobId()) << endl;
-      m_comm.abort(6);
-      return;
+      cerr << timeStamp() << "could not remove job file: " << jobFile(job->jobId()) << endl;
     }
     delete job;
   }
-//   cout << "slave " << slave << " finished work on job " << job << (stillRunning ? ", job still running" : "") << endl;
+//   cout << timeStamp() << "slave " << slave << " finished work on job " << job << (stillRunning ? ", job still running" : "") << endl;
 }
 
 ofstream& MPIMaster::intensityOutputFile()
@@ -254,4 +254,11 @@ ofstream& MPIMaster::intensityOutputFile()
 int MPIMaster::availableSlaves() const
 {
   return m_availableSlaves.size();
+}
+
+std::string MPIMaster::timeStamp() const
+{
+  stringstream stream;
+  stream << '[' << pt::second_clock::local_time() << "] ";
+  return stream.str();
 }

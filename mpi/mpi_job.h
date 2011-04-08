@@ -52,6 +52,8 @@ public:
   };
   virtual JobType type() const = 0;
 
+  std::string name() const;
+
 protected:
   MPIMaster* const m_master;
   unsigned int m_id;

@@ -55,6 +55,27 @@ unsigned int MPIJob::jobId() const
   return m_id;
 }
 
+string MPIJob::name() const
+{
+  stringstream stream;
+  switch(type()) {
+    case BisectStart:
+      stream << "BisectStart";
+      break;
+    case Bisect:
+      stream << "Bisect";
+      break;
+    case FindRoots:
+      stream << "FindRoots";
+      break;
+    case Intensity:
+      stream << "Intensity";
+      break;
+  }
+  stream << '#' << m_id;
+  return stream.str();
+}
+
 //BEGIN BisectStartJob
 BisectStartJob::BisectStartJob(MPIMaster* master, const fp from, const fp to)
 : MPIJob(master)
