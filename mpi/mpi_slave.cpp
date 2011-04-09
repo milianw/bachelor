@@ -63,7 +63,7 @@ void MPISlave::work()
          */
         BisectInput input;
         m_comm.recv(MASTER_RANK, TAG_BISECT_INPUT, input);
-        m_comm.isend(MASTER_RANK, TAG_BISECT_RESULT, m_resonanceField.checkSegment(input.from, input.to));
+        m_comm.send(MASTER_RANK, TAG_BISECT_RESULT, m_resonanceField.checkSegment(input.from, input.to));
         break;
       }
       case CMD_DIAGONALIZE: {
@@ -75,7 +75,7 @@ void MPISlave::work()
          */
         fp B;
         m_comm.recv(MASTER_RANK, TAG_DIAGONALIZE_INPUT, B);
-        m_comm.isend(MASTER_RANK, TAG_DIAGONALIZE_RESULT, m_resonanceField.diagonalizeNode(B));
+        m_comm.send(MASTER_RANK, TAG_DIAGONALIZE_RESULT, m_resonanceField.diagonalizeNode(B));
         break;
       }
       case CMD_FINDROOTS: {
