@@ -70,9 +70,10 @@ int main(int argc, char** argv) {
     printMatlab(nuc.A);
     cout << ";" << endl;
     cout << "[A, Apa] = euler(Sys.g, A_full, 1);" << endl;
+    cout << "Q = "; printMatlab(nuc.Q.transpose()); cout << ";" << endl;
     cout << "Sys = nucspinadd(Sys,";
     cout << '\'' << id.str() << '\'';
-    cout << ", A, Apa);" << endl;
+    cout << ", A, Apa, Q);" << endl;
   }
   cout << "B_direction = ";
   printMatlab((exp.gTensorEigenVectors().col(2) / exp.gTensorEigenVectors().col(2).norm()).transpose());

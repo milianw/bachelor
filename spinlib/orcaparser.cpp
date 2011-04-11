@@ -116,7 +116,7 @@ void OrcaParser::parseFile(const string& file)
       bool haveA = false;
       bool haveQ = false;
       getline(stream, line);
-      while(!stream.eof() && !boost::starts_with(line, " ---") && (!haveQ || !haveA)) {
+      while(!stream.eof() && !boost::contains(line, "---") && (!haveQ || !haveA)) {
         if(!haveA && boost::starts_with(line, " Raw HFC matrix (all values in MHz):")) {
           for(int i = 0; i < 3; ++i) {
             for(int j = 0; j < 3; ++j) {
