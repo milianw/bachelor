@@ -164,33 +164,41 @@ void SpinHamiltonian::addElectronZeeman(MatrixXc& H) const
 
 void SpinHamiltonian::addQuadrupole(MatrixXc& H) const
 {
-  for (int bra = 0; bra < m_spins.states; ++bra) {
-    for (int ket = 0; ket < m_spins.states; ++ket) {
-      if (spinState(bra, 0 /* = Electron */) != spinState(ket, 0 /* = Electron */)) {
-        continue;  //matrix elements between different electron states are zero
-      }
-      c_fp colVal = 0;
-      // k = 1 to skip electron
-      for (int k = 1; k < m_spins.elements; ++k) {    //loop over nuclei
-        const Nucleus& nucleus = m_exp.nuclei.at(k - 1);
-        if (nucleus.twoJ < 1) {
-          // only spin one and higher has quadrupole interaction
-          continue;
-        } else if (nucleus.Q.isZero()) {
-          continue;
-        } else if (!stateContributes(bra, ket, k)) {
+
+  // k = 1 to skip electron
+  for (int k = 1; k < m_spins.elements; ++k) {    //loop over nuclei
+    const Nucleus& nucleus = m_exp.nuclei.at(k - 1);
+    if (nucleus.twoJ < 1) {
+      // only spin one and higher has quadrupole interaction
+      continue;
+    } else if (nucleus.Q.isZero()) {
+      continue;
+    }
+
+    ///NOTE: must be extended for J > 1 if ever supported
+    const Matrix3c Isquared[3] = {PauliMatrix_J_one::X * PauliMatrix_J_one::X,
+                                  PauliMatrix_J_one::Y * PauliMatrix_J_one::Y,
+                                  PauliMatrix_J_one::Z * PauliMatrix_J_one::Z};
+
+    for (int bra = 0; bra < m_spins.states; ++bra) {
+      for (int ket = 0; ket < m_spins.states; ++ket) {
+        if (!stateContributes(bra, ket, k, IncludeElectron)) {
           continue;
         }
+        c_fp colVal = 0;
 
-        //compute elements of I vector
-        Vector3c I = spinVector(bra, ket, k);
-        ///NOTE: don't use .dot() as that would do s.adjoint() * ...
-        ///      but for operators this is wrong
-        ///FIXME: Q needs to be rotated
-        colVal += I.cwiseProduct(nucleus.Q.cwiseProduct(I)).sum();
+        int spinBra = spinState(bra, k);
+        int spinKet = spinState(ket, k);
+
+        // iterate over x,y,z
+        ///FIXME: must be rewritten once Q is rotated
+        for(int i = 0; i < 3; ++i) {
+          colVal += nucleus.Q(i) * Isquared[i](spinBra, spinKet);
+        }
+
+        // Q is in MHz, convert to MKS
+        H(bra, ket) += colVal * h * 1.0E6;
       }
-      // Q is in MHz, convert to MKS
-      H(bra, ket) += colVal * h * 1.0E6;
     }
   }
 }
