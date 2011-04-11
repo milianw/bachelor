@@ -64,8 +64,8 @@ class SpinHamiltonian {
     void addQuadrupole(MatrixXc& H) const;
 
   private:
-    /// interprets @p i as binary number and returns the k-th bit of it
-    inline bool spinState(int state, int k) const;
+    /// return spin of element @p k in state @p state
+    inline int spinState(int state, int k) const;
 
     /// return spin vector from pauli matrices
     /// NOTE: don't .dot() them, use .cwiseProduct().sum()!

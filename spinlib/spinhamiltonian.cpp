@@ -52,7 +52,7 @@ inline Vector3c SpinHamiltonian::spinVector(int bra, int ket, int k) const
   return m_spins.spinVector(bra, ket, k);
 }
 
-inline bool SpinHamiltonian::spinState(int state, int k) const
+inline int SpinHamiltonian::spinState(int state, int k) const
 {
   return m_spins.spinInState(k, state);
 }
