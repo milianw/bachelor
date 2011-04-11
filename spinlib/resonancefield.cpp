@@ -60,6 +60,7 @@ struct Segment {
 
 static BisectAnswer notResonantAnswer(const fp from, const fp to)
 {
+  DEBUG(std::cout << "segment not resonant:" << from << " - " << to << std::endl;)
   BisectAnswer answer;
   answer.status = BisectAnswer::NotResonant;
   answer.from = from;
@@ -69,6 +70,7 @@ static BisectAnswer notResonantAnswer(const fp from, const fp to)
 
 static BisectAnswer continueAnswer(const fp from, const fp to, const BisectNode& mid)
 {
+  DEBUG(std::cout << "segment needs refinement:" << from << " - " << to << " mid: " << mid.B << std::endl;)
   BisectAnswer answer;
   answer.status = BisectAnswer::Continue;
   answer.from = from;
@@ -79,6 +81,7 @@ static BisectAnswer continueAnswer(const fp from, const fp to, const BisectNode&
 
 static BisectAnswer resonantAnswer(const fp from, const fp to, const BisectNode& mid)
 {
+  DEBUG(std::cout << "segment resonant:" << from << " - " << to << " mid: " << mid.B << std::endl;)
   BisectAnswer answer;
   answer.status = BisectAnswer::Resonant;
   answer.from = from;
@@ -132,6 +135,7 @@ fp ResonanceField::calculateLambda() const
 
 BisectNode ResonanceField::diagonalizeNode(const fp B) const
 {
+  DEBUG(static int diags = 0; cout << "diagonalizing node at B = " << B << "(diag #" << (diags++) << ")" << endl;)
   SpinHamiltonian H(B, m_exp);
   SelfAdjointEigenSolver<MatrixXc> eigenSolver(H.hamiltonian());
   const VectorX& E = eigenSolver.eigenvalues();
@@ -188,6 +192,7 @@ vector< fp > ResonanceField::calculate(fp B_min, fp B_max)
   cleanupResonancyField(field);
 
   DEBUG(cout << "cleaned resonance field contains " << field.size() << " roots" << endl;)
+  DEBUG(for(size_t i = 0; i < min(field.size(), size_t(25)); ++i) { cout << field.at(i) << ", "; } cout << endl;)
 
   m_eVals.clear();
   return field;
@@ -195,6 +200,7 @@ vector< fp > ResonanceField::calculate(fp B_min, fp B_max)
 
 BisectAnswer ResonanceField::checkSegment(const BisectNode& from, const BisectNode& to) const
 {
+  DEBUG(cout << "checking segment: " << from.B << " - " << to.B << endl;)
   const fp B_diff = to.B - from.B;
   bool resonancePossible = false;
   if ((to.E(m_exp.dimension - 1) - to.E(0)) > m_mwFreq) {
@@ -322,7 +328,7 @@ vector<fp> ResonanceField::findRoots(const map<fp, fp>& resonantSegments)
   map<fp, fp>::const_iterator it = resonantSegments.begin();
   const map<fp, fp>::const_iterator end = resonantSegments.end();
   GNUPLOT_DEBUG(
-    cout << "set xrange[" << it.key() * 0.9 << ":" << (end-1).value() * 1.1 << "]" << endl;
+    cout << "set xrange[" << it->first * 0.9 << ":" << resonantSegments.rbegin()->second * 1.1 << "]" << endl;
     cout << "u(x,min,max) = (x>=min)&&(x<max)? 1 : 1/0;" << endl;
   )
   while(it != end) {
@@ -345,9 +351,10 @@ vector<fp> ResonanceField::findRootsInSegment(const BisectNode& from, const Bise
   vector<fp> roots;
   const fp B_diff = to.B - from.B;
   GNUPLOT_DEBUG(
-    cout << "set arrow from " << B_min << ",-5e-26 to " << B_min << ",5e-26 ls 2" << endl;
-    cout << "set arrow from " << B_max << ",-5e-26 to " << B_max << ",5e-26 ls 2" << endl;
+    cout << "set arrow from " << from.B << ",-5e-26 to " << from.B << ",5e-26 ls 2" << endl;
+    cout << "set arrow from " << to.B << ",-5e-26 to " << to.B << ",5e-26 ls 2" << endl;
   )
+  DEBUG(cout << "find roots in segment:" << from.B << " - " << to.B << endl;)
   // see eq 8
   static const Matrix4 M = (Matrix4() << 
                             2, -2, 1, 1,
@@ -369,6 +376,7 @@ vector<fp> ResonanceField::findRootsInSegment(const BisectNode& from, const Bise
         // Newton-Raphson root finding
         fp t = newtonRaphson(p, 0.5, m_mwFreq); // x_0 = 0.5
         if (!isfinite(t)) {
+          DEBUG(cout << "skipping infinite root:" << u << ", " << v << endl;)
           continue;
         }
         fp t2 = t;
@@ -400,14 +408,14 @@ vector<fp> ResonanceField::findRootsInSegment(const BisectNode& from, const Bise
         }
         continue;
       }
-
+      DEBUG(cout << "found root for transition (" << u << ", " << v << "): " << root << endl;)
       roots.push_back(root);
       GNUPLOT_DEBUG(
-        cout << "replot u(x, " << B_min << "," << B_max << ") * ((((x-" << B_min << ")/" << B_diff << "))**3 * (" << p(0) << ") + (((x-" << B_min << ")/" << B_diff << "))**2 * (" << p(1) << ") + (((x-" << B_min << ")/" << B_diff << ")) * (" << p(2) << ") + (" << p(3) << " - " << mwFreq << ")) "
-                  "title \"B_min = " << B_min << ", B_max = " << B_max << " || u = " << u << ", v = " << v << "\"" << endl;
+        cout << "replot u(x, " << from.B << "," << to.B << ") * ((((x-" << from.B << ")/" << B_diff << "))**3 * (" << p(0) << ") + (((x-" << from.B << ")/" << B_diff << "))**2 * (" << p(1) << ") + (((x-" << from.B << ")/" << B_diff << ")) * (" << p(2) << ") + (" << p(3) << " - " << m_mwFreq << ")) "
+                  "title \"B_min = " << from.B << ", B_max = " << to.B << " || u = " << u << ", v = " << v << "\"" << endl;
         cout << "set arrow from " << root << ",-1e-24 to " << root << ",1e-24 ls 0" << endl;
-        nodes << B_min << '\t' << (from.E(v) - from.E(u) - mwFreq) << endl;
-        nodes << B_max << '\t' << (to.E(v) - to.E(u) - mwFreq) << endl;
+//         nodes << from.B << '\t' << (from.E(v) - from.E(u) - mwFreq) << endl;
+//         nodes << to.B << '\t' << (to.E(v) - to.E(u) - mwFreq) << endl;
       )
     }
   }
