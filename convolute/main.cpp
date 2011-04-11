@@ -41,12 +41,11 @@ const int DEFAULT_STEPS = 100;
 const fp DEFAULT_WIDTH = 0.001;
 const fp WIDTHS_TO_ZERO = 4.0; // = exp(-N^2 /2), with N = 4 this is approx. 0.033%
 const bool DEFAULT_DERIV = false;
-///NOTE: disabled for now as it would prevent comparing of non-normalized data with the spectrum
-const bool DEFAULT_NORMALIZE = false;
+const bool DEFAULT_NORMALIZE = true;
 
 void usage()
 {
-  qerr << "convolute DATA_DIR [steps=" << DEFAULT_STEPS << "] [width=" << DEFAULT_WIDTH << "] [deriv=" << DEFAULT_DERIV << "]" << endl;
+  qerr << "convolute DATA_DIR [steps=" << DEFAULT_STEPS << "] [width=" << DEFAULT_WIDTH << "] [deriv=" << DEFAULT_DERIV << "] [norm=" << DEFAULT_NORMALIZE << "]" << endl;
 }
 
 class Gaussian {
@@ -84,6 +83,16 @@ public:
   void normalizeIntensity(const double maxValue)
   {
     m_intensity /= maxValue;
+  }
+
+  double center() const
+  {
+    return m_center;
+  }
+
+  double height() const
+  {
+    return m_intensity;
   }
 
 private:
@@ -172,7 +181,21 @@ int main(int argc, char* argv[]) {
   }
 
   bool normalize = DEFAULT_NORMALIZE;
-
+  QString normalizeStr;
+  if (app.arguments().count() >= 5) {
+    normalizeStr = app.arguments().at(4);
+  } else if (env.contains("CONVOLUTE_NORMALIZE")) {
+    normalizeStr = env.value("CONVOLUTE_NORMALIZE");
+  }
+  if (!normalizeStr.isEmpty()) {
+    bool ok = true;
+    normalize = normalizeStr.toFloat(&ok);
+    if (!ok) {
+      qerr << "invalid normalize argument" << endl << endl;
+      usage();
+      return 3;
+    }
+  }
 
   // step 1: read data
   QMap<fp, Gaussian*> data;
@@ -204,30 +227,35 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  // output raw data marked by third row == 1
+  foreach(Gaussian* g, data) {
+      cout << g->center() << '\t' << g->height() << "\t1" << endl;
+  }
+
   // step 2: sum each peak
   fp lastMax = -1;
   const fp stepSize = 2.0 * width * WIDTHS_TO_ZERO / steps;
 
-  cout << (data.begin().key() - width * WIDTHS_TO_ZERO - 200 * stepSize) << '\t' << 0 << endl;
-  cout << (data.begin().key() - width * WIDTHS_TO_ZERO - stepSize) << '\t' << 0 << endl;
+  cout << (data.begin().key() - width * WIDTHS_TO_ZERO - 200 * stepSize) << '\t' << 0 << '\t' << 0 << endl;
+  cout << (data.begin().key() - width * WIDTHS_TO_ZERO - stepSize) << '\t' << 0 << '\t' << 0 << endl;
 
   foreach(const fp center, data.keys()) {
     if (lastMax != -1 && center - width * WIDTHS_TO_ZERO > lastMax + stepSize) {
-      cout << (lastMax + stepSize) << '\t' << 0 << endl;
-      cout << (center - width * WIDTHS_TO_ZERO - stepSize) << '\t' << 0 << endl;
+      cout << (lastMax + stepSize) << '\t' << 0 << '\t' << 0 << endl;
+      cout << (center - width * WIDTHS_TO_ZERO - stepSize) << '\t' << 0 << '\t' << 0 << endl;
     }
     for(fp x = max(lastMax, center - width * WIDTHS_TO_ZERO); x <= center + width * WIDTHS_TO_ZERO; x += stepSize) {
       fp y = 0;
       foreach(Gaussian* g, data) {
         y = qMax(deriv ? g->yDeriv(x) : g->y(x), y);
       }
-      cout << x << '\t' << y << endl;
+      cout << x << '\t' << y << '\t' << 0 << endl;
     }
     lastMax = max(lastMax, center + width * WIDTHS_TO_ZERO);
   }
 
-  cout << (lastMax + stepSize) << '\t' << 0 << endl;
-  cout << (lastMax + 200 * stepSize) << '\t' << 0 << endl;
+  cout << (lastMax + stepSize) << '\t' << 0 << '\t' << 0 << endl;
+  cout << (lastMax + 200 * stepSize) << '\t' << 0 << '\t' << 0 << endl;
 
   qDeleteAll(data.values());
   data.clear();
