@@ -76,6 +76,7 @@ MatrixXc SpinHamiltonian::hamiltonian() const
   addNuclearZeeman(H);
   addHyperFine(H);
   addElectronZeeman(H);
+  addQuadrupole(H);
   return H;
 }
 
@@ -157,6 +158,36 @@ void SpinHamiltonian::addElectronZeeman(MatrixXc& H) const
       ///NOTE: don't use .dot() as that would do s.adjoint() * ...
       ///      but for operators this is wrong
       H(bra, ket) += spinVector(bra, ket, 0 /* = Electron */).cwiseProduct(gDotH_B).sum() * Bohrm;
+    }
+  }
+}
+
+void SpinHamiltonian::addQuadrupole(MatrixXc& H) const
+{
+  for (int bra = 0; bra < m_spins.states; ++bra) {
+    for (int ket = 0; ket < m_spins.states; ++ket) {
+      c_fp colVal = 0;
+      // k = 1 to skip electron
+      for (int k = 1; k < m_spins.elements; ++k) {    //loop over nuclei
+        const Nucleus& nucleus = m_exp.nuclei.at(k - 1);
+        if (nucleus.twoJ < 1) {
+          // only spin one and higher has quadrupole interaction
+          continue;
+        } else if (nucleus.Q.isZero()) {
+          continue;
+        } else if (!stateContributes(bra, ket, k)) {
+          continue;
+        }
+
+        //compute elements of I vector
+        Vector3c I = spinVector(bra, ket, k);
+        ///NOTE: don't use .dot() as that would do s.adjoint() * ...
+        ///      but for operators this is wrong
+        ///FIXME: Q needs to be rotated
+        colVal += I.cwiseProduct(nucleus.Q.cwiseProduct(I)).sum();
+      }
+      // Q is in MHz, convert to MKS
+      H(bra, ket) += colVal * h * 1.0E6;
     }
   }
 }

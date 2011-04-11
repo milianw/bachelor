@@ -58,8 +58,10 @@ class SpinHamiltonian {
     void addNuclearZeeman(MatrixXc& H) const;
     /// add the hyper fine Hamiltonian component to @p H
     void addHyperFine(MatrixXc& H) const;
-    /// electron Zeeman Hamiltonian component to @p H
+    /// add electron Zeeman Hamiltonian component to @p H
     void addElectronZeeman(MatrixXc& H) const;
+    /// add quadrupole interaction energy operator to @p H
+    void addQuadrupole(MatrixXc& H) const;
 
   private:
     /// interprets @p i as binary number and returns the k-th bit of it
