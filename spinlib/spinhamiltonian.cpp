@@ -166,6 +166,7 @@ MatrixXc SpinHamiltonian::magneticMoments() const
   MatrixXc moments(m_spins.states, m_spins.states);
 
   const Vector3c g_x = m_exp.gTensorEigenVectors().col(0) / m_exp.gTensorEigenVectors().col(0).norm();
+  const fp g = m_exp.gTensorEigenValues()(0);
 
   for (int bra = 0; bra < m_spins.states; ++bra) {
     for (int ket = 0; ket < m_spins.states; ++ket) {
@@ -181,8 +182,7 @@ MatrixXc SpinHamiltonian::magneticMoments() const
 
         if (k == 0) {
           // electron
-          ///TODO: anisotropic gTensor?
-          xMoment *= g_E * Bohrm;
+          xMoment *= g * Bohrm;
         } else if (k < m_spins.spinHalfs) {
           // J = 1/2 nucleus
           xMoment *= -1.0 * g_1H * NUC_MAGNETON;
