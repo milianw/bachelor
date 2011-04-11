@@ -81,7 +81,7 @@ string identifierForExperiment(const Experiment& exp)
 {
   stringstream stream;
   Spins s = exp.spinSystem();
-  stream << s.spinHalfs << ':' << s.spinOnes << ':' << exp.mwFreqGHz;
+  stream << (s.spinHalfs-1) << ':' << s.spinOnes << ':' << exp.mwFreqGHz;
   return stream.str();
 }
 
