@@ -65,12 +65,12 @@ Experiment::Experiment(const vector<Nucleus>& nuclei_)
 Experiment Experiment::generateDummy(int protons, int nitrogens)
 {
   vector<Nucleus> nuclei;
-  const Matrix3c A = Matrix3c::Identity() * 1420;
+  const Matrix3 A = Matrix3::Identity() * 1420;
   for(int i = 0; i < protons; ++i) {
-    nuclei.push_back(Nucleus("1H", 1, 1, A, Constants::g_1H));
+    nuclei.push_back(Nucleus("1H", 1, 1, A, Constants::g_1H, Vector3::Zero()));
   }
   for(int i = 0; i < nitrogens; ++i) {
-    nuclei.push_back(Nucleus("14N", 2, 14, A, Constants::g_14N));
+    nuclei.push_back(Nucleus("14N", 2, 14, A, Constants::g_14N, Vector3::Zero()));
   }
   return Experiment(nuclei);
 }

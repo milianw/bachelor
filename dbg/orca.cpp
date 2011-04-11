@@ -22,9 +22,12 @@ int main(int argc, char** argv) {
 
   BOOST_FOREACH(const Nucleus& nuc, parser.nuclei()) {
     cout << "Nucleus: " << nuc.name << ", J = " << float(nuc.twoJ)/2 << ", g = " << nuc.g << endl;
-    cout << nuc.A << endl;
+    cout << "A = " << endl << nuc.A << endl;
     cout << "euler angles: " << parser.eulerRotation()[nuc.name].first.transpose() << endl;
     cout << "[Ax, Ay, Az]: " << parser.eulerRotation()[nuc.name].second.transpose() << endl;
+    if (!nuc.Q.isZero()) {
+      cout << "Q = " << nuc.Q.transpose() << endl;
+    }
     cout << endl;
   }
 

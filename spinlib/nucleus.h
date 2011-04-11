@@ -26,22 +26,27 @@
 
 /**
  * defines a nucleus in the experiment
- *
- * NOTE: use MKS units!
  */
 struct Nucleus {
   Nucleus() {}
   Nucleus(const std::string& name_, const int twoJ_, const int isotope_,
-          const Matrix3c& A_, const fp g_)
+          const Matrix3& A_, const fp g_, const Vector3 Q_)
   : name(name_), twoJ(twoJ_), isotope(isotope_), A(A_), g(g_)
+  , Q(Q_)
   { }
 
+  // arbitrary name identifying the nucleus
   std::string name;
+  // 2*J (positive spin maximum)
   int twoJ;
+  // isotope number
   int isotope;
-  ///TODO: complex data
-  Matrix3c A;
+  // hyperfine coupling matrix in MHz
+  Matrix3 A;
+  // g value
   fp g;
+  // quadrupole tensor eigenvalues in MHz
+  Vector3 Q;
 };
 
 
