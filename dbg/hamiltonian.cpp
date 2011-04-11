@@ -89,6 +89,14 @@ int main(int argc, char** argv) {
     cout << "hyperfine:" << endl;
     dbg(m);
   }
+  {
+    MatrixXc m(exp.dimension, exp.dimension);
+    m.setZero();
+    H.addQuadrupole(m);
+    m /= (Constants::h * 1E09);
+    cout << "quadrupole:" << endl;
+    dbg(m);
+  }
   /*
   {
     Spins s(exp.nProtons + 1, exp.nNitrogens);
