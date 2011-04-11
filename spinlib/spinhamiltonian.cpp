@@ -166,6 +166,9 @@ void SpinHamiltonian::addQuadrupole(MatrixXc& H) const
 {
   for (int bra = 0; bra < m_spins.states; ++bra) {
     for (int ket = 0; ket < m_spins.states; ++ket) {
+      if (spinState(bra, 0 /* = Electron */) != spinState(ket, 0 /* = Electron */)) {
+        continue;  //matrix elements between different electron states are zero
+      }
       c_fp colVal = 0;
       // k = 1 to skip electron
       for (int k = 1; k < m_spins.elements; ++k) {    //loop over nuclei
