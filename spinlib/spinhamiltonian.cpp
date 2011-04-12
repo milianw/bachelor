@@ -174,6 +174,17 @@ void SpinHamiltonian::addQuadrupole(MatrixXc& H) const
       continue;
     }
 
+    ///FIXME: if EFG is available, use it and the formula:
+    /// Q_ij = eQ / (2I * (2I - 1)) * V_ij
+    /// question: how to get e (not e^2).
+    /// question: units? efg is in a.u.^3
+    /// ah, better idea:
+    /// A = e^2qQ / (2I*(2I-1)) = nucleus.Q(1)
+    /// Q_ij = A(V_ij/V_zz)
+    /// then: Q = R.transpose() * EFG * R
+    /// with R the direct cosine matrix (R =  [[xx', xy', xz'], [yx', ...])
+    /// x: gtensor eigen vector, x': EFG eigen vector
+
     ///NOTE: must be extended for J > 1 if ever supported
     const Matrix3c Isquared[3] = {PauliMatrix_J_one::X * PauliMatrix_J_one::X,
                                   PauliMatrix_J_one::Y * PauliMatrix_J_one::Y,
