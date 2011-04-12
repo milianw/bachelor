@@ -222,8 +222,16 @@ int main(int argc, char* argv[]) {
   }
 
   if (normalize) {
-    foreach(Gaussian* g, data) {
-      g->normalizeIntensity(maxI);
+    QMap< fp, Gaussian* >::iterator it = data.begin();
+    while(it != data.end()) {
+      it.value()->normalizeIntensity(maxI);
+      // get rid of data far below the peak threshold
+      if (it.value()->height() < 1E-6) {
+        delete it.value();
+        it = data.erase(it);
+      } else {
+        ++it;
+      }
     }
   }
 
@@ -236,7 +244,7 @@ int main(int argc, char* argv[]) {
   fp lastMax = -1;
   const fp stepSize = 2.0 * width * WIDTHS_TO_ZERO / steps;
 
-  cout << (data.begin().key() - width * WIDTHS_TO_ZERO - 200 * stepSize) << '\t' << 0 << '\t' << 0 << endl;
+  cout << (data.begin().key() - width * WIDTHS_TO_ZERO - 50 * stepSize) << '\t' << 0 << '\t' << 0 << endl;
   cout << (data.begin().key() - width * WIDTHS_TO_ZERO - stepSize) << '\t' << 0 << '\t' << 0 << endl;
 
   foreach(const fp center, data.keys()) {
@@ -255,7 +263,7 @@ int main(int argc, char* argv[]) {
   }
 
   cout << (lastMax + stepSize) << '\t' << 0 << '\t' << 0 << endl;
-  cout << (lastMax + 200 * stepSize) << '\t' << 0 << '\t' << 0 << endl;
+  cout << (lastMax + 50 * stepSize) << '\t' << 0 << '\t' << 0 << endl;
 
   qDeleteAll(data.values());
   data.clear();
