@@ -87,7 +87,9 @@ void MPISlave::work()
          */
         BisectInput input;
         m_comm.recv(MASTER_RANK, TAG_FINDROOTS_INPUT, input);
-        m_comm.send(MASTER_RANK, TAG_FINDROOTS_RESULT, m_resonanceField.findRootsInSegment(input.from, input.to));
+        vector<fp> answer = m_resonanceField.findRootsInSegment(input.from, input.to);
+        m_resonanceField.cleanupResonancyField(answer);
+        m_comm.send(MASTER_RANK, TAG_FINDROOTS_RESULT, answer);
         break;
       }
       case CMD_INTENSITY: {

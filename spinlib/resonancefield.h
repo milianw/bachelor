@@ -70,7 +70,7 @@ public:
   /**
    * Cleanup resonancy field, removes nearby B ranges below resolution threshold.
    */
-  static void cleanupResonancyField(std::vector<fp>& field);
+  void cleanupResonancyField(std::vector<fp>& field) const;
 
 private:
   const Experiment& m_exp;
@@ -78,6 +78,9 @@ private:
   const fp m_mwFreq;
   const bool m_loopingResonanceCanOccur;
   const fp m_lambda;
+
+  const fp m_cleanupThreshold;
+  const fp m_resfieldThreshold;
 
   fp calculateLambda() const;
 

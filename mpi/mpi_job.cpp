@@ -238,7 +238,6 @@ void FindRootsJob::handleResult(const int slave)
   DEBUG_FUNC(<< slave << '\t' << m_from.B << '\t' << m_to.B << '\t' << m_answer.size())
   UNUSED(slave);
 
-  ResonanceField::cleanupResonancyField(m_answer);
   for(int i = 0, c = m_answer.size(); i < c; ++i) {
     m_master->enqueueJob(new IntensityJob(m_master, m_answer.at(i)));
   }

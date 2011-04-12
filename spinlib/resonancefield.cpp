@@ -102,8 +102,13 @@ ResonanceField::ResonanceField(const Experiment& exp)
 , m_mwFreq(exp.mwFreqGHz * 1.0E9 * h)
 , m_loopingResonanceCanOccur(checkForLoopingResonance())
 , m_lambda(calculateLambda())
+, m_cleanupThreshold(getenv("RESFIELD_CLEANUP_THRESHOLD") ? atof(getenv("RESFIELD_CLEANUP_THRESHOLD")) : 0.001)
+, m_resfieldThreshold(getenv("RESFIELD_THRESHOLD") ? atof(getenv("RESFIELD_THRESHOLD")) : 1.0E-6)
 {
-  DEBUG(cout << (m_loopingResonanceCanOccur ? "looping resonance can occur" : "no looping resonance can occur") << endl;)
+  DEBUG(
+    cout << (m_loopingResonanceCanOccur ? "looping resonance can occur" : "no looping resonance can occur") << endl;
+    cout << "modelling accuracy: " << m_resfieldThreshold * m_mwFreq / 1.0E6 / h << "MHz" << endl;
+  )
 }
 
 bool ResonanceField::checkForLoopingResonance() const
@@ -154,24 +159,22 @@ BisectNode ResonanceField::diagonalizeNode(const fp B) const
   return BisectNode(B, E, E_deriv);
 }
 
-void ResonanceField::cleanupResonancyField(vector< fp >& field)
+void ResonanceField::cleanupResonancyField(vector< fp >& field) const
 {
-  static const fp threshold = getenv("RESFIELD_CLEANUP_THRESHOLD") ? atof(getenv("RESFIELD_CLEANUP_THRESHOLD")) : 0.001;
-
   if (field.size() < 2) {
     return;
   }
 
   sort(field.begin(), field.end());
 
-  if (!threshold) {
+  if (!m_cleanupThreshold) {
     return;
   }
 
   vector<fp>::iterator it = field.begin();
 
   while(it != field.end() - 1) {
-    if (abs(*it / *(it+1) - 1) < threshold) {
+    if (abs(*it / *(it+1) - 1) < m_cleanupThreshold) {
       field.erase(it + 1);
     } else {
       ++it;
@@ -246,15 +249,7 @@ BisectAnswer ResonanceField::checkSegment(const BisectNode& from, const BisectNo
     }
     epsilon *= 2;
 
-    static const float threshold = getenv("RESFIELD_THRESHOLD") ? atof(getenv("RESFIELD_THRESHOLD")) : 1.0E-6;
-    DEBUG(
-      static bool once = false;
-      if (!once) {
-        cout << "modelling accuracy: " << threshold * m_mwFreq / 1.0E6 / h << "MHz" << endl;
-        once = true;
-      }
-    )
-    if (epsilon > threshold * m_mwFreq) {
+    if (epsilon > m_resfieldThreshold * m_mwFreq) {
       return continueAnswer(from.B, to.B, mid);
     } else {
       return resonantAnswer(from.B, to.B, mid);
