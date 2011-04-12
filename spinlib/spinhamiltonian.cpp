@@ -107,7 +107,7 @@ void SpinHamiltonian::addNuclearZeeman(MatrixXc& H) const
         }
         colVal += val;
       }
-      H(bra, ket) += colVal * -1.0 * NUC_MAGNETON;
+      H(bra, ket) += colVal * fp(-1.0) * NUC_MAGNETON;
     }
   }
 }
@@ -133,7 +133,7 @@ void SpinHamiltonian::addHyperFine(MatrixXc& H) const
         ///      but for operators this is wrong
         colVal += s.cwiseProduct(m_exp.nuclei.at(k - 1).A * spinVector(bra, ket, k)).sum();
       }
-      H(bra, ket) += colVal * h * 1.0E6;
+      H(bra, ket) += colVal * h * fp(1.0E6);
     }
   }
 }
@@ -197,7 +197,7 @@ void SpinHamiltonian::addQuadrupole(MatrixXc& H) const
         }
 
         // Q is in MHz, convert to MKS
-        H(bra, ket) += colVal * h * 1.0E6;
+        H(bra, ket) += colVal * h * fp(1.0E6);
       }
     }
   }
@@ -209,6 +209,10 @@ MatrixXc SpinHamiltonian::magneticMoments() const
 
   const Vector3c g_x = m_exp.gTensorEigenVectors().col(0) / m_exp.gTensorEigenVectors().col(0).norm();
   const fp g = m_exp.gTensorEigenValues()(0);
+
+  // normalize to prevent loss of precision
+  // required for working with float fp
+  const fp normFactor = Bohrm;
 
   for (int bra = 0; bra < m_spins.states; ++bra) {
     for (int ket = 0; ket < m_spins.states; ++ket) {
@@ -233,7 +237,7 @@ MatrixXc SpinHamiltonian::magneticMoments() const
           xMoment *= -1.0 * g_14N * NUC_MAGNETON;
         }
 
-        moment += xMoment;
+        moment += xMoment / normFactor;
       }
 
       moments(bra, ket) = moment;

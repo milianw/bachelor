@@ -96,13 +96,13 @@ int main(int argc, char* argv[])
   QString orcaInput;
 
   // peaks
-  double B = 0;
+  fp B = 0;
 
   // intensity
   int steps = 0;
-  double B_min = 0;
-  double B_max = 0;
-  double mwFreq = 0;
+  fp B_min = 0;
+  fp B_max = 0;
+  fp mwFreq = 0;
   QString intensityArg;
 
   { // argument parsing
