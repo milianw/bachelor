@@ -25,7 +25,6 @@
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include "mpi_master.h"
 #include "mpi_slave.h"
@@ -105,7 +104,7 @@ int main(int argc, char* argv[]) {
 
     // append info about the experiment
     stringstream stream;
-    stream << outputDir << '/' << boost::posix_time::second_clock::local_time() << '='  << from << '-' << to << ':' << steps << ':' << identifierForExperiment(exp) << ":mpi";
+    stream << outputDir << "/" << from << '-' << to << ':' << steps << ':' << identifierForExperiment(exp) << ":mpi";
     outputDir = stream.str();
 
     // make sure the path exists

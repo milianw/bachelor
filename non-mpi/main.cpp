@@ -209,7 +209,7 @@ int main(int argc, char* argv[])
 
       QDir outputDir(outputPath);
       ENSURE(outputDir.exists(), "--output")
-      QString base = QString("%5=%1-%2:%3:%4").arg(B_min).arg(B_max).arg(steps).arg(QString::fromStdString(identifierForExperiment(exp))).arg(QDateTime::currentDateTime().toString());
+      QString base = QString("%1-%2:%3:%4").arg(B_min).arg(B_max).arg(steps).arg(QString::fromStdString(identifierForExperiment(exp)));
       ENSURE(outputDir.exists(base) || outputDir.mkdir(base), "--output");
       const QString outputFileTpl(outputDir.canonicalPath() + QDir::separator() + base + QDir::separator() + "%1");
 
