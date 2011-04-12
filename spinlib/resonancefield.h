@@ -76,7 +76,6 @@ private:
   const Experiment& m_exp;
   // micro wave frequency in atomic units
   const fp m_mwFreq;
-  const bool m_loopingResonanceCanOccur;
   const fp m_lambda;
 
   const fp m_cleanupThreshold;
@@ -86,6 +85,8 @@ private:
 
   /// @return true if looping resonance can occur, false otherwise
   bool checkForLoopingResonance() const;
+  mutable bool m_loopingResonanceChecked;
+  mutable bool m_loopingResonanceCanOccur;
 
   std::map<fp, fp> resonantSegments(fp B_minStart, fp B_maxStart);
   std::vector<fp> findRoots(const std::map<fp, fp>& resonantSegments);

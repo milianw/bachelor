@@ -100,23 +100,31 @@ ResonanceField::ResonanceField(const Experiment& exp)
 : m_exp(exp)
   // to atomic units:
 , m_mwFreq(exp.mwFreqGHz * 1.0E9 * h)
-, m_loopingResonanceCanOccur(checkForLoopingResonance())
 , m_lambda(calculateLambda())
 , m_cleanupThreshold(getenv("RESFIELD_CLEANUP_THRESHOLD") ? atof(getenv("RESFIELD_CLEANUP_THRESHOLD")) : 0.001)
 , m_resfieldThreshold(getenv("RESFIELD_THRESHOLD") ? atof(getenv("RESFIELD_THRESHOLD")) : 1.0E-6)
+, m_loopingResonanceChecked(false)
+, m_loopingResonanceCanOccur(false)
 {
   DEBUG(
-    cout << (m_loopingResonanceCanOccur ? "looping resonance can occur" : "no looping resonance can occur") << endl;
     cout << "modelling accuracy: " << m_resfieldThreshold * m_mwFreq / 1.0E6 / h << "MHz" << endl;
   )
 }
 
 bool ResonanceField::checkForLoopingResonance() const
 {
+  if (m_loopingResonanceChecked) {
+    return m_loopingResonanceCanOccur;
+  }
   ///TODO: make sure they are always sorted in the correct order...
   VectorX eVals = SpinHamiltonian(0, m_exp).calculateEigenValues();
-  DEBUG(cout << "maximum splitting at zero field: " << (eVals(m_exp.dimension - 1) - eVals(0))/1E6/h << "MHz" << endl;)
-  return (eVals(m_exp.dimension - 1) - eVals(0)) >= m_mwFreq;
+  m_loopingResonanceCanOccur = (eVals(m_exp.dimension - 1) - eVals(0)) >= m_mwFreq;
+  m_loopingResonanceChecked = true;
+  DEBUG(
+    cout << "maximum splitting at zero field: " << (eVals(m_exp.dimension - 1) - eVals(0))/1E6/h << "MHz" << endl;
+    cout << (m_loopingResonanceCanOccur ? "looping resonance can occur" : "no looping resonance can occur") << endl;
+  )
+  return m_loopingResonanceCanOccur;
 }
 
 fp ResonanceField::calculateLambda() const
@@ -207,7 +215,7 @@ BisectAnswer ResonanceField::checkSegment(const BisectNode& from, const BisectNo
   const fp B_diff = to.B - from.B;
   bool resonancePossible = false;
   if ((to.E(m_exp.dimension - 1) - to.E(0)) > m_mwFreq) {
-    if (!m_loopingResonanceCanOccur) {
+    if (!checkForLoopingResonance()) {
       // for all kombinations u,v do eq 13
       for(int u = 0; u < m_exp.dimension; ++u) {
         for(int v = u + 1; v < m_exp.dimension; ++v) {
@@ -364,7 +372,7 @@ vector<fp> ResonanceField::findRootsInSegment(const BisectNode& from, const Bise
       const Vector4 p = M * (e_v - e_u);
       fp root = 0;
       // apply newton raphson rootfinding algo if no looping resonance can occur or polynomial is monotonic
-      if (!m_loopingResonanceCanOccur || (p(1) * p(1) - 3.0 * p(0) * p(2)) <= 0) {
+      if (!checkForLoopingResonance() || (p(1) * p(1) - 3.0 * p(0) * p(2)) <= 0) {
         if (((from.E(v) - from.E(u) - m_mwFreq) * (to.E(v) - to.E(u) - m_mwFreq)) > 0) {
           continue;
         }
