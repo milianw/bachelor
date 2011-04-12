@@ -24,9 +24,13 @@ else
   steps=${a[1]}
 fi
 
-t="Spectrum for ${a[2]} 1H, ${a[3]} 14H, mwFreq = ${a[4]} GHz, B-Range: ${a[0]} ($steps steps) ${a[5]}"
+if [[ "$TITLE_ADD" != "" ]]; then
+  TITLE_ADD="\\n$TITLE_ADD"
+fi
 
-echo "$GNUPLOT_CMD set title '$t';
+t="Spectrum for ${a[2]} 1H, ${a[3]} 14H, mwFreq = ${a[4]} GHz\\nB-Range: ${a[0]} ($steps steps) ${a[5]}$TITLE_ADD"
+
+echo "$GNUPLOT_CMD set title \"$t\";
       set xlabel 'static B-field in Tesla';
       set ylabel 'intensity in a.u.';
       set grid;
