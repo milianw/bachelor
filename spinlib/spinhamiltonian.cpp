@@ -282,11 +282,11 @@ fp SpinHamiltonian::calculateIntensity() const
       }
       /// < Psi_j | and abs squared: |< Psi_j | M | Psi_i >|^2 M | Psi_i >
       intensity += (eigenVectors.col(j).adjoint() * moments * eigenVectors.col(i)).squaredNorm();
-      ///TODO: eq 3-24, p 52 says: |< j|M|i > dot H_1|^2
-      ///meaning: what about H_1?
+      //NOTE: eq 3-24, p 52 says: |< j|M|i > dot H_1|^2
+      //H_1 is probably just a constant term which we ignore for now as we normalize the intensity anyways
     }
   }
-  return (intensity * 2.0 * M_PI * (Bohrm / hbar) * (Bohrm / hbar));
+  return intensity; // ignore constant term: * 2.0 * M_PI * (Bohrm / hbar) * (Bohrm / hbar)
 }
 
 void SpinHamiltonian::calculateTransitions() const
