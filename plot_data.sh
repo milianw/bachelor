@@ -1,23 +1,28 @@
 #!/bin/bash
 echo "plotting files from: $1"
 
-plt_base=/tmp/.plt_$(basename $1)_
-
-if [ -d $1 ]; then
-  cat $1/* | sort -g > ${plt_base}raw
-else
-  cat $1 | sort -g > ${plt_base}raw
-fi
-
-./convolute/convolute $1 > ${plt_base}conv
-if [[ "$(basename $1)" == "intensity.data" ]]; then
+if [[ "$(basename "$1")" == "intensity.data" ]]; then
   # mpi
-  a=($(basename $(dirname $1) | tr ":" "\n"))
+  basestring=$(basename "$(dirname "$1")")
 else
   # non-mpi
-  a=($(basename $1 | tr ":" "\n"))
+  basestring=$(basename "$1")
 fi
 
+plt_base=/tmp/.plt_${basestring}_
+
+if [ -d "$1" ]; then
+  cat "$1"/* | sort -g > "${plt_base}raw"
+else
+  cat "$1" | sort -g > "${plt_base}raw"
+fi
+
+./convolute/convolute "$1" > "${plt_base}conv"
+
+date=${basestring/=*/}
+exp=${basestring/*=/}
+
+a=($(echo $exp | tr ":" "\n"))
 if [[ "${a[1]}" == "-1" ]]; then
   steps="auto"
 else
@@ -28,7 +33,7 @@ if [[ "$TITLE_ADD" != "" ]]; then
   TITLE_ADD="\\n$TITLE_ADD"
 fi
 
-t="Spectrum for ${a[2]} 1H, ${a[3]} 14H, mwFreq = ${a[4]} GHz\\nB-Range: ${a[0]} ($steps steps) ${a[5]}$TITLE_ADD"
+t="Spectrum for ${a[2]}x 1H, ${a[3]}x 14H, mwFreq = ${a[4]} GHz\\nB-Range: ${a[0]} ($steps steps) ${a[5]} $date $TITLE_ADD"
 
 echo "$GNUPLOT_CMD set title \"$t\";
       set xlabel 'static B-field in Tesla';
