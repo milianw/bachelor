@@ -28,6 +28,9 @@ int main(int argc, char** argv) {
     if (!nuc.Q.isZero()) {
       cout << "Q = " << nuc.Q.transpose() << endl;
     }
+    if (!nuc.EFG.isZero()) {
+      cout << "EFG = " << endl << nuc.EFG << endl;
+    }
     cout << endl;
   }
 

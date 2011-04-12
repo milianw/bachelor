@@ -30,9 +30,9 @@
 struct Nucleus {
   Nucleus() {}
   Nucleus(const std::string& name_, const int twoJ_, const int isotope_,
-          const Matrix3& A_, const fp g_, const Vector3 Q_)
+          const Matrix3& A_, const fp g_, const Vector3 Q_, const Matrix3 EFG_)
   : name(name_), twoJ(twoJ_), isotope(isotope_), A(A_), g(g_)
-  , Q(Q_)
+  , Q(Q_), EFG(EFG_)
   { }
 
   // arbitrary name identifying the nucleus
@@ -46,7 +46,12 @@ struct Nucleus {
   // g value
   fp g;
   // quadrupole tensor eigenvalues in MHz
+  // (0) = e**2qQ, (1) = e**2qQ/(4I*(2I-1)), (2) = eta
+  // i.e. the diagonal representation of the SH term I*Q*I = e**2qQ/(4I(2I-1))*[-(1-eta),-(1+eta),2]
   Vector3 Q;
+  // electric field gradient matrix
+  Matrix3 EFG;
+  
 };
 
 

@@ -164,7 +164,6 @@ void SpinHamiltonian::addElectronZeeman(MatrixXc& H) const
 
 void SpinHamiltonian::addQuadrupole(MatrixXc& H) const
 {
-
   // k = 1 to skip electron
   for (int k = 1; k < m_spins.elements; ++k) {    //loop over nuclei
     const Nucleus& nucleus = m_exp.nuclei.at(k - 1);

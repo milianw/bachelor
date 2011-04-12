@@ -67,10 +67,10 @@ Experiment Experiment::generateDummy(int protons, int nitrogens)
   vector<Nucleus> nuclei;
   const Matrix3 A = Matrix3::Identity() * 1420;
   for(int i = 0; i < protons; ++i) {
-    nuclei.push_back(Nucleus("1H", 1, 1, A, Constants::g_1H, Vector3::Zero()));
+    nuclei.push_back(Nucleus("1H", 1, 1, A, Constants::g_1H, Vector3::Zero(), Matrix3::Zero()));
   }
   for(int i = 0; i < nitrogens; ++i) {
-    nuclei.push_back(Nucleus("14N", 2, 14, A, Constants::g_14N, Vector3::Zero()));
+    nuclei.push_back(Nucleus("14N", 2, 14, A, Constants::g_14N, Vector3::Zero(), Matrix3::Zero()));
   }
   return Experiment(nuclei);
 }

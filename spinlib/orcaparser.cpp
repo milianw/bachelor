@@ -113,10 +113,12 @@ void OrcaParser::parseFile(const string& file)
 
       Matrix3 A = Matrix3::Zero();
       Vector3 Q = Vector3::Zero();
+      Matrix3 EFG = Matrix3::Zero();
       bool haveA = false;
       bool haveQ = false;
+      bool haveEFG = false;
       getline(stream, line);
-      while(!stream.eof() && !boost::contains(line, "---") && (!haveQ || !haveA)) {
+      while(!stream.eof() && !boost::contains(line, "---") && (!haveQ || !haveA || !haveEFG)) {
         if(!haveA && boost::starts_with(line, " Raw HFC matrix (all values in MHz):")) {
           for(int i = 0; i < 3; ++i) {
             for(int j = 0; j < 3; ++j) {
@@ -144,10 +146,17 @@ void OrcaParser::parseFile(const string& file)
           stream >> eta;
           Q = (Vector3() << -1.0 + eta, -1.0 - eta, 2).finished() * beta;
           haveQ = true;
+        } else if (!haveEFG && boost::starts_with(line, " Raw EFG matrix")) {
+          for(int i = 0; i < 3; ++i) {
+            for(int j = 0; j < 3; ++j) {
+              stream >> EFG(i, j);
+            }
+          }
+          haveEFG = true;
         }
         getline(stream, line);
       }
-      m_nuclei.push_back(Nucleus(nucleus, spin * 2, isotope, A, g, Q));
+      m_nuclei.push_back(Nucleus(nucleus, spin * 2, isotope, A, g, Q, EFG));
     } else if (boost::contains(line, "Euler rotation of hyperfine tensor to g-tensor")) {
       getline(stream, line); // ---...
       getline(stream, line); //
