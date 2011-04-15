@@ -174,21 +174,34 @@ void SpinHamiltonian::addQuadrupole(MatrixXc& H) const
       continue;
     }
 
-    ///FIXME: if EFG is available, use it and the formula:
-    /// Q_ij = eQ / (2I * (2I - 1)) * V_ij
-    /// question: how to get e (not e^2).
-    /// question: units? efg is in a.u.^3
-    /// ah, better idea:
-    /// A = e^2qQ / (2I*(2I-1)) = nucleus.Q(1)
-    /// Q_ij = A(V_ij/V_zz)
-    /// then: Q = R.transpose() * EFG * R
-    /// with R the direct cosine matrix (R =  [[xx', xy', xz'], [yx', ...])
-    /// x: gtensor eigen vector, x': EFG eigen vector
+    Matrix3c Q = nucleus.quadrupoleCouplingMatrix();
+    if (!nucleus.EFG.isZero()) {
+      // rotate Q to gTensor frame
+      // Q' = R.transpose() * Q * R
+      // with R the direct cosine matrix (R =  [[xx', xy', xz'], [yx', ...])
+      // x: gtensor eigen vector, x': EFG eigen vector
+      Matrix3c R;
+      SelfAdjointEigenSolver<Matrix3c> solver(Q);
+      for(int gDim = 0; gDim < 3; ++gDim) {
+        for(int qDim = 0; qDim < 3; ++qDim) {
+          const Vector3c& g_V = m_exp.gTensorEigenVectors().col(gDim);
+          const Vector3c& q_V = solver.eigenvectors().col(qDim);
+          R(gDim, qDim) = g_V.dot(q_V) / (g_V.norm() * q_V.norm());
+        }
+      }
+      cout << "reference:" << endl << m_exp.gTensor() << endl;
+      cout << "eigen vectors:" << endl << m_exp.gTensorEigenVectors() << endl;
+      cout << "eigen values:" << m_exp.gTensorEigenValues().transpose() << endl;
+      cout << endl << "Q = " << endl << Q << endl;
+      cout << "eigen vectors:" << solver.eigenvectors() << endl;
+      cout << "eigen values:" << solver.eigenvalues() << endl;
+      cout << "R = " << endl << R << endl << endl;
+      Q = R.transpose() * Q * R;
+    }
 
+    // [0]: X, [1]: Y, [2]: Z
     ///NOTE: must be extended for J > 1 if ever supported
-    const Matrix3c Isquared[3] = {PauliMatrix_J_one::X * PauliMatrix_J_one::X,
-                                  PauliMatrix_J_one::Y * PauliMatrix_J_one::Y,
-                                  PauliMatrix_J_one::Z * PauliMatrix_J_one::Z};
+    const MatrixXc pauli[3] = {PauliMatrix_J_one::X, PauliMatrix_J_one::Y, PauliMatrix_J_one::Z};
 
     for (int bra = 0; bra < m_spins.states; ++bra) {
       for (int ket = 0; ket < m_spins.states; ++ket) {
@@ -200,10 +213,11 @@ void SpinHamiltonian::addQuadrupole(MatrixXc& H) const
         int spinBra = spinState(bra, k);
         int spinKet = spinState(ket, k);
 
-        // iterate over x,y,z
-        ///FIXME: must be rewritten once Q is rotated
+        // iterate over x,y,z combinations
         for(int i = 0; i < 3; ++i) {
-          colVal += nucleus.Q(i) * Isquared[i](spinBra, spinKet);
+          for(int j = 0; j < 3; ++j) {
+            colVal += (Q(i, j) * (pauli[i].row(spinBra) * pauli[j].col(spinKet)))(0, 0);
+          }
         }
 
         // Q is in MHz, convert to MKS

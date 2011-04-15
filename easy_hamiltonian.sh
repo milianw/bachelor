@@ -7,6 +7,7 @@ if [[ "$2" != "" ]]; then
 else
   B=0.3
 fi
+echo "format longg" >> /tmp/test.m
 echo "hamiltonian2(Sys, $B * 1000 * B_direction, 1);" >> /tmp/test.m
 echo "exit;" >> /tmp/test.m
 matlab -nojvm -nosplash -r "run('/tmp/test.m');"

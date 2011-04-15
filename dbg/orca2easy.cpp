@@ -71,9 +71,17 @@ int main(int argc, char** argv) {
     cout << ";" << endl;
     cout << "[A, Apa] = euler(Sys.g, A_full, 1);" << endl;
     cout << "Q = "; printMatlab(nuc.Q.transpose()); cout << ";" << endl;
+    if (nuc.EFG.isZero()) {
+      cout << "Qpa = [];" << endl;
+    } else {
+      cout << "Q_full = ";
+      printMatlab(nuc.quadrupoleCouplingMatrix());
+      cout << ";" << endl;
+      cout << "[Q2, Qpa] = euler(Sys.g, Q_full, 1);" << endl;
+    }
     cout << "Sys = nucspinadd(Sys,";
     cout << '\'' << id.str() << '\'';
-    cout << ", A, Apa, Q);" << endl;
+    cout << ", A, Apa, Q, Qpa);" << endl;
   }
   cout << "B_direction = ";
   printMatlab((exp.gTensorEigenVectors().col(2) / exp.gTensorEigenVectors().col(2).norm()).transpose());

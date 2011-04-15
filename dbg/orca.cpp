@@ -30,6 +30,7 @@ int main(int argc, char** argv) {
     }
     if (!nuc.EFG.isZero()) {
       cout << "EFG = " << endl << nuc.EFG << endl;
+      cout << "Q_full = " << endl << nuc.quadrupoleCouplingMatrix() << endl;
     }
     cout << endl;
   }
