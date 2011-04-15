@@ -100,12 +100,19 @@ void guessBRange(const Experiment& exp, fp& from, fp& to)
   fp B = exp.mwFreqGHz * 1E09 * Constants::h / (Constants::Bohrm * g);
   cout << "guessing B-range center from electron zeeman splitting, B = " << B << endl;
   fp A = 0;
+  cout << exp.nuclei.size() << endl;
   BOOST_FOREACH(const Nucleus& nuc, exp.nuclei) {
     A += nuc.A.eigenvalues().array().abs().sum() * nuc.twoJ / 3.0;
+    A += nuc.Q.array().abs().sum() * nuc.twoJ * nuc.twoJ / 3.0;
   }
   // A in MHz
   A *= 1E06 * Constants::h / (Constants::Bohrm * g);
-  cout << "guessing B-range width from A tensors, sum(A) = " << A << endl;
+  if (A > B * 0.005) {
+    cout << "guessing B-range width from A,Q tensors:" << A << endl;
+  } else {
+    A = B * 0.005;
+    cout << "guessing minimum B-range width (0.5%):" << A << endl;
+  }
   from = B - A;
   to = B + A;
 }
