@@ -189,13 +189,6 @@ void SpinHamiltonian::addQuadrupole(MatrixXc& H) const
           R(gDim, qDim) = g_V.dot(q_V) / (g_V.norm() * q_V.norm());
         }
       }
-      cout << "reference:" << endl << m_exp.gTensor() << endl;
-      cout << "eigen vectors:" << endl << m_exp.gTensorEigenVectors() << endl;
-      cout << "eigen values:" << m_exp.gTensorEigenValues().transpose() << endl;
-      cout << endl << "Q = " << endl << Q << endl;
-      cout << "eigen vectors:" << solver.eigenvectors() << endl;
-      cout << "eigen values:" << solver.eigenvalues() << endl;
-      cout << "R = " << endl << R << endl << endl;
       Q = R.transpose() * Q * R;
     }
 
