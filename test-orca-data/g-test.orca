@@ -1,7 +1,7 @@
 
--------------------
+ -------------------
 ELECTRONIC G-MATRIX
--------------------
+ -------------------
 
  The g-matrix: 
               2.0055600   -0.0000785    0.0009609
@@ -24,11 +24,11 @@ Notes:  (1) The principal values are square roots of the eigenvalues of gT*g
         (2) Orientations are eigenvectors of gT*g
         (3) Individual contributions are projections of the full matrices onto the eigenvectors of gT*g
 
------------------------------------------
+ -----------------------------------------
 ELECTRIC AND MAGNETIC HYPERFINE STRUCTURE
------------------------------------------
+ -----------------------------------------
 
------------------------------------------------------------
+ -----------------------------------------------------------
  Nucleus  1H  : A:ISTP=    1 I=  0.5 P=533.5514 MHz/au**3
                 Q:ISTP=    2 I=  1.0 Q=  0.0029 barn     
  -----------------------------------------------------------

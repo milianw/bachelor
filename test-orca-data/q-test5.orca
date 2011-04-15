@@ -5,8 +5,8 @@ ELECTRONIC G-MATRIX
 
  The g-matrix: 
               2   0    0
-              0    2   0
-              0    0   2
+              0   2    0
+              0   0    2
 
 Notes:  (1) The principal values are square roots of the eigenvalues of gT*g
         (2) Orientations are eigenvectors of gT*g
@@ -22,14 +22,28 @@ ELECTRIC AND MAGNETIC HYPERFINE STRUCTURE
  -----------------------------------------------------------
 
  Raw HFC matrix (all values in MHz): 
-             1420      0      0
-             0       1420     0
-             0         0     1420
+             0      0     0
+             0      0     0
+             0      0     0
+
+ Raw EFG matrix (all values in a.u.**-3):
+            -0.4602       0.1117      -0.6550
+             0.1117       0.4377       0.1851
+            -0.6550       0.1851       0.0225
+
+ V(El)      -0.3927      -0.1746       0.5673
+ V(Nuc)      0.7780       0.7344      -1.5125
+         ----------   ----------   ----------
+ V(Tot)      0.3853       0.5599      -0.9452 
+ Orientation: 
+  X       0.4788992   -0.3456640    0.8069522
+  Y       0.7253319    0.6736128   -0.1419132
+  Z      -0.4945191    0.6532703    0.5733138
 
 
  Quadrupole tensor eigenvalues (in MHz;Q= 0.0193 I=  1.0)
-  e**2qQ            =    -200 MHz 
-  e**2qQ/(4I*(2I-1))=    -50 MHz 
-  eta               =    0
+  e**2qQ            =    -4.292 MHz 
+  e**2qQ/(4I*(2I-1))=    -1.073 MHz 
+  eta               =     0.185
   NOTE: the diagonal representation of the SH term I*Q*I = e**2qQ/(4I(2I-1))*[-(1-eta),-(1+eta),2]
 
