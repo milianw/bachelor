@@ -25,6 +25,7 @@
 #include <ostream>
 
 #include "fptype.h"
+#include "eigentypes.h"
 
 class Experiment;
 
@@ -39,5 +40,13 @@ std::string identifierForExperiment(const Experiment& exp);
 std::string guessPeakMemConsumption(const Experiment& exp);
 
 void guessBRange(const Experiment& exp, fp& from, fp& to);
+
+/**
+ * generates rotation matrix to transform from basis @p from to basis @p to.
+ *
+ * to rotate a vector into the basis: v' = R * v;
+ * to rotate a tensor into the basis: a' = R * a * R.transpose()
+ */
+Matrix3c rotationMatrix(const Matrix3c& to, const Matrix3c& from);
 
 #endif // MW_BACHELOR_HELPERS_H

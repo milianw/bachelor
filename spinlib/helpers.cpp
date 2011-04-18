@@ -116,3 +116,16 @@ void guessBRange(const Experiment& exp, fp& from, fp& to)
   from = B - A;
   to = B + A;
 }
+
+Matrix3c rotationMatrix(const Matrix3c& to, const Matrix3c& from)
+{
+  Matrix3c R;
+  for(int i = 0; i < 3; ++i) {
+    for(int j = 0; j < 3; ++j) {
+      const Vector3c& src = from.col(i);
+      const Vector3c& dest = to.col(j);
+      R(i, j) = src.dot(dest) / (dest.norm() * src.norm());
+    }
+  }
+  return R;
+}

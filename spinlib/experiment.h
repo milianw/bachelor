@@ -72,6 +72,9 @@ public:
   // incident micro wave frequency in GHz
   fp mwFreqGHz;
 
+  // orientation of B field in labor frame, defaults to [0 0 1] (i.e. z-Axis)
+  Vector3 orientation;
+
   /**
    * static field of given strength in direction of |g_z>
    *

@@ -30,6 +30,7 @@
 #include "experiment.h"
 #include "spins.h"
 #include "nucleus.h"
+#include "helpers.h"
 
 using namespace Constants;
 using namespace Eigen;
@@ -177,19 +178,12 @@ void SpinHamiltonian::addQuadrupole(MatrixXc& H) const
     Matrix3c Q = nucleus.quadrupoleCouplingMatrix();
     if (!nucleus.EFG.isZero()) {
       // rotate Q to gTensor frame
-      // Q' = R.transpose() * Q * R
+      // Q' = R * Q * R.transpose()
       // with R the direct cosine matrix (R =  [[xx', xy', xz'], [yx', ...])
-      // x: gtensor eigen vector, x': EFG eigen vector
-      Matrix3c R;
-      SelfAdjointEigenSolver<Matrix3c> solver(Q);
-      for(int gDim = 0; gDim < 3; ++gDim) {
-        for(int qDim = 0; qDim < 3; ++qDim) {
-          const Vector3c& g_V = m_exp.gTensorEigenVectors().col(gDim);
-          const Vector3c& q_V = solver.eigenvectors().col(qDim);
-          R(gDim, qDim) = g_V.dot(q_V) / (g_V.norm() * q_V.norm());
-        }
-      }
-      Q = R.transpose() * Q * R;
+      // x: gtensor eigen vector, x': Q eigen vector
+      const SelfAdjointEigenSolver<Matrix3c> solver(Q);
+      const Matrix3c R = rotationMatrix(m_exp.gTensorEigenVectors(), solver.eigenvectors());
+      Q = R * Q * R.transpose();
     }
 
     // [0]: X, [1]: Y, [2]: Z

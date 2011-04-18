@@ -29,6 +29,7 @@
 #include <map>
 
 #include <boost/foreach.hpp>
+#include "helpers.h"
 
 using namespace std;
 using namespace Eigen;
@@ -60,6 +61,7 @@ Experiment::Experiment(const vector<Nucleus>& nuclei_)
 , mwFreqGHz(0)
 {
   setGTensor(Matrix3::Identity() * Constants::g_E);
+  orientation << 0, 0, 1;
 }
 
 Experiment Experiment::generateDummy(int protons, int nitrogens)
@@ -104,10 +106,11 @@ Spins Experiment::spinSystem() const
 Vector3c Experiment::staticBField(const fp B) const
 {
   if (getenv("USE_LABOR_Z")) {
-    return (Vector3c() << 0, 0, B).finished();
+    return (orientation * B / orientation.norm()).cast<c_fp>();
   }
-  const Vector3c& gz = m_gTensorEigenVectors.col(2);
-  return gz * B / gz.norm();
+  const Matrix3c R = rotationMatrix(gTensorEigenVectors(), Matrix3c::Identity());
+  const Vector3c e = R * orientation;
+  return e * B / e.norm();
 }
 
 void Experiment::setGTensor(const Matrix3& gTensor)
