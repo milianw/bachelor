@@ -218,7 +218,9 @@ MatrixXc SpinHamiltonian::magneticMoments() const
 {
   MatrixXc moments(m_spins.states, m_spins.states);
 
-  const Vector3c g_x = m_exp.gTensorEigenVectors().col(0) / m_exp.gTensorEigenVectors().col(0).norm();
+  // pick vector perpendicular to B and g_y
+  const Vector3c x = m_exp.gTensorEigenVectors().col(1).cross(m_staticBField).normalized();
+
   const fp g = m_exp.gTensorEigenValues()(0);
 
   // normalize to prevent loss of precision
@@ -235,7 +237,8 @@ MatrixXc SpinHamiltonian::magneticMoments() const
           continue;
         }
 
-        c_fp xMoment = g_x.dot(spinVector(bra, ket, k));
+
+        c_fp xMoment = x.dot(spinVector(bra, ket, k));
 
         if (k == 0) {
           // electron
