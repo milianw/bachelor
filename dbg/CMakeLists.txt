@@ -11,6 +11,7 @@ add_dbg_exe(orca orca.cpp)
 add_dbg_exe(orca2easy orca2easy.cpp)
 add_dbg_exe(euler euler.cpp)
 add_dbg_exe(orca2orca orca2orca.cpp)
+add_dbg_exe(grid grid.cpp)
 
 add_executable(bench_eigen bench_eigen.cpp)
 target_link_libraries(bench_eigen)
