@@ -268,7 +268,7 @@ int main(int argc, char* argv[]) {
 
   // output raw data marked by third row == 1
   foreach(Gaussian* g, data) {
-      cout << g->center() << '\t' << g->height() << "\t1" << endl;
+      cout << g->center() << '\t' << g->height() / orientations.at(g->orientation()).w << "\t1" << endl;
   }
 
 
