@@ -222,14 +222,14 @@ int main(int argc, char* argv[])
         QTextStream* out = new QTextStream(file);
         outputStreams << out;
       }
-
+      ///TODO: arbitrary orientations?
       if (steps != -1) { // dirty version that simply devides the max-min range into equal sized steps
         #pragma omp parallel
         {
           #pragma omp for
           for(int i = 0; i < steps; ++i) {
             const fp B = B_min + B_stepSize * i;
-            *outputStreams.at(omp_get_thread_num()) << B << '\t' << SpinHamiltonian(B, exp).calculateIntensity() << endl;
+            *outputStreams.at(omp_get_thread_num()) << B << '\t' << SpinHamiltonian(B, exp).calculateIntensity() << "\t0 0 1\t1" << endl;
           }
         }
       } else {
@@ -240,7 +240,7 @@ int main(int argc, char* argv[])
           #pragma omp for
           for(unsigned int i = 0; i < resonanceField.size(); ++i) {
             const fp B = resonanceField.at(i);
-            *outputStreams.at(omp_get_thread_num()) << B << '\t' << SpinHamiltonian(B, exp).calculateIntensity() << endl;
+            *outputStreams.at(omp_get_thread_num()) << B << '\t' << SpinHamiltonian(B, exp).calculateIntensity() << "\t0 0 1\t1" << endl;
           }
         }
       }

@@ -31,7 +31,7 @@ using namespace std;
 MPISlave::MPISlave(const mpi::communicator& comm, const Experiment& exp)
 : m_comm(comm)
 , m_exp(exp)
-, m_resonanceField(exp)
+, m_resonanceField(m_exp)
 {
   if (comm.rank() == MASTER_RANK) {
     cerr << "MPISlave created in master rank!" << endl;
@@ -63,6 +63,7 @@ void MPISlave::work()
          */
         BisectInput input;
         m_comm.recv(MASTER_RANK, TAG_BISECT_INPUT, input);
+        m_exp.orientation = input.orientation.orientation;
         m_comm.send(MASTER_RANK, TAG_BISECT_RESULT, m_resonanceField.checkSegment(input.from, input.to));
         break;
       }
@@ -73,9 +74,10 @@ void MPISlave::work()
          * input: fp B - static B field node
          * output: BisectNode
          */
-        fp B;
-        m_comm.recv(MASTER_RANK, TAG_DIAGONALIZE_INPUT, B);
-        m_comm.send(MASTER_RANK, TAG_DIAGONALIZE_RESULT, m_resonanceField.diagonalizeNode(B));
+        DiagonalizeInput input;
+        m_comm.recv(MASTER_RANK, TAG_DIAGONALIZE_INPUT, input);
+        m_exp.orientation = input.orientation.orientation;
+        m_comm.send(MASTER_RANK, TAG_DIAGONALIZE_RESULT, m_resonanceField.diagonalizeNode(input.B));
         break;
       }
       case CMD_FINDROOTS: {
@@ -87,6 +89,7 @@ void MPISlave::work()
          */
         BisectInput input;
         m_comm.recv(MASTER_RANK, TAG_FINDROOTS_INPUT, input);
+        m_exp.orientation = input.orientation.orientation;
         vector<fp> answer = m_resonanceField.findRootsInSegment(input.from, input.to);
         m_resonanceField.cleanupResonancyField(answer);
         m_comm.send(MASTER_RANK, TAG_FINDROOTS_RESULT, answer);
@@ -99,9 +102,10 @@ void MPISlave::work()
         * input: fp B
         * output: fp intensity
         */
-        fp B;
-        m_comm.recv(MASTER_RANK, TAG_INTENSITY_INPUT, B);
-        SpinHamiltonian H(B, m_exp);
+        IntensityInput input;
+        m_comm.recv(MASTER_RANK, TAG_INTENSITY_INPUT, input);
+        m_exp.orientation = input.orientation.orientation;
+        SpinHamiltonian H(input.B, m_exp);
         m_comm.send(MASTER_RANK, TAG_INTENSITY_RESULT, H.calculateIntensity());
         break;
       }

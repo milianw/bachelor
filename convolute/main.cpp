@@ -21,6 +21,7 @@
 
 #include <iostream>
 #include <vector>
+#include <fstream>
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QStringList>
@@ -50,10 +51,11 @@ void usage()
 
 class Gaussian {
 public:
-  Gaussian(double center, double intensity, double width)
+  Gaussian(double center, double intensity, double width, int orientation)
   : m_center(center)
   , m_intensity(intensity)
   , m_width(width)
+  , m_orientation(orientation)
   {
   }
 
@@ -64,20 +66,12 @@ public:
 
   fp y(const double x) const
   {
-    if (!applies(x)) {
-      return 0;
-    } else {
-      return m_intensity * exp( - pow(x - m_center, 2) / (2.0 * pow(m_width, 2)) );
-    }
+    return m_intensity * exp( - pow(x - m_center, 2) / (2.0 * pow(m_width, 2)) );
   }
 
   fp yDeriv(const double x) const
   {
-    if (!applies(x)) {
-      return 0;
-    } else {
-      return - m_intensity * (x - m_center) / pow(m_width, 2) * exp( - pow(x - m_center, 2) / (2.0 * pow(m_width, 2)) );
-    }
+    return - m_intensity * (x - m_center) / pow(m_width, 2) * exp( - pow(x - m_center, 2) / (2.0 * pow(m_width, 2)) );
   }
 
   void normalizeIntensity(const double maxValue)
@@ -95,10 +89,34 @@ public:
     return m_intensity;
   }
 
+  void addIntensity(fp intensity)
+  {
+    m_intensity += intensity;
+  }
+
+  int orientation() const
+  {
+    return m_orientation;
+  }
+
 private:
   double m_center;
   double m_intensity;
   double m_width;
+
+  int m_orientation;
+};
+
+struct Orientation {
+  fp x;
+  fp y;
+  fp z;
+  fp w;
+
+  bool operator==(const Orientation& o) const
+  {
+    return o.x == x && o.y == y && o.z == z && o.w == w;
+  }
 };
 
 int main(int argc, char* argv[]) {
@@ -198,31 +216,44 @@ int main(int argc, char* argv[]) {
   }
 
   // step 1: read data
-  QMap<fp, Gaussian*> data;
+  QMultiMap<fp, Gaussian*> data;
   fp maxI = 0;
 
+  QList<Orientation> orientations;
+
   foreach(const QString& dataFile, dataFiles) {
-    QFile file(dataFile);
-    if (!file.open(QIODevice::ReadOnly)) {
+    ifstream file(dataFile.toLocal8Bit());
+    if (!file.is_open()) {
       qerr << "could not open data file for reading:" << dataFile << endl;
       return 3;
     }
-    while(!file.atEnd()) {
-      QStringList tuple = QString::fromLocal8Bit(file.readLine()).split(QLatin1Char('\t'));
-      fp B = tuple.first().toDouble();
-      fp I = tuple.last().toDouble();
+    while(!file.eof()) {
+      fp B;
+      fp I;
+      Orientation o;
+      file >> B >> I >> o.x >> o.y >> o.z >> o.w;
+      if (file.bad()) {
+        file.clear();
+        continue;
+      }
+      I *= o.w;
       if (!I) {
         continue;
       }
       if (I > maxI) {
         maxI = I;
       }
-      data[B] = new Gaussian(B, I, width);
+      int oIdx = orientations.indexOf(o);
+      if (oIdx == -1) {
+        oIdx = orientations.size();
+        orientations << o;
+      }
+      data.insert(B, new Gaussian(B, I, width, oIdx));
     }
   }
 
   if (normalize) {
-    QMap< fp, Gaussian* >::iterator it = data.begin();
+    QMultiMap< fp, Gaussian* >::iterator it = data.begin();
     while(it != data.end()) {
       it.value()->normalizeIntensity(maxI);
       // get rid of data far below the peak threshold
@@ -240,6 +271,7 @@ int main(int argc, char* argv[]) {
       cout << g->center() << '\t' << g->height() << "\t1" << endl;
   }
 
+
   // step 2: sum each peak
   fp lastMax = -1;
   const fp stepSize = 2.0 * width * WIDTHS_TO_ZERO / steps;
@@ -247,18 +279,51 @@ int main(int argc, char* argv[]) {
   cout << (data.begin().key() - width * WIDTHS_TO_ZERO - 50 * stepSize) << '\t' << 0 << '\t' << 0 << endl;
   cout << (data.begin().key() - width * WIDTHS_TO_ZERO - stepSize) << '\t' << 0 << '\t' << 0 << endl;
 
-  foreach(const fp center, data.keys()) {
+  QVector<fp> yPerOrientation;
+  yPerOrientation.resize(orientations.size());
+
+  // normalize faktor for summation
+  fp sumNormFaktor = 0;
+  foreach(const fp center, data.uniqueKeys()) {
+    yPerOrientation.fill(0);
+    foreach(Gaussian* g, data) {
+      if (!g->applies(center)) {
+        continue;
+      }
+      fp& y_now = yPerOrientation[g->orientation()];
+      fp y = deriv ? g->yDeriv(center) : g->y(center);
+      y_now = qMax(y_now, y);
+    }
+    fp y_tot = 0;
+    for(int i = 0; i < orientations.size(); ++i) {
+      y_tot += yPerOrientation.at(i);
+    }
+    sumNormFaktor = qMax(y_tot, sumNormFaktor);
+  }
+
+  foreach(const fp center, data.uniqueKeys()) {
     if (lastMax != -1 && center - width * WIDTHS_TO_ZERO > lastMax + stepSize) {
       cout << (lastMax + stepSize) << '\t' << 0 << '\t' << 0 << endl;
       cout << (center - width * WIDTHS_TO_ZERO - stepSize) << '\t' << 0 << '\t' << 0 << endl;
     }
+
     for(fp x = max(lastMax, center - width * WIDTHS_TO_ZERO); x <= center + width * WIDTHS_TO_ZERO; x += stepSize) {
-      fp y = 0;
+      yPerOrientation.fill(0);
       foreach(Gaussian* g, data) {
-        y = qMax(deriv ? g->yDeriv(x) : g->y(x), y);
+        if (!g->applies(x)) {
+          continue;
+        }
+        fp& y_now = yPerOrientation[g->orientation()];
+        fp y = deriv ? g->yDeriv(x) : g->y(x);
+        y_now = qMax(y_now, y);
       }
-      cout << x << '\t' << y << '\t' << 0 << endl;
+      fp y_tot = 0;
+      for(int i = 0; i < orientations.size(); ++i) {
+        y_tot += yPerOrientation.at(i);
+      }
+      cout << x << '\t' << (y_tot / sumNormFaktor) << '\t' << 0 << endl;
     }
+
     lastMax = max(lastMax, center + width * WIDTHS_TO_ZERO);
   }
 

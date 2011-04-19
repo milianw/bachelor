@@ -21,6 +21,7 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
@@ -54,6 +55,7 @@ int main(int argc, char* argv[]) {
     ("mwFreq,m", po::value<fp>()->required(), "micro wave frequency in GHz")
     ("outputDir,o", po::value<string>()->default_value(string()), "path for writing intensity data to, defaults to current working directory")
     ("steps,i", po::value<int>()->default_value(-1), "number of B-steps, the default is auto-adapted segmentation")
+    ("orientations,O", po::value<string>()->default_value(string()), "file containing orientation vectors, default is a single [0 0 1] orientation.")
   ;
 
   po::variables_map vm;
@@ -96,6 +98,30 @@ int main(int argc, char* argv[]) {
     cout << endl
          << "peak mem consumption (on slaves) at least:" << guessPeakMemConsumption(exp) << endl;
 
+    // read orientation file
+    string orientationsFile = vm["orientations"].as<string>();
+    vector<Orientation> orientations;
+    if (!orientationsFile.empty()) {
+      ifstream stream(orientationsFile.c_str());
+      if (!stream.is_open()) {
+        cerr << "could not read orientations file: " << orientationsFile << endl;
+        world.abort(4);
+        return 4;
+      }
+      while(!stream.eof()) {
+        Orientation orientation;
+        stream >> orientation.orientation(0) >> orientation.orientation(1) >> orientation.orientation(2) >> orientation.weight;
+        if (stream.good()) {
+          orientations.push_back(orientation);
+        }
+      }
+    }
+    if (orientations.empty()) {
+      orientations.push_back(Orientation((Vector3() << 0, 0, 1).finished(), 1));
+    }
+    cout << "number of orientations: " << orientations.size() << endl;
+
+    // find output dir
     string outputDir = vm["outputDir"].as<string>();
     if (outputDir.empty()) {
       // fallback to current work dir
@@ -121,7 +147,7 @@ int main(int argc, char* argv[]) {
     }
 
     MPIMaster master(world, exp, outputDir);
-    master.calculateIntensity(from, to, steps);
+    master.calculateIntensity(from, to, steps, orientations);
   } else {
     MPISlave slave(world, exp);
     slave.work();

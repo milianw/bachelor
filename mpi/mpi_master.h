@@ -26,7 +26,7 @@
 #include "mpi_types.h"
 
 #include <fstream>
-#include <queue>
+#include <vector>
 
 class Experiment;
 class MPIJob;
@@ -40,7 +40,7 @@ public:
             const std::string& outputDir);
   ~MPIMaster();
 
-  void calculateIntensity(const fp from, const fp to, const int steps);
+  void calculateIntensity(const fp from, const fp to, const int steps, const std::vector<Orientation>& orientations);
 
   template<typename InputT, typename OutputT>
   int runCommand(MPIJob* job, Commands cmd,
@@ -50,8 +50,6 @@ public:
   void enqueueJob(MPIJob *job);
 
   std::ofstream& intensityOutputFile();
-
-  int availableSlaves() const;
 
   std::string timeStamp() const;
 
@@ -65,7 +63,7 @@ private:
   std::vector<int> m_availableSlaves;
   const std::string& m_outputDir;
 
-  std::queue<MPIJob *> m_jobQueue;
+  std::vector<MPIJob *> m_jobQueue;
   unsigned int m_lastJobId;
 
   std::string m_intensityOutputFile;

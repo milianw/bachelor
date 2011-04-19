@@ -23,6 +23,7 @@
 #define MW_MPI_JOB_H
 
 #include "mpi_iface.h"
+#include "mpi_types.h"
 
 #include "spinlib/resonancefield.h"
 
@@ -61,7 +62,7 @@ protected:
 
 class BisectStartJob : public MPIJob {
 public:
-  BisectStartJob(MPIMaster* master, const fp from, const fp to);
+  BisectStartJob(MPIMaster* master, const fp from, const fp to, const Orientation& orientation);
   virtual ~BisectStartJob();
 
   virtual void start();
@@ -75,6 +76,7 @@ public:
 private:
   const fp m_from;
   const fp m_to;
+  const Orientation m_orientation;
   std::vector<BisectNode> m_results;
   // slaves might be randomly sorted
   // this maps them to an index for the result vector
@@ -83,7 +85,7 @@ private:
 
 class BisectJob : public MPIJob {
 public:
-  BisectJob(MPIMaster* master, const BisectNode& from, const BisectNode& to);
+  BisectJob(MPIMaster* master, const BisectInput& input);
   virtual ~BisectJob();
 
   virtual void start();
@@ -95,14 +97,13 @@ public:
   virtual JobType type() const;
 
 private:
-  const BisectNode m_from;
-  const BisectNode m_to;
+  const BisectInput m_input;
   BisectAnswer m_answer;
 };
 
 class FindRootsJob : public MPIJob {
 public:
-  FindRootsJob(MPIMaster* master, const BisectNode& from, const BisectNode& to);
+  FindRootsJob(MPIMaster* master, const BisectInput& input);
   virtual ~FindRootsJob();
 
   virtual void start();
@@ -114,14 +115,13 @@ public:
   virtual JobType type() const;
 
 private:
-  const BisectNode m_from;
-  const BisectNode m_to;
+  const BisectInput m_input;
   std::vector<fp> m_answer;
 };
 
 class IntensityJob : public MPIJob {
 public:
-  IntensityJob(MPIMaster* master, const fp B);
+  IntensityJob(MPIMaster* master, const IntensityInput& input);
   virtual ~IntensityJob();
 
   virtual void start();
@@ -133,7 +133,7 @@ public:
   virtual JobType type() const;
 
 private:
-  const fp m_B;
+  const IntensityInput m_input;
   fp m_answer;
 };
 

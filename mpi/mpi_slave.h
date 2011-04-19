@@ -23,6 +23,8 @@
 
 #include "mpi_types.h"
 
+#include "spinlib/experiment.h"
+
 class MPISlave {
 public:
   MPISlave(const mpi::communicator& comm, const Experiment& exp);
@@ -32,7 +34,7 @@ public:
 
 private:
   const mpi::communicator& m_comm;
-  const Experiment& m_exp;
+  Experiment m_exp;
   const ResonanceField m_resonanceField;
 };
 

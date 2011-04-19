@@ -30,6 +30,7 @@ using namespace boost::archive;
 
 #define DEBUG_FUNC(args)
 // #define DEBUG_FUNC(args) cout << this << ' ' << __PRETTY_FUNCTION__ << '\t' args << endl;
+
 #define UNUSED(x) (void) x
 
 //BEGIN MPIJob
@@ -77,22 +78,24 @@ string MPIJob::name() const
 }
 
 //BEGIN BisectStartJob
-BisectStartJob::BisectStartJob(MPIMaster* master, const fp from, const fp to)
+BisectStartJob::BisectStartJob(MPIMaster* master, const fp from, const fp to, const Orientation& orientation)
 : MPIJob(master)
 , m_from(from)
 , m_to(to)
+, m_orientation(orientation)
 {
-  DEBUG_FUNC(<< from << '\t' << to)
+  DEBUG_FUNC(<< m_from << '\t' << m_to << '\t' << m_orientation.orientation.transpose() << '\t' << m_orientation.weight)
 }
 
 BisectStartJob::~BisectStartJob()
 {
-  DEBUG_FUNC(<< m_from << '\t' << m_to)
+  DEBUG_FUNC(<< m_from << '\t' << m_to << '\t' << m_orientation.orientation.transpose() << '\t' << m_orientation.weight)
 }
 
 void BisectStartJob::start()
 {
-  const int slavesToUse = m_master->availableSlaves();
+//   const int slavesToUse = m_master->availableSlaves();
+  const int slavesToUse = 2;
   if (slavesToUse < 2) {
     cerr << "need at least two slaves to work properly" << endl;
     exit(1);
@@ -104,9 +107,9 @@ void BisectStartJob::start()
   fp B = m_from;
   for(int i = 0; i < slavesToUse; ++i) {
     int slave = m_master->runCommand(this, CMD_DIAGONALIZE,
-                                     TAG_DIAGONALIZE_INPUT, B,
+                                     TAG_DIAGONALIZE_INPUT, DiagonalizeInput(B, m_orientation),
                                      TAG_DIAGONALIZE_RESULT, m_results.at(i));
-    DEBUG_FUNC(<< slave << '\t' << B)
+    DEBUG_FUNC(<< slave << '\t' << B << '\t' << m_orientation.orientation.transpose() << '\t' << m_orientation.weight)
     m_slaveToResult[slave] = i;
     B += stepSize;
   }
@@ -121,25 +124,26 @@ void BisectStartJob::handleResult(const int slave)
   // check previous result
   if (idx > 0 && m_results.at(idx - 1).E.size()) {
     // previous has also finished, we can bisect this segment further
-    m_master->enqueueJob(new BisectJob(m_master, m_results.at(idx - 1), m_results.at(idx)));
+    m_master->enqueueJob(new BisectJob(m_master, BisectInput(m_results.at(idx - 1), m_results.at(idx), m_orientation)));
   }
   // check next result
   if (idx + 1 < m_results.size() && m_results.at(idx + 1).E.size()) {
     // next has also finished, we can bisect this segment further
-    m_master->enqueueJob(new BisectJob(m_master, m_results.at(idx), m_results.at(idx + 1)));
+    m_master->enqueueJob(new BisectJob(m_master, BisectInput(m_results.at(idx), m_results.at(idx + 1), m_orientation)));
   }
 }
 
 void BisectStartJob::saveTo(binary_oarchive& archive) const
 {
-  archive << m_from << m_to;
+  archive << m_from << m_to << m_orientation;
 }
 
 MPIJob* BisectStartJob::constructFrom(boost::archive::binary_iarchive& archive, MPIMaster* master)
 {
   fp from, to;
-  archive >> from >> to;
-  return new BisectStartJob(master, from, to);
+  Orientation orientation;
+  archive >> from >> to >> orientation;
+  return new BisectStartJob(master, from, to, orientation);
 }
 
 MPIJob::JobType BisectStartJob::type() const
@@ -149,41 +153,40 @@ MPIJob::JobType BisectStartJob::type() const
 
 //BEGIN BisectJob
 
-BisectJob::BisectJob(MPIMaster* master, const BisectNode& from, const BisectNode& to)
+BisectJob::BisectJob(MPIMaster* master, const BisectInput& input)
 : MPIJob(master)
-, m_from(from)
-, m_to(to)
+, m_input(input)
 {
-  DEBUG_FUNC(<< from.B << '\t' << to.B)
+  DEBUG_FUNC(<< m_input.from.B << '\t' << m_input.to.B << '\t' << m_input.orientation.orientation.transpose() << '\t' << m_input.orientation.weight)
 }
 
 BisectJob::~BisectJob()
 {
-  DEBUG_FUNC(<< m_from.B << '\t' << m_to.B)
+  DEBUG_FUNC(<< m_input.from.B << '\t' << m_input.to.B << '\t' << m_input.orientation.orientation.transpose() << '\t' << m_input.orientation.weight)
 }
 
 void BisectJob::start()
 {
   int slave = m_master->runCommand(this, CMD_BISECT,
-                                   TAG_BISECT_INPUT, BisectInput(m_from, m_to),
+                                   TAG_BISECT_INPUT, m_input,
                                    TAG_BISECT_RESULT, m_answer);
 
-  DEBUG_FUNC(<< slave << '\t' << m_from.B << '\t' << m_to.B)
+  DEBUG_FUNC(<< slave << m_input.from.B << '\t' << m_input.to.B << '\t' << m_input.orientation.orientation.transpose() << '\t' << m_input.orientation.weight)
   UNUSED(slave);
 }
 
 void BisectJob::handleResult(const int slave)
 {
-  DEBUG_FUNC(<< slave << '\t' << m_from.B << '\t' << m_to.B << '\t' << m_answer.status)
+  DEBUG_FUNC(<< slave << m_input.from.B << '\t' << m_input.to.B << '\t' << m_input.orientation.orientation.transpose() << '\t' << m_input.orientation.weight)
   UNUSED(slave);
   switch (m_answer.status) {
     case BisectAnswer::Continue:
-      m_master->enqueueJob(new BisectJob(m_master, m_from, m_answer.mid));
-      m_master->enqueueJob(new BisectJob(m_master, m_answer.mid, m_to));
+      m_master->enqueueJob(new BisectJob(m_master, BisectInput(m_input.from, m_answer.mid, m_input.orientation)));
+      m_master->enqueueJob(new BisectJob(m_master, BisectInput(m_answer.mid, m_input.to, m_input.orientation)));
       break;
     case BisectAnswer::Resonant:
-      m_master->enqueueJob(new FindRootsJob(m_master, m_from, m_answer.mid));
-      m_master->enqueueJob(new FindRootsJob(m_master, m_answer.mid, m_to));
+      m_master->enqueueJob(new FindRootsJob(m_master, BisectInput(m_input.from, m_answer.mid, m_input.orientation)));
+      m_master->enqueueJob(new FindRootsJob(m_master, BisectInput(m_answer.mid, m_input.to, m_input.orientation)));
       break;
     case BisectAnswer::NotResonant:
       // nothing to do
@@ -193,14 +196,14 @@ void BisectJob::handleResult(const int slave)
 
 void BisectJob::saveTo(binary_oarchive& archive) const
 {
-  archive << m_from << m_to;
+  archive << m_input;
 }
 
 MPIJob* BisectJob::constructFrom(boost::archive::binary_iarchive& archive, MPIMaster* master)
 {
-  BisectNode from, to;
-  archive >> from >> to;
-  return new BisectJob(master, from, to);
+  BisectInput input;
+  archive >> input;
+  return new BisectJob(master, input);
 }
 
 MPIJob::JobType BisectJob::type() const
@@ -210,49 +213,48 @@ MPIJob::JobType BisectJob::type() const
 
 //BEGIN FindRootsJob
 
-FindRootsJob::FindRootsJob(MPIMaster* master, const BisectNode& from, const BisectNode& to)
+FindRootsJob::FindRootsJob(MPIMaster* master, const BisectInput& input)
 : MPIJob(master)
-, m_from(from)
-, m_to(to)
+, m_input(input)
 {
-  DEBUG_FUNC(<< from.B << '\t' << to.B)
+  DEBUG_FUNC(<< m_input.from.B << '\t' << m_input.to.B << '\t' << m_input.orientation.orientation.transpose() << '\t' << m_input.orientation.weight)
 }
 
 FindRootsJob::~FindRootsJob()
 {
-  DEBUG_FUNC(<< m_from.B << '\t' << m_to.B)
+  DEBUG_FUNC(<< m_input.from.B << '\t' << m_input.to.B << '\t' << m_input.orientation.orientation.transpose() << '\t' << m_input.orientation.weight)
 }
 
 void FindRootsJob::start()
 {
   int slave = m_master->runCommand(this, CMD_FINDROOTS,
-                                   TAG_FINDROOTS_INPUT, BisectInput(m_from, m_to),
+                                   TAG_FINDROOTS_INPUT, m_input,
                                    TAG_FINDROOTS_RESULT, m_answer);
 
-  DEBUG_FUNC(<< slave << '\t' << m_from.B << '\t' << m_to.B)
+  DEBUG_FUNC(<< slave << '\t' << m_input.from.B << '\t' << m_input.to.B << '\t' << m_input.orientation.orientation.transpose() << '\t' << m_input.orientation.weight)
   UNUSED(slave);
 }
 
 void FindRootsJob::handleResult(const int slave)
 {
-  DEBUG_FUNC(<< slave << '\t' << m_from.B << '\t' << m_to.B << '\t' << m_answer.size())
+  DEBUG_FUNC(<< slave << '\t' << m_input.from.B << '\t' << m_input.to.B << '\t' << m_input.orientation.orientation.transpose() << '\t' << m_input.orientation.weight << '\t' << m_answer.size())
   UNUSED(slave);
 
   for(int i = 0, c = m_answer.size(); i < c; ++i) {
-    m_master->enqueueJob(new IntensityJob(m_master, m_answer.at(i)));
+    m_master->enqueueJob(new IntensityJob(m_master, IntensityInput(m_answer.at(i), m_input.orientation)));
   }
 }
 
 void FindRootsJob::saveTo(binary_oarchive& archive) const
 {
-  archive << m_from << m_to;
+  archive << m_input;
 }
 
 MPIJob* FindRootsJob::constructFrom(boost::archive::binary_iarchive& archive, MPIMaster* master)
 {
-  BisectNode from, to;
-  archive >> from >> to;
-  return new FindRootsJob(master, from, to);
+  BisectInput input;
+  archive >> input;
+  return new FindRootsJob(master, input);
 }
 
 MPIJob::JobType FindRootsJob::type() const
@@ -262,45 +264,45 @@ MPIJob::JobType FindRootsJob::type() const
 
 //BEGIN IntensityJob
 
-IntensityJob::IntensityJob(MPIMaster* master, const fp B)
+IntensityJob::IntensityJob(MPIMaster* master, const IntensityInput& input)
 : MPIJob(master)
-, m_B(B)
+, m_input(input)
 {
-  DEBUG_FUNC(<< B)
+  DEBUG_FUNC(<< m_input.B << '\t' << m_input.orientation.orientation.transpose() << '\t' << m_input.orientation.weight)
 }
 
 IntensityJob::~IntensityJob()
 {
-  DEBUG_FUNC(<< m_B)
+  DEBUG_FUNC(<< m_input.B << '\t' << m_input.orientation.orientation.transpose() << '\t' << m_input.orientation.weight)
 }
 
 void IntensityJob::start()
 {
   int slave = m_master->runCommand(this, CMD_INTENSITY,
-                                   TAG_INTENSITY_INPUT, m_B,
+                                   TAG_INTENSITY_INPUT, m_input,
                                    TAG_INTENSITY_RESULT, m_answer);
 
-  DEBUG_FUNC(<< slave << m_B)
+  DEBUG_FUNC(<< slave << m_input.B << '\t' << m_input.orientation.orientation.transpose() << '\t' << m_input.orientation.weight)
   UNUSED(slave);
 }
 
 void IntensityJob::handleResult(const int slave)
 {
-  DEBUG_FUNC(<< slave << '\t' << m_B << '\t' << m_answer)
+  DEBUG_FUNC(<< slave << m_input.B << '\t' << m_input.orientation.orientation.transpose() << '\t' << m_input.orientation.weight << '\t' << m_answer)
   UNUSED(slave);
-  m_master->intensityOutputFile() << m_B << '\t' << m_answer << endl;
+  m_master->intensityOutputFile() << m_input.B << '\t' << m_answer << '\t' << m_input.orientation.orientation.transpose() << '\t' << m_input.orientation.weight << endl;
 }
 
 void IntensityJob::saveTo(binary_oarchive& archive) const
 {
-  archive << m_B;
+  archive << m_input;
 }
 
 MPIJob* IntensityJob::constructFrom(boost::archive::binary_iarchive& archive, MPIMaster* master)
 {
-  fp B;
-  archive >> B;
-  return new IntensityJob(master, B);
+  IntensityInput input;
+  archive >> input;
+  return new IntensityJob(master, input);
 }
 
 MPIJob::JobType IntensityJob::type() const

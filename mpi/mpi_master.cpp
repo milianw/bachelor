@@ -75,12 +75,13 @@ MPIMaster::~MPIMaster()
   cout << timeStamp() << "intensity data written to file:" << endl << m_intensityOutputFile  << endl;
 }
 
-void MPIMaster::calculateIntensity(const fp from, const fp to, const int steps)
+void MPIMaster::calculateIntensity(const fp from, const fp to, const int steps, const std::vector< Orientation >& orientations)
 {
+  bool continuingJobs = false;
+  {
   fs::path outputPath(m_outputDir);
   fs::directory_iterator it(outputPath);
   fs::directory_iterator end;
-  bool continuingJobs = false;
   while(it != end) {
     if (fs::is_regular_file(it->status())) {
       if (boost::ends_with(it->path().filename(), ".job")) {
@@ -91,17 +92,22 @@ void MPIMaster::calculateIntensity(const fp from, const fp to, const int steps)
     }
     ++it;
   }
+  }
 
   if (!continuingJobs) {
     if (steps > 0) {
       const fp stepSize = (to - from) / steps;
-      fp B = from;
-      for(int i = 0; i < steps; ++i) {
-        enqueueJob(new IntensityJob(this, B));
-        B += stepSize;
+      BOOST_FOREACH(const Orientation& orientation, orientations) {
+        fp B = from;
+        for(int i = 0; i < steps; ++i) {
+          enqueueJob(new IntensityJob(this, IntensityInput(B, orientation)));
+          B += stepSize;
+        }
       }
     } else {
-      enqueueJob(new BisectStartJob(this, from, to));
+      BOOST_FOREACH(const Orientation& orientation, orientations) {
+        enqueueJob(new BisectStartJob(this, from, to, orientation));
+      }
     }
     cout << timeStamp() << "starting jobs from scratch" << endl;
   } else {
@@ -116,6 +122,7 @@ void MPIMaster::calculateIntensity(const fp from, const fp to, const int steps)
     m_comm.abort(3);
   }
 
+  bool forceWaitJob = false;
   while(!m_jobQueue.empty() || !m_pendingRequests.empty()) {
     cout << timeStamp() << "QUEUE: free slaves: " << m_availableSlaves.size() << ", pending jobs: " << m_jobQueue.size() << endl;
 
@@ -124,20 +131,38 @@ void MPIMaster::calculateIntensity(const fp from, const fp to, const int steps)
       boost::optional<ResponsePair> status = mpi::test_any(m_pendingRequests.begin(), m_pendingRequests.end());
       if (status) {
         handleResponse(*status);
+        forceWaitJob = false;
       } else {
         break;
       }
     }
 
-    if ((m_availableSlaves.empty() || m_jobQueue.empty()) && !m_pendingRequests.empty()) {
+    if ((m_availableSlaves.empty() || m_jobQueue.empty() || forceWaitJob) && !m_pendingRequests.empty()) {
 //       cout << timeStamp() << "all slaves working, waiting for any to finish before assigning new work..." << endl;
       handleResponse(mpi::wait_any(m_pendingRequests.begin(), m_pendingRequests.end()));
+      forceWaitJob = false;
     }
 
     while (!m_jobQueue.empty() && !m_availableSlaves.empty()) {
-      MPIJob* job = m_jobQueue.front();
+      std::vector<MPIJob*>::reverse_iterator it = m_jobQueue.rbegin();
+      bool foundJob = false;
+      while(it != m_jobQueue.rend()) {
+        if (dynamic_cast<BisectStartJob*>(*it) && m_availableSlaves.size() < 2) {
+          ///TODO: put this into the MPIJob API?
+          ++it;
+          continue;
+        }
+        foundJob = true;
+        break;
+      }
+      if (!foundJob) {
+        cout << timeStamp() << "not enough slaves to continue jobs, waiting" << endl;
+        forceWaitJob = true;
+        break;
+      }
+      MPIJob* job = *it;
       cout << timeStamp() << "START: " << job->name() << endl;
-      m_jobQueue.pop();
+      m_jobQueue.erase(--it.base());
       job->start();
     }
   }
@@ -169,7 +194,7 @@ void MPIMaster::enqueueJob(MPIJob* job)
   archive << id;
   job->saveTo(archive);
 
-  m_jobQueue.push(job);
+  m_jobQueue.push_back(job);
 }
 
 bool MPIMaster::readdJob(const std::string& jobFile)
@@ -207,7 +232,7 @@ bool MPIMaster::readdJob(const std::string& jobFile)
     job->setJobId(id);
     m_lastJobId = max(id, m_lastJobId);
 
-    m_jobQueue.push(job);
+    m_jobQueue.push_back(job);
     return true;
   } catch(boost::archive::archive_exception e) {
     cerr << timeStamp() << "could not load job file, skipping:" << jobFile << endl << e.what() << endl;
@@ -251,11 +276,6 @@ void MPIMaster::handleResponse(const ResponsePair& response)
 ofstream& MPIMaster::intensityOutputFile()
 {
   return m_intensityOutput;
-}
-
-int MPIMaster::availableSlaves() const
-{
-  return m_availableSlaves.size();
 }
 
 std::string MPIMaster::timeStamp() const

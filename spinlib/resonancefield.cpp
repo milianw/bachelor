@@ -127,6 +127,7 @@ bool ResonanceField::checkForLoopingResonance() const
   return m_loopingResonanceCanOccur;
 }
 
+///FIXME: update when orientation is changed in experiment
 fp ResonanceField::calculateLambda() const
 {
   //implementation of eq 14
