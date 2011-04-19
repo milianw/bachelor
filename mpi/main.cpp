@@ -130,7 +130,7 @@ int main(int argc, char* argv[]) {
 
     // append info about the experiment
     stringstream stream;
-    stream << outputDir << "/" << from << '-' << to << ':' << steps << ':' << identifierForExperiment(exp) << ":mpi";
+    stream << outputDir << "/" << from << '-' << to << ':' << steps << ':' << identifierForExperiment(exp) << ":mpi:" << orientations.size();
     outputDir = stream.str();
 
     // make sure the path exists
