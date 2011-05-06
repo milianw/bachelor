@@ -82,6 +82,7 @@ public:
   { }
 
   Orientation(const Vector3& _orientation, const fp _weight)
+  : orientation(_orientation), weight(_weight)
   { }
 
   Vector3 orientation;
