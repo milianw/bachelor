@@ -11,6 +11,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 include(OptimizeForArchitecture)
 
 find_package(GSL REQUIRED)
+find_package(FFTW REQUIRED)
 
 find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
@@ -32,6 +33,7 @@ add_subdirectory(mpi)
 add_subdirectory(non-mpi)
 add_subdirectory(convolute)
 add_subdirectory(dbg)
+add_subdirectory(broaden)
 
 # add_executable(test test.cpp)
 # OptimizeForArchitecture(test)
