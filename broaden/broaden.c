@@ -29,12 +29,12 @@
 
 static int debug = 0;
 
-typedef struct s_lebedev {
+/* typedef struct s_lebedev { */
 
-  double phi;
-  double theta;
-  double weight;
-} lebedev;
+/*   double phi; */
+/*   double theta; */
+/*   double weight; */
+/* } lebedev; */
 
 typedef struct s_orientation {
 
@@ -133,50 +133,50 @@ unsigned int determine_line_count (FILE * datafile) {
   return lines;
 }
 
-/** 
- * read_lebedev_grid: read Lebedev grid data from file into an array of struct lebedev_grid
- * 
- * @param path - absolute path to the data file containing the Lebedev grid data
- * @param grid - uninitialized pointer to an array which will be allocated and filled with grid data
- * 
- * @return - returns the number of Lebedev grid points successfully parsed, zero otherwise
- */
-int read_lebedev_grid (FILE * lebedev_file, lebedev ** grid) {
+/* /\**  */
+/*  * read_lebedev_grid: read Lebedev grid data from file into an array of struct lebedev_grid */
+/*  *  */
+/*  * @param path - absolute path to the data file containing the Lebedev grid data */
+/*  * @param grid - uninitialized pointer to an array which will be allocated and filled with grid data */
+/*  *  */
+/*  * @return - returns the number of Lebedev grid points successfully parsed, zero otherwise */
+/*  *\/ */
+/* int read_lebedev_grid (FILE * lebedev_file, lebedev ** grid) { */
 
-  int lines;
-  int i;
-  char buffer [256];
+/*   int lines; */
+/*   int i; */
+/*   char buffer [256]; */
 
-  lines = 0;
-  i = 0;
+/*   lines = 0; */
+/*   i = 0; */
 
-  /* determine size of Lebedev array to be allocated */
-  if ((lines = determine_line_count (lebedev_file)) > 0) {
-    if (!(*grid = malloc (sizeof(lebedev)*lines)))
-      return 0;
-  }
-  else
-    return 0;
+/*   /\* determine size of Lebedev array to be allocated *\/ */
+/*   if ((lines = determine_line_count (lebedev_file)) > 0) { */
+/*     if (!(*grid = malloc (sizeof(lebedev)*lines))) */
+/*       return 0; */
+/*   } */
+/*   else */
+/*     return 0; */
 
-  if(debug)
-    printf ("The spectrum file has %d lines\n", lines);
+/*   if(debug) */
+/*     printf ("The spectrum file has %d lines\n", lines); */
 
-  /* the file has to be rewound to the beginning, since it is currently standing
-     at the end from the previous call to determine_line_count
-  */
-  rewind (lebedev_file);
+/*   /\* the file has to be rewound to the beginning, since it is currently standing */
+/*      at the end from the previous call to determine_line_count */
+/*   *\/ */
+/*   rewind (lebedev_file); */
 
-  /* parse Lebedev grid data from file, use exponential form for floating point data if applicable */
-  while(fgets(buffer, sizeof(buffer), lebedev_file)) {
-    if (sscanf(buffer, "%lf %lf %lf[^\n]\n", &(* grid)[i].phi, &(* grid)[i].theta, &(* grid)[i].weight) == 3) {
-      if (debug)
-	printf ("i: %d phi: %.15lf theta: %.15lf weight: %.15lf\n", i, (* grid)[i].phi, (* grid)[i].theta, (* grid)[i].weight);
-      i++;
-    }
-  }
+/*   /\* parse Lebedev grid data from file, use exponential form for floating point data if applicable *\/ */
+/*   while(fgets(buffer, sizeof(buffer), lebedev_file)) { */
+/*     if (sscanf(buffer, "%lf %lf %lf[^\n]\n", &(* grid)[i].phi, &(* grid)[i].theta, &(* grid)[i].weight) == 3) { */
+/*       if (debug) */
+/* 	printf ("i: %d phi: %.15lf theta: %.15lf weight: %.15lf\n", i, (* grid)[i].phi, (* grid)[i].theta, (* grid)[i].weight); */
+/*       i++; */
+/*     } */
+/*   } */
 
-  return lines;
-}
+/*   return lines; */
+/* } */
 
 /** 
  * read_input_epr_spectrum: read EPR spectrum from data file into an array of struct epr_spectrum
@@ -223,23 +223,23 @@ int read_input_epr_spectrum (FILE * spectrum_file, epr_spectrum * spectrum) {
   return lines;
 }
 
-/** 
- * 
- * 
- * @param f 
- * @param grid 
- * @param phi 
- * @param theta 
- * 
- * @return 
- */
-int lebedev_quadrature (double (* f) (double phi, double theta), lebedev ** grid,
-			double phi, double theta) {
+/* /\**  */
+/*  *  */
+/*  *  */
+/*  * @param f  */
+/*  * @param grid  */
+/*  * @param phi  */
+/*  * @param theta  */
+/*  *  */
+/*  * @return  */
+/*  *\/ */
+/* int lebedev_quadrature (double (* f) (double phi, double theta), lebedev ** grid, */
+/* 			double phi, double theta) { */
 
-  /* perform Lebedev quadrature for given coordinates */
+/*   /\* perform Lebedev quadrature for given coordinates *\/ */
 
-  return 0;
-}
+/*   return 0; */
+/* } */
 
 /** 
  * fill_spectrum_equidistant: create spectrum with equidistant data points from
@@ -382,49 +382,52 @@ int broaden_spectrum (epr_spectrum * spectrum, double decay) {
  */
 void usage(char * cmdname)
 {
-  printf("Usage: %s --fill --input-spectrum [spectrum file] --output-file [output file] --lebedev-average [lebedev file] --broadening [decay constant] --debug.\n\n\
+  /* printf("Usage: %s --fill --input-spectrum [spectrum file] --output-file [output file] --lebedev-average [lebedev file] --broadening [decay constant] --debug.\n\n\ */
+  printf("Usage: %s --fill --input-spectrum [spectrum file] --output-file [output file] --broadening [decay constant] --debug.\n\n\
           Where:\n\
           \n\
           fill - insert additional data points to EPR to enable discrete FFT\n\
           input-spectrum - input file with EPR spectrum data\n\
           output-file - write output to [output file]\n\
-          lebedev-average - perform Lebedev average with Lebedev data from [lebedev file]\n\
           broadening - perform line broadening through FFT using the supplied [decay constant]\n\
           debug - output extended debug data\n\n", cmdname);
+
+          /* lebedev-average - perform Lebedev average with Lebedev data from [lebedev file]\n\ */
 }
 
 int main (int argc, char** argv) {
 
   int i, c, option_index;
   /* option flags for averaging, fill and broadening; default = 0 => OFF */
-  int lebedev_average = 0, fill = 0, broadening = 0;
+  /* int lebedev_average = 0; */
+  int fill = 0, broadening = 0;
   double decay;
   double accuracy;
-  lebedev * lebedev_grid;
+  /* lebedev * lebedev_grid; */
   epr_spectrum spectrum;
   FILE * input_spectrum_file;
-  FILE * lebedev_file;
+  /* FILE * lebedev_file; */
   FILE * output_file;
   char input_spectrum_path [256];
-  char lebedev_file_path [256];
+  /* char lebedev_file_path [256]; */
   char output_path [256];
 
   memset (input_spectrum_path, 0, 256);
-  memset (lebedev_file_path, 0, 256);
+  /* memset (lebedev_file_path, 0, 256); */
   memset (output_path, 0, 256);
 
   static struct option options [] = {
     {"input-spectrum", required_argument, NULL, 'i'},
     {"output-file", required_argument, NULL, 'o'},
     {"fill", required_argument, NULL, 'f'},
-    {"lebedev-average", required_argument, NULL, 'l'},
+    /* {"lebedev-average", required_argument, NULL, 'l'}, */
     {"broadening", required_argument, NULL, 'b'},
     {"debug", no_argument, NULL, 'd'},
     {0, 0, 0, 0}
   };
 
   /* parse command line options using getopt_long */
-  while ((c = getopt_long(argc, argv, "i:o:f:l:b:d", options, &option_index)) != -1) {
+  while ((c = getopt_long(argc, argv, "i:o:f:b:d", options, &option_index)) != -1) {
 
     switch (c) {
 
@@ -441,10 +444,10 @@ int main (int argc, char** argv) {
       accuracy = atof (optarg);
       break;
 
-    case 'l':
-      strncpy (lebedev_file_path, optarg, 255);
-      lebedev_average = 1;
-      break;
+    /* case 'l': */
+    /*   strncpy (lebedev_file_path, optarg, 255); */
+    /*   lebedev_average = 1; */
+    /*   break; */
 
     case 'b':
       broadening = 1;
@@ -471,11 +474,11 @@ int main (int argc, char** argv) {
   if (!(output_file = fopen (output_path, "w")))
     output_file = stdout;
 
-  if (lebedev_average && !(lebedev_file = fopen (lebedev_file_path, "r"))) {
-    printf ("Error opening file for Lebedev grid data or no file specified.\n");
-    usage(argv[0]);
-    return 0;
-  }
+  /* if (lebedev_average && !(lebedev_file = fopen (lebedev_file_path, "r"))) { */
+  /*   printf ("Error opening file for Lebedev grid data or no file specified.\n"); */
+  /*   usage(argv[0]); */
+  /*   return 0; */
+  /* } */
 
   /* read input files for EPR spectrum and Lebedev grid data */
   if (!(read_input_epr_spectrum (input_spectrum_file, &spectrum) > 0)) {
@@ -483,10 +486,10 @@ int main (int argc, char** argv) {
     return -1;
   }
 
-  if (lebedev_average && !(read_lebedev_grid (lebedev_file, &lebedev_grid)) > 0) {
-    printf ("Error parsing Lebedev grid file, no data points found.\n");
-    return -1;
-  }
+  /* if (lebedev_average && !(read_lebedev_grid (lebedev_file, &lebedev_grid)) > 0) { */
+  /*   printf ("Error parsing Lebedev grid file, no data points found.\n"); */
+  /*   return -1; */
+  /* } */
 
   /* generate equidistant grid if fill parameter is set */
   if (fill)
