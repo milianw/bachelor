@@ -149,7 +149,7 @@ int read_cartesian_data (FILE * cartesian_file, cartesian ** cartesian_data) {
 
   /* parse Lebedev grid data from file, use exponential form for floating point data if applicable */
   while(fgets(buffer, sizeof(buffer), cartesian_file)) {
-    if (sscanf(buffer, "%lf %lf %lf[^\n]\n", &(* cartesian_data)[i].x, &(* cartesian_data)[i].y, &(* cartesian_data)[i].z, , &(* cartesian_data)[i].weight) == 4) {
+    if (sscanf(buffer, "%lf %lf %lf[^\n]\n", &(* cartesian_data)[i].x, &(* cartesian_data)[i].y, &(* cartesian_data)[i].z, &(* cartesian_data)[i].weight) == 4) {
       if (debug)
 	printf ("i: %d x: %.15lf y: %.15lf z: %.15lf weight: %.15lf\n", i, (* cartesian_data)[i].x, (* cartesian_data)[i].y, (* cartesian_data)[i].z, (* cartesian_data)[i].weight);
       i++;
@@ -159,7 +159,7 @@ int read_cartesian_data (FILE * cartesian_file, cartesian ** cartesian_data) {
   return lines;
 }
 
-int lebedev_to_cartesian (cartesian ** in, lebedev ** out) {
+int lebedev_to_cartesian (lebedev ** in, cartesian ** out) {
  
   int lines;
   int i;
@@ -211,6 +211,7 @@ int main (int argc, char** argv) {
   memset (input_path, 0, 256);
   memset (output_path, 0, 256);
   
+  lines = 0;
   to_cartesian = 0;
   to_lebedev = 0;
 
@@ -256,25 +257,53 @@ int main (int argc, char** argv) {
     }
   }
 
-  if (strlen(input_path) >  0 && !(input_file = fopen (input_path, "r"))) {
-    printf ("Error opening file for input.\n");
-    usage(argv[0]);
-    return 0;
+  if ((strlen(input_path) > 0)){
+    input_file = fopen (input_path, "r");
+    
+    if (!input_file) {
+      printf ("Error opening file for input.\n");
+      usage(argv[0]);
+      return 0;
+    }
   }
   else
     input_file = stdin;
   
-  if (strlen(output_path) >  0 && !(input_file = fopen (output_path, "w"))) {
-    printf ("Error opening file for output.\n");
+  if ((strlen(output_path) > 0)){
+    output_file = fopen (output_path, "w");
+    
+    if (!output_file) {
+      printf ("Error opening file for output.\n");
+      usage(argv[0]);
+      return 0;
+    }
+  }
+  else
+    output_file = stdout;
+  
+  if(to_cartesian) {
+    if (!(lines = read_lebedev_data(input_file, &lebedev_data))) {
+      printf("Error parsing Lebedev input data.\n");
+      return 0;
+    }
+    lebedev_to_cartesian(&lebedev_data, &cartesian_data);
+    for (i = 0; i < lines; i++)
+      fprintf (output_file, "%lg %lg %lg %lg\n", cartesian_data[i].x, cartesian_data[i].y, cartesian_data[i].z, cartesian_data[i].weight);
+  }
+  else if (to_lebedev) {
+    if (!(lines = read_cartesian_data(input_file, &cartesian_data))) {
+      printf("Error parsing cartesian input data.\n");
+      return 0;
+    }
+    cartesian_to_lebedev(&cartesian_data, &lebedev_data);
+      for (i = 0; i < lines; i++)
+	fprintf (output_file, "%lg %lg %lg\n", lebedev_data[i].phi, lebedev_data[i].theta, lebedev_data[i].weight);
+  }
+  else {
+    printf ("Either --to-cartesian or --to-lebedev must specified.\n");
     usage(argv[0]);
     return 0;
   }
-  if (!(output_file = fopen (output_path, "w")))
-    output_file = stdout;
-
-  /* output new spectrum to stdout/output_file */
-  for (i = 0; i < lines; i++)
-    fprintf (output_file, "%lg %lg %lg %lg %lg %lg\n", spectrum.B[i][0], spectrum.I[i][0], spectrum.O[i].x, spectrum.O[i].y, spectrum.O[i].z, spectrum.O[i].weight);
 
   return 0;
 }
