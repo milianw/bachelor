@@ -159,24 +159,55 @@ int read_cartesian_data (FILE * cartesian_file, cartesian ** cartesian_data) {
   return lines;
 }
 
-int lebedev_to_cartesian (lebedev ** in, cartesian ** out) {
+int lebedev_to_cartesian (lebedev ** in, cartesian ** out, int npoints) {
  
-  int lines;
   int i;
   
-  lines = 0;
+  if (npoints > 0) {
+    if (!(*out = malloc (sizeof(cartesian)*npoints)))
+      return 0;
+  }
+  else
+    return 0;
   
-  return lines;
+  for (i = 0; i < npoints; i++) {
+
+    (* out)[i].x = sin ((* in)[i].theta) * cos ((* in)[i].phi);
+    (* out)[i].y = sin ((* in)[i].theta) * sin ((* in)[i].phi);;
+    (* out)[i].z = cos ((* in)[i].theta);
+    (* out)[i].weight = (* in)[i].weight;
+  }
+
+  return npoints;
 }
 
-int cartesian_to_lebedev (cartesian ** in, lebedev ** out) {
-  
-  int lines;
+int cartesian_to_lebedev (cartesian ** in, lebedev ** out, int npoints) {
+
   int i;
   
-  lines = 0;
+  if (npoints > 0) {
+    if (!(*out = malloc (sizeof(lebedev)*npoints)))
+      return 0;
+  }
+  else
+    return 0;
   
-  return lines;
+  for (i = 0; i < npoints; i++) {
+
+    if (((* in)[i].x) > 0)
+      (* out)[i].phi = atan(((* in)[i].y) / ((* in)[i].x));
+    else if (((* in)[i].x) == 0)
+      (((* in)[i].y) / ((* in)[i].y)) * (M_PI / 2);
+    else if (((* in)[i].x) < 0 && ((* in)[i].y) >= 0)
+      (* out)[i].phi = atan(((* in)[i].y) / ((* in)[i].x)) + M_PI;
+    else if (((* in)[i].x) < 0 && ((* in)[i].y) < 0)
+      (* out)[i].phi = atan(((* in)[i].y) / ((* in)[i].x)) - M_PI;
+
+    (* out)[i].theta = acos(((* in)[i].z) / sqrt(((* in)[i].x) * ((* in)[i].x) + ((* in)[i].y) * ((* in)[i].y) + ((* in)[i].z) * ((* in)[i].z)));
+    (* out)[i].weight = (* in)[i].weight;
+  }
+
+  return npoints;
 }
 
 /** 
@@ -286,7 +317,7 @@ int main (int argc, char** argv) {
       printf("Error parsing Lebedev input data.\n");
       return 0;
     }
-    lebedev_to_cartesian(&lebedev_data, &cartesian_data);
+    lebedev_to_cartesian(&lebedev_data, &cartesian_data, lines);
     for (i = 0; i < lines; i++)
       fprintf (output_file, "%lg %lg %lg %lg\n", cartesian_data[i].x, cartesian_data[i].y, cartesian_data[i].z, cartesian_data[i].weight);
   }
@@ -295,7 +326,7 @@ int main (int argc, char** argv) {
       printf("Error parsing cartesian input data.\n");
       return 0;
     }
-    cartesian_to_lebedev(&cartesian_data, &lebedev_data);
+    cartesian_to_lebedev(&cartesian_data, &lebedev_data, lines);
       for (i = 0; i < lines; i++)
 	fprintf (output_file, "%lg %lg %lg\n", lebedev_data[i].phi, lebedev_data[i].theta, lebedev_data[i].weight);
   }
