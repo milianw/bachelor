@@ -335,7 +335,9 @@ int main (int argc, char** argv) {
       printf("Error parsing Lebedev input data.\n");
       return 0;
     }
-    lebedev_to_cartesian(&lebedev_data, &cartesian_data, lines);
+    if (!lebedev_to_cartesian(&lebedev_data, &cartesian_data, lines))
+      return 0;
+
     for (i = 0; i < lines; i++)
       fprintf (output_file, "%lg %lg %lg %lg\n", cartesian_data[i].x, cartesian_data[i].y, cartesian_data[i].z, cartesian_data[i].weight);
   }
@@ -344,7 +346,9 @@ int main (int argc, char** argv) {
       printf("Error parsing cartesian input data.\n");
       return 0;
     }
-    cartesian_to_lebedev(&cartesian_data, &lebedev_data, lines);
+    if(!cartesian_to_lebedev(&cartesian_data, &lebedev_data, lines))
+      return 0;
+
       for (i = 0; i < lines; i++)
 	fprintf (output_file, "%lg %lg %lg\n", lebedev_data[i].phi, lebedev_data[i].theta, lebedev_data[i].weight);
   }
