@@ -159,6 +159,15 @@ int read_cartesian_data (FILE * cartesian_file, cartesian ** cartesian_data) {
   return lines;
 }
 
+/** 
+ * lebedev_to_cartesian - convert Lebedev coordinate data to cartesian coordinate data
+ * 
+ * @param in - pointer to an array of Lebedev data
+ * @param out - pointer to an uninitialized array for the cartesian output data
+ * @param npoints - number of data points in the input Lebedev data array
+ * 
+ * @return - returns npoints if successful, zero otherwise
+ */
 int lebedev_to_cartesian (lebedev ** in, cartesian ** out, int npoints) {
  
   int i;
@@ -181,6 +190,15 @@ int lebedev_to_cartesian (lebedev ** in, cartesian ** out, int npoints) {
   return npoints;
 }
 
+/** 
+ * cartesian_to_lebedev - convert cartesian coordinate data to Lebedev coordinate data
+ * 
+ * @param in - pointer to an array of cartesian data
+ * @param out - pointer to an uninitialized array for the Lebedev output data
+ * @param npoints - number of data points in the input Lebedev data array
+ * 
+ * @return - returns npoints if successful, zero otherwise
+ */
 int cartesian_to_lebedev (cartesian ** in, lebedev ** out, int npoints) {
 
   int i;
