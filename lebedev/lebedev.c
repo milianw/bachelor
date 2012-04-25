@@ -25,6 +25,7 @@
 #include <math.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <install/include/eigen3/Eigen/src/Eigen2Support/Geometry/Transform.h>
 
 static int debug = 0;
 
@@ -72,12 +73,12 @@ unsigned int determine_line_count (FILE * datafile) {
 /** 
  * read_lebedev_data: read Lebedev grid data from file into an array of struct lebedev_grid
  * 
- * @param path - absolute path to the data file containing the Lebedev grid data
- * @param grid - uninitialized pointer to an array which will be allocated and filled with grid data
+ * @param lebedev_file - file handle to the data file containing the Lebedev grid data
+ * @param lebedev_data - uninitialized pointer to an array which will be allocated and filled with grid data
  * 
  * @return - returns the number of Lebedev grid points successfully parsed, zero otherwise
  */
-int read_lebedev_data (FILE * lebedev_file, lebedev ** grid) {
+int read_lebedev_data (FILE * lebedev_file, lebedev ** lebedev_data) {
 
   int lines;
   int i;
@@ -88,14 +89,14 @@ int read_lebedev_data (FILE * lebedev_file, lebedev ** grid) {
 
   /* determine size of Lebedev array to be allocated */
   if ((lines = determine_line_count (lebedev_file)) > 0) {
-    if (!(*grid = malloc (sizeof(lebedev)*lines)))
+    if (!(*lebedev_data = malloc (sizeof(lebedev)*lines)))
       return 0;
   }
   else
     return 0;
 
   if(debug)
-    printf ("The spectrum file has %d lines\n", lines);
+    printf ("The input file has %d lines\n", lines);
 
   /* the file has to be rewound to the beginning, since it is currently standing
      at the end from the previous call to determine_line_count
@@ -104,9 +105,54 @@ int read_lebedev_data (FILE * lebedev_file, lebedev ** grid) {
 
   /* parse Lebedev grid data from file, use exponential form for floating point data if applicable */
   while(fgets(buffer, sizeof(buffer), lebedev_file)) {
-    if (sscanf(buffer, "%lf %lf %lf[^\n]\n", &(* grid)[i].phi, &(* grid)[i].theta, &(* grid)[i].weight) == 3) {
+    if (sscanf(buffer, "%lf %lf %lf[^\n]\n", &(* lebedev_data)[i].phi, &(* lebedev_data)[i].theta, &(* lebedev_data)[i].weight) == 3) {
       if (debug)
-	printf ("i: %d phi: %.15lf theta: %.15lf weight: %.15lf\n", i, (* grid)[i].phi, (* grid)[i].theta, (* grid)[i].weight);
+	printf ("i: %d phi: %.15lf theta: %.15lf weight: %.15lf\n", i, (* lebedev_data)[i].phi, (* lebedev_data)[i].theta, (* lebedev_data)[i].weight);
+      i++;
+    }
+  }
+
+  return lines;
+}
+
+/** 
+ * read_cartesian_data: read Lebedev grid data from file into an array of struct lebedev_grid
+ * 
+ * @param cartesian_file - file handle to the data file containing the cartesian data
+ * @param cartesian_data - uninitialized pointer to an array which will be allocated and filled with cartesian data
+ * 
+ * @return - returns the number of cartesian data points successfully parsed, zero otherwise
+ */
+int read_cartesian_data (FILE * cartesian_file, cartesian ** cartesian_data) {
+
+  int lines;
+  int i;
+  char buffer [256];
+
+  lines = 0;
+  i = 0;
+
+  /* determine size of Lebedev array to be allocated */
+  if ((lines = determine_line_count (cartesian_file)) > 0) {
+    if (!(*cartesian_data = malloc (sizeof(cartesian)*lines)))
+      return 0;
+  }
+  else
+    return 0;
+
+  if(debug)
+    printf ("The input file has %d lines\n", lines);
+
+  /* the file has to be rewound to the beginning, since it is currently standing
+     at the end from the previous call to determine_line_count
+  */
+  rewind (cartesian_file);
+
+  /* parse Lebedev grid data from file, use exponential form for floating point data if applicable */
+  while(fgets(buffer, sizeof(buffer), cartesian_file)) {
+    if (sscanf(buffer, "%lf %lf %lf[^\n]\n", &(* cartesian_data)[i].x, &(* cartesian_data)[i].y, &(* cartesian_data)[i].z, , &(* cartesian_data)[i].weight) == 4) {
+      if (debug)
+	printf ("i: %d x: %.15lf y: %.15lf z: %.15lf weight: %.15lf\n", i, (* cartesian_data)[i].x, (* cartesian_data)[i].y, (* cartesian_data)[i].z, (* cartesian_data)[i].weight);
       i++;
     }
   }
