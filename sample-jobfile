@@ -1,0 +1,24 @@
+#PBS -N epr-2water-02-16-auto-powder
+#PBS -q big
+#PBS -l nodes=10:ppn=2:infiniband
+#PBS -l walltime=12:00:00
+#PBS -l file=1000M
+#PBS -m ea -M glaubitz@physik.fu-berlin.de
+
+orcafile=$PBS_O_WORKDIR/data.orca
+orientations=$PBS_O_WORKDIR/orientations
+
+export PATH=/home/glaubitz/hs:$PATH
+export LD_LIBRARY_PATH=/home/glaubitz/hs/lib:$LD_LIBRARY_PATH
+
+cd $PBS_O_WORKDIR
+
+export RESFIELD_CLEANUP_THRESHOLD=1e-6
+export RESFIELD_THRESHOLD=1E-8
+export FREQUENCY_THRESHOLD=1E-5
+
+outfile_base=$PBS_O_WORKDIR/$(basename $0)
+
+mpirun hs-mpi -m 95 -s $orcafile -O orientations > $outfile_base.cout 2> $outfile_base.cerr
+
+
