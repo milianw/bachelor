@@ -84,9 +84,9 @@ void MPIMaster::calculateIntensity(const fp from, const fp to, const int steps, 
   fs::directory_iterator end;
   while(it != end) {
     if (fs::is_regular_file(it->status())) {
-      if (boost::ends_with(it->path().filename().string(), ".job")) {
+      if (boost::ends_with(it->path().filename(), ".job")) {
         m_lastJobId = max(boost::lexical_cast<unsigned int>(it->path().stem()), m_lastJobId);
-        bool added = readdJob(it->path().string());
+        bool added = readdJob(it->path().file_string());
         continuingJobs = continuingJobs || added;
       }
     }

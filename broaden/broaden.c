@@ -383,10 +383,10 @@ int broaden_spectrum (epr_spectrum * spectrum, double decay) {
 void usage(char * cmdname)
 {
   /* printf("Usage: %s --fill --input-spectrum [spectrum file] --output-file [output file] --lebedev-average [lebedev file] --broadening [decay constant] --debug.\n\n\ */
-  printf("Usage: %s --fill --input-spectrum [spectrum file] --output-file [output file] --broadening [decay constant] --debug.\n\n\
+  printf("Usage: %s --fill [accuracy] --input-spectrum [spectrum file] --output-file [output file] --broadening [decay constant] --debug.\n\n\
           Where:\n\
           \n\
-          fill - insert additional data points to EPR to enable discrete FFT\n\
+          fill - insert additional data points with [accuracy] to EPR to enable discrete FFT\n\
           input-spectrum - input file with EPR spectrum data\n\
           output-file - write output to [output file]\n\
           broadening - perform line broadening through FFT using the supplied [decay constant]\n\

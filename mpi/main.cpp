@@ -125,7 +125,7 @@ int main(int argc, char* argv[]) {
     string outputDir = vm["outputDir"].as<string>();
     if (outputDir.empty()) {
       // fallback to current work dir
-      outputDir = fs::current_path().string();
+      outputDir = fs::current_path().directory_string();
     }
 
     // append info about the experiment
@@ -135,7 +135,7 @@ int main(int argc, char* argv[]) {
 
     // make sure the path exists
     fs::path oPath(outputDir);
-    outputDir = fs::system_complete(oPath).string();
+    outputDir = fs::system_complete(oPath).directory_string();
     if (!fs::exists(oPath) && !fs::create_directories(oPath)) {
       cerr << "could not create output path: " << oPath << endl;
       world.abort(2);
