@@ -315,11 +315,48 @@ int broaden_spectrum (epr_spectrum * spectrum, double decay) {
 int sum_orientations (epr_spectrum * spectrum) {
 
   int i;
+  int orientation_index;
+  int new_size;
+  fftw_complex B;
+  fftw_complex I;
+
+  B[0] = .0;
+  B[1] = .0;
+  I[0] = .0;
+  I[1] = .0;
+
+  orientation_index = 0;
+  new_size = spectrum->size;
 
   for (i = 0; i < spectrum->size; i++) {
+    if (B[0] != spectrum->B[i][0]) {
+      B[0] = spectrum->B[i][0];
+      B[1] = spectrum->B[i][1];
+      I[0] = .0;
+      I[1] = .0;
+
+      spectrum->B[i - orientation_index][0] = B[0];
+      spectrum->B[i - orientation_index][1] = B[1];
+      spectrum->I[i - orientation_index][0] = I[0];
+      spectrum->I[i - orientation_index][1] = I[1];
+      spectrum->O[i - orientation_index].x = 0;
+      spectrum->O[i - orientation_index].y = 0;
+      spectrum->O[i - orientation_index].z = 0;
+      spectrum->O[i - orientation_index].weight = 0;
+
+      new_size -= orientation_index;
+      orientation_index = 0;
+    }
+    else {
+      orientation_index++;
+      I[0] += spectrum->I[i][0]*spectrum->O[i].weight;
+      I[1] += spectrum->I[i][1]*spectrum->O[i].weight;
+    }
   }
 
-  return 0;
+  // TODO: realloc spectrum
+
+  return new_size;
 }
 
 /** 
