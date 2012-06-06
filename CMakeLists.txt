@@ -33,7 +33,7 @@ add_subdirectory(mpi)
 add_subdirectory(non-mpi)
 add_subdirectory(convolute)
 add_subdirectory(dbg)
-add_subdirectory(broaden)
+add_subdirectory(powder)
 add_subdirectory(lebedev)
 
 # add_executable(test test.cpp)
