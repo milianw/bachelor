@@ -313,6 +313,23 @@ int broaden_spectrum (epr_spectrum * spectrum, double decay) {
 }
 
 /** 
+ * sum_orientations: sum over all orientations using weights provided in the spectrum
+ * 
+ * @param spectrum - pointer to the struct of the EPR spectrum to be broadenend
+ * 
+ * @return - returns size of spectrum if successful, zero otherwise
+ */
+int sum_orientations (epr_spectrum * spectrum) {
+
+  int i;
+
+  for (i = 0; i < spectrum->size; i++) {
+  }
+
+  return 0;
+}
+
+/** 
  * usage: print usage information
  * 
  * @param cmdname - pointer to a string containing the name of the binary (argv[0])
@@ -320,13 +337,14 @@ int broaden_spectrum (epr_spectrum * spectrum, double decay) {
 void usage(char * cmdname)
 {
   /* printf("Usage: %s --fill --input-spectrum [spectrum file] --output-file [output file] --lebedev-average [lebedev file] --broadening [decay constant] --debug.\n\n\ */
-  printf("Usage: %s --fill [accuracy] --input-spectrum [spectrum file] --output-file [output file] --broadening [decay constant] --debug.\n\n\
+  printf("Usage: %s --fill, -f [accuracy] --input-spectrum, -i [spectrum file] --output-file, -o [output file] --broadening, -b [decay constant] --sum-orientations, -s --debug, -d.\n\n\
           Where:\n\
           \n\
           fill - insert additional data points with [accuracy] to EPR to enable discrete FFT\n\
           input-spectrum - input file with EPR spectrum data\n\
           output-file - write output to [output file]\n\
           broadening - perform line broadening through FFT using the supplied [decay constant]\n\
+          sum-orientations - sum over all orientations using the weights provided with the spectrum\n\
           debug - output extended debug data\n\n", cmdname);
 
           /* lebedev-average - perform Lebedev average with Lebedev data from [lebedev file]\n\ */
@@ -335,9 +353,8 @@ void usage(char * cmdname)
 int main (int argc, char** argv) {
 
   int i, c, option_index;
-  /* option flags for averaging, fill and broadening; default = 0 => OFF */
-  /* int lebedev_average = 0; */
-  int fill = 0, broadening = 0;
+  /* option flags for fill, broadening, sum; default = 0 => OFF */
+  int fill = 0, broadening = 0, sum = 0;
   double decay;
   double accuracy;
   /* lebedev * lebedev_grid; */
@@ -357,8 +374,8 @@ int main (int argc, char** argv) {
     {"input-spectrum", required_argument, NULL, 'i'},
     {"output-file", required_argument, NULL, 'o'},
     {"fill", required_argument, NULL, 'f'},
-    /* {"lebedev-average", required_argument, NULL, 'l'}, */
     {"broadening", required_argument, NULL, 'b'},
+    {"sum-orientations", no_argument, NULL, 's'},
     {"debug", no_argument, NULL, 'd'},
     {0, 0, 0, 0}
   };
@@ -381,10 +398,9 @@ int main (int argc, char** argv) {
       accuracy = atof (optarg);
       break;
 
-    /* case 'l': */
-    /*   strncpy (lebedev_file_path, optarg, 255); */
-    /*   lebedev_average = 1; */
-    /*   break; */
+    case 's':
+      sum = 1;
+      break;
 
     case 'b':
       broadening = 1;
@@ -416,6 +432,11 @@ int main (int argc, char** argv) {
     printf ("Error parsing input spectrum, no data points found.\n");
     return -1;
   }
+
+  /* sum over all orientations for each B value, using the
+     Lebedev weights provided with the spectrum */
+  if (sum)
+    sum_orientations(&spectrum);
 
   /* generate equidistant grid if fill parameter is set */
   if (fill)
