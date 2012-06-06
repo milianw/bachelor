@@ -29,13 +29,6 @@
 
 static int debug = 0;
 
-/* typedef struct s_lebedev { */
-
-/*   double phi; */
-/*   double theta; */
-/*   double weight; */
-/* } lebedev; */
-
 typedef struct s_orientation {
 
   double x;
