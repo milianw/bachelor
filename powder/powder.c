@@ -43,6 +43,7 @@ typedef struct s_epr_spectrum {
   fftw_complex * I; /* pointer to an array of I field values */
   orientation * O; /* pointer to an array of orientation values */
   int size; /* amount of data points in spectrum */
+  int B_index; /* number of unique B field values in the spectrum */
 
 } epr_spectrum;
 
@@ -139,6 +140,7 @@ int read_input_epr_spectrum (FILE * spectrum_file, epr_spectrum * spectrum) {
   int lines;
   int i;
   char buffer [256];
+  double B;
 
   lines = 0;
   i = 0;
@@ -159,9 +161,18 @@ int read_input_epr_spectrum (FILE * spectrum_file, epr_spectrum * spectrum) {
   */
   rewind (spectrum_file);
 
+  /* the following index and reference value are used to count the number of
+     individual B field values in the input spectrum */
+  spectrum->B_index = 1; /* assuming there is at least one parsable line with a B field value in the spectrum file */
+  B = .0;
+
   /* parse EPR spectrum input file */
   while(fgets(buffer, sizeof(buffer), spectrum_file)) {
     if (sscanf(buffer, "%lg %lg %lg %lg %lg %lg[^\n]\n", &spectrum->B[i][0], &spectrum->I[i][0], &spectrum->O[i].x, &spectrum->O[i].y, &spectrum->O[i].z, &spectrum->O[i].weight) == 6) {
+      if (spectrum->B[i][0] != B) {
+	spectrum->B_index++;
+	B = spectrum->B[i][0];
+      }
       if (debug)
 	printf ("i: %d B: %lg I: %lg x: %lg y: %lg z: %lg weight: %lg\n", i, spectrum->B[i][0], spectrum->I[i][0], spectrum->O[i].x, spectrum->O[i].y, spectrum->O[i].z, spectrum->O[i].weight);
       i++;
