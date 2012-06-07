@@ -328,6 +328,7 @@ int sum_orientations (epr_spectrum * spectrum) {
   int i;
   int orientation_index;
   int new_size;
+  epr_spectrum sum_spectrum;
   fftw_complex B;
   fftw_complex I;
 
@@ -335,6 +336,14 @@ int sum_orientations (epr_spectrum * spectrum) {
   B[1] = .0;
   I[0] = .0;
   I[1] = .0;
+
+  /* no need to sum orientations if we have only
+     one intensity/orientation set per B field value */
+  if (spectrum->size == spectrum->B_index)
+    return spectrum->size;
+
+  if (!alloc_epr_spectrum(&sum_spectrum, spectrum->B_index))
+    return 0;
 
   orientation_index = 0;
   new_size = spectrum->size;
