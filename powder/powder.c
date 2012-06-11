@@ -43,7 +43,7 @@ typedef struct s_epr_spectrum {
   fftw_complex * I; /* pointer to an array of I field values */
   orientation * O; /* pointer to an array of orientation values */
   int size; /* amount of data points in spectrum */
-  int B_index; /* number of unique B field values in the spectrum */
+  /* int B_index; /\* number of unique B field values in the spectrum *\/ */
 
 } epr_spectrum;
 
@@ -140,7 +140,7 @@ int read_input_epr_spectrum (FILE * spectrum_file, epr_spectrum * spectrum) {
   int lines;
   int i;
   char buffer [256];
-  double B;
+  /* double B; */
 
   lines = 0;
   i = 0;
@@ -161,18 +161,18 @@ int read_input_epr_spectrum (FILE * spectrum_file, epr_spectrum * spectrum) {
   */
   rewind (spectrum_file);
 
-  /* the following index and reference value are used to count the number of
-     individual B field values in the input spectrum */
-  spectrum->B_index = 1; /* assuming there is at least one parsable line with a B field value in the spectrum file */
-  B = .0;
+  /* /\* the following index and reference value are used to count the number of */
+  /*    individual B field values in the input spectrum *\/ */
+  /* spectrum->B_index = 1; /\* assuming there is at least one parsable line with a B field value in the spectrum file *\/ */
+  /* B = .0; */
 
   /* parse EPR spectrum input file */
   while(fgets(buffer, sizeof(buffer), spectrum_file)) {
     if (sscanf(buffer, "%lg %lg %lg %lg %lg %lg[^\n]\n", &spectrum->B[i][0], &spectrum->I[i][0], &spectrum->O[i].x, &spectrum->O[i].y, &spectrum->O[i].z, &spectrum->O[i].weight) == 6) {
-      if (spectrum->B[i][0] != B) {
-	spectrum->B_index++;
-	B = spectrum->B[i][0];
-      }
+      /* if (spectrum->B[i][0] != B) { */
+      /* 	spectrum->B_index++; */
+      /* 	B = spectrum->B[i][0]; */
+      /* } */
       if (debug)
 	printf ("i: %d B: %lg I: %lg x: %lg y: %lg z: %lg weight: %lg\n", i, spectrum->B[i][0], spectrum->I[i][0], spectrum->O[i].x, spectrum->O[i].y, spectrum->O[i].z, spectrum->O[i].weight);
       i++;
@@ -183,8 +183,7 @@ int read_input_epr_spectrum (FILE * spectrum_file, epr_spectrum * spectrum) {
 }
 
 /** 
- * fill_spectrum_equidistant: create spectrum with equidistant data points from
- *                            input spectrum, so the data can be used for FFT later
+ * create_regular_grid: create regular grid with equidistant B field values
  * 
  * @param spectrum - pointer to an array with spectrum data which will be replaced with a new array,
  *                   the memory for the input array will be deallocated
@@ -192,7 +191,7 @@ int read_input_epr_spectrum (FILE * spectrum_file, epr_spectrum * spectrum) {
  * 
  * @return - returns the size of the new, intercalated array, zero otherwise
  */
-int fill_spectrum_equidistant (epr_spectrum * spectrum, double accuracy) {
+int create_regular_grid (epr_spectrum * spectrum, double accuracy) {
 
   int i, j;
   int new_size;
@@ -316,68 +315,68 @@ int broaden_spectrum (epr_spectrum * spectrum, double decay) {
     return 0;
 }
 
-/** 
- * sum_orientations: sum over all orientations using weights provided in the spectrum
- * 
- * @param spectrum - pointer to the struct of the EPR spectrum to be broadenend
- * 
- * @return - returns size of spectrum if successful, zero otherwise
- */
-int sum_orientations (epr_spectrum * spectrum) {
+/* /\**  */
+/*  * sum_orientations: sum over all orientations using weights provided in the spectrum */
+/*  *  */
+/*  * @param spectrum - pointer to the struct of the EPR spectrum to be broadenend */
+/*  *  */
+/*  * @return - returns size of spectrum if successful, zero otherwise */
+/*  *\/ */
+/* int sum_orientations (epr_spectrum * spectrum) { */
 
-  int i;
-  int orientation_index;
-  int new_size;
-  epr_spectrum sum_spectrum;
-  fftw_complex B;
-  fftw_complex I;
+/*   int i; */
+/*   int orientation_index; */
+/*   int new_size; */
+/*   epr_spectrum sum_spectrum; */
+/*   fftw_complex B; */
+/*   fftw_complex I; */
 
-  B[0] = .0;
-  B[1] = .0;
-  I[0] = .0;
-  I[1] = .0;
+/*   B[0] = .0; */
+/*   B[1] = .0; */
+/*   I[0] = .0; */
+/*   I[1] = .0; */
 
-  /* no need to sum orientations if we have only
-     one intensity/orientation set per B field value */
-  if (spectrum->size == spectrum->B_index)
-    return spectrum->size;
+/*   /\* no need to sum orientations if we have only */
+/*      one intensity/orientation set per B field value *\/ */
+/*   if (spectrum->size == spectrum->B_index) */
+/*     return spectrum->size; */
 
-  if (!alloc_epr_spectrum(&sum_spectrum, spectrum->B_index))
-    return 0;
+/*   if (!alloc_epr_spectrum(&sum_spectrum, spectrum->B_index)) */
+/*     return 0; */
 
-  orientation_index = 0;
-  new_size = spectrum->size;
+/*   orientation_index = 0; */
+/*   new_size = spectrum->size; */
 
-  for (i = 0; i < spectrum->size; i++) {
-    if (B[0] != spectrum->B[i][0]) {
-      B[0] = spectrum->B[i][0];
-      B[1] = spectrum->B[i][1];
-      I[0] = .0;
-      I[1] = .0;
+/*   for (i = 0; i < spectrum->size; i++) { */
+/*     if (B[0] != spectrum->B[i][0]) { */
+/*       B[0] = spectrum->B[i][0]; */
+/*       B[1] = spectrum->B[i][1]; */
+/*       I[0] = .0; */
+/*       I[1] = .0; */
 
-      spectrum->B[i - orientation_index][0] = B[0];
-      spectrum->B[i - orientation_index][1] = B[1];
-      spectrum->I[i - orientation_index][0] = I[0];
-      spectrum->I[i - orientation_index][1] = I[1];
-      spectrum->O[i - orientation_index].x = 0;
-      spectrum->O[i - orientation_index].y = 0;
-      spectrum->O[i - orientation_index].z = 0;
-      spectrum->O[i - orientation_index].weight = 0;
+/*       spectrum->B[i - orientation_index][0] = B[0]; */
+/*       spectrum->B[i - orientation_index][1] = B[1]; */
+/*       spectrum->I[i - orientation_index][0] = I[0]; */
+/*       spectrum->I[i - orientation_index][1] = I[1]; */
+/*       spectrum->O[i - orientation_index].x = 0; */
+/*       spectrum->O[i - orientation_index].y = 0; */
+/*       spectrum->O[i - orientation_index].z = 0; */
+/*       spectrum->O[i - orientation_index].weight = 0; */
 
-      new_size -= orientation_index;
-      orientation_index = 0;
-    }
-    else {
-      orientation_index++;
-      I[0] += spectrum->I[i][0]*spectrum->O[i].weight;
-      I[1] += spectrum->I[i][1]*spectrum->O[i].weight;
-    }
-  }
+/*       new_size -= orientation_index; */
+/*       orientation_index = 0; */
+/*     } */
+/*     else { */
+/*       orientation_index++; */
+/*       I[0] += spectrum->I[i][0]*spectrum->O[i].weight; */
+/*       I[1] += spectrum->I[i][1]*spectrum->O[i].weight; */
+/*     } */
+/*   } */
 
-  // TODO: realloc spectrum
+/*   // TODO: realloc spectrum */
 
-  return new_size;
-}
+/*   return new_size; */
+/* } */
 
 /** 
  * usage: print usage information
@@ -387,10 +386,10 @@ int sum_orientations (epr_spectrum * spectrum) {
 void usage(char * cmdname)
 {
   /* printf("Usage: %s --fill --input-spectrum [spectrum file] --output-file [output file] --lebedev-average [lebedev file] --broadening [decay constant] --debug.\n\n\ */
-  printf("Usage: %s --fill, -f [accuracy] --input-spectrum, -i [spectrum file] --output-file, -o [output file] --broadening, -b [decay constant] --sum-orientations, -s --debug, -d.\n\n\
+  printf("Usage: %s --regular, -r [accuracy] --input-spectrum, -i [spectrum file] --output-file, -o [output file] --broadening, -b [decay constant] --sum-orientations, -s --debug, -d.\n\n\
           Where:\n\
           \n\
-          fill - insert additional data points with [accuracy] to EPR to enable discrete FFT\n\
+          regular - insert additional data points with [accuracy] to EPR to create a regular grid\n\
           input-spectrum - input file with EPR spectrum data\n\
           output-file - write output to [output file]\n\
           broadening - perform line broadening through FFT using the supplied [decay constant]\n\
@@ -403,8 +402,8 @@ void usage(char * cmdname)
 int main (int argc, char** argv) {
 
   int i, c, option_index;
-  /* option flags for fill, broadening, sum; default = 0 => OFF */
-  int fill = 0, broadening = 0, sum = 0;
+  /* option flags for regular, broadening, sum; default = 0 => OFF */
+  int regular = 0, broadening = 0, sum = 0;
   double decay;
   double accuracy;
   /* lebedev * lebedev_grid; */
@@ -423,9 +422,9 @@ int main (int argc, char** argv) {
   static struct option options [] = {
     {"input-spectrum", required_argument, NULL, 'i'},
     {"output-file", required_argument, NULL, 'o'},
-    {"fill", required_argument, NULL, 'f'},
+    {"regular", required_argument, NULL, 'r'},
     {"broadening", required_argument, NULL, 'b'},
-    {"sum-orientations", no_argument, NULL, 's'},
+    /* {"sum-orientations", no_argument, NULL, 's'}, */
     {"debug", no_argument, NULL, 'd'},
     {0, 0, 0, 0}
   };
@@ -444,7 +443,7 @@ int main (int argc, char** argv) {
       break;
 
     case 'f':
-      fill = 1;
+      regular = 1;
       accuracy = atof (optarg);
       break;
 
@@ -488,9 +487,9 @@ int main (int argc, char** argv) {
   if (sum)
     sum_orientations(&spectrum);
 
-  /* generate equidistant grid if fill parameter is set */
-  if (fill)
-    fill_spectrum_equidistant (&spectrum, accuracy);
+  /* generate equidistant grid if regular flag is set */
+  if (regular)
+    create_regular_grid (&spectrum, accuracy);
 
   if (broadening)
     broaden_spectrum (&spectrum, decay);
