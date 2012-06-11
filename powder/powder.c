@@ -386,14 +386,13 @@ int broaden_spectrum (epr_spectrum * spectrum, double decay) {
 void usage(char * cmdname)
 {
   /* printf("Usage: %s --fill --input-spectrum [spectrum file] --output-file [output file] --lebedev-average [lebedev file] --broadening [decay constant] --debug.\n\n\ */
-  printf("Usage: %s --regular, -r [accuracy] --input-spectrum, -i [spectrum file] --output-file, -o [output file] --broadening, -b [decay constant] --sum-orientations, -s --debug, -d.\n\n\
+  printf("Usage: %s --regular, -r [accuracy] --input-spectrum, -i [spectrum file] --output-file, -o [output file] --broadening, -b [decay constant] --debug, -d.\n\n\
           Where:\n\
           \n\
           regular - insert additional data points with [accuracy] to EPR to create a regular grid\n\
           input-spectrum - input file with EPR spectrum data\n\
           output-file - write output to [output file]\n\
           broadening - perform line broadening through FFT using the supplied [decay constant]\n\
-          sum-orientations - sum over all orientations using the weights provided with the spectrum\n\
           debug - output extended debug data\n\n", cmdname);
 
           /* lebedev-average - perform Lebedev average with Lebedev data from [lebedev file]\n\ */
@@ -430,7 +429,7 @@ int main (int argc, char** argv) {
   };
 
   /* parse command line options using getopt_long */
-  while ((c = getopt_long(argc, argv, "i:o:f:b:d", options, &option_index)) != -1) {
+  while ((c = getopt_long(argc, argv, "i:o:r:b:d", options, &option_index)) != -1) {
 
     switch (c) {
 
@@ -442,7 +441,7 @@ int main (int argc, char** argv) {
       strncpy (output_path, optarg, 255);
       break;
 
-    case 'f':
+    case 'r':
       regular = 1;
       accuracy = atof (optarg);
       break;
@@ -482,10 +481,10 @@ int main (int argc, char** argv) {
     return -1;
   }
 
-  /* sum over all orientations for each B value, using the
-     Lebedev weights provided with the spectrum */
-  if (sum)
-    sum_orientations(&spectrum);
+  /* /\* sum over all orientations for each B value, using the */
+  /*    Lebedev weights provided with the spectrum *\/ */
+  /* if (sum) */
+  /*   sum_orientations(&spectrum); */
 
   /* generate equidistant grid if regular flag is set */
   if (regular)
