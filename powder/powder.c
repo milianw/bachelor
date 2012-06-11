@@ -43,8 +43,6 @@ typedef struct s_epr_spectrum {
   fftw_complex * I; /* pointer to an array of I field values */
   orientation * O; /* pointer to an array of orientation values */
   int size; /* amount of data points in spectrum */
-  /* int B_index; /\* number of unique B field values in the spectrum *\/ */
-
 } epr_spectrum;
 
 /** 
@@ -161,18 +159,9 @@ int read_input_epr_spectrum (FILE * spectrum_file, epr_spectrum * spectrum) {
   */
   rewind (spectrum_file);
 
-  /* /\* the following index and reference value are used to count the number of */
-  /*    individual B field values in the input spectrum *\/ */
-  /* spectrum->B_index = 1; /\* assuming there is at least one parsable line with a B field value in the spectrum file *\/ */
-  /* B = .0; */
-
   /* parse EPR spectrum input file */
   while(fgets(buffer, sizeof(buffer), spectrum_file)) {
     if (sscanf(buffer, "%lg %lg %lg %lg %lg %lg[^\n]\n", &spectrum->B[i][0], &spectrum->I[i][0], &spectrum->O[i].x, &spectrum->O[i].y, &spectrum->O[i].z, &spectrum->O[i].weight) == 6) {
-      /* if (spectrum->B[i][0] != B) { */
-      /* 	spectrum->B_index++; */
-      /* 	B = spectrum->B[i][0]; */
-      /* } */
       if (debug)
 	printf ("i: %d B: %lg I: %lg x: %lg y: %lg z: %lg weight: %lg\n", i, spectrum->B[i][0], spectrum->I[i][0], spectrum->O[i].x, spectrum->O[i].y, spectrum->O[i].z, spectrum->O[i].weight);
       i++;
@@ -233,11 +222,8 @@ int create_regular_grid (epr_spectrum * spectrum, double accuracy) {
 
       for (i = 0; i < spectrum->size; i++) {
       	j = (int) floor ((spectrum->B[i][0] - B_min) / accuracy);
-      	/* new_spectrum.B[j][0] = spectrum->B[i][0]; */
-      	/* new_spectrum.B[j][1] = spectrum->B[i][1]; */
       	new_spectrum.I[j][0] += spectrum->I[i][0] * spectrum->O[i].weight;
       	new_spectrum.I[j][1] += spectrum->I[i][1] * spectrum->O[i].weight;
-      	/* new_spectrum.O[j] = spectrum->O[i]; */
       }
     }
 
@@ -315,69 +301,6 @@ int broaden_spectrum (epr_spectrum * spectrum, double decay) {
     return 0;
 }
 
-/* /\**  */
-/*  * sum_orientations: sum over all orientations using weights provided in the spectrum */
-/*  *  */
-/*  * @param spectrum - pointer to the struct of the EPR spectrum to be broadenend */
-/*  *  */
-/*  * @return - returns size of spectrum if successful, zero otherwise */
-/*  *\/ */
-/* int sum_orientations (epr_spectrum * spectrum) { */
-
-/*   int i; */
-/*   int orientation_index; */
-/*   int new_size; */
-/*   epr_spectrum sum_spectrum; */
-/*   fftw_complex B; */
-/*   fftw_complex I; */
-
-/*   B[0] = .0; */
-/*   B[1] = .0; */
-/*   I[0] = .0; */
-/*   I[1] = .0; */
-
-/*   /\* no need to sum orientations if we have only */
-/*      one intensity/orientation set per B field value *\/ */
-/*   if (spectrum->size == spectrum->B_index) */
-/*     return spectrum->size; */
-
-/*   if (!alloc_epr_spectrum(&sum_spectrum, spectrum->B_index)) */
-/*     return 0; */
-
-/*   orientation_index = 0; */
-/*   new_size = spectrum->size; */
-
-/*   for (i = 0; i < spectrum->size; i++) { */
-/*     if (B[0] != spectrum->B[i][0]) { */
-/*       B[0] = spectrum->B[i][0]; */
-/*       B[1] = spectrum->B[i][1]; */
-/*       I[0] = .0; */
-/*       I[1] = .0; */
-
-/*       spectrum->B[i - orientation_index][0] = B[0]; */
-/*       spectrum->B[i - orientation_index][1] = B[1]; */
-/*       spectrum->I[i - orientation_index][0] = I[0]; */
-/*       spectrum->I[i - orientation_index][1] = I[1]; */
-/*       spectrum->O[i - orientation_index].x = 0; */
-/*       spectrum->O[i - orientation_index].y = 0; */
-/*       spectrum->O[i - orientation_index].z = 0; */
-/*       spectrum->O[i - orientation_index].weight = 0; */
-
-/*       new_size -= orientation_index; */
-/*       orientation_index = 0; */
-/*     } */
-/*     else { */
-/*       orientation_index++; */
-/*       I[0] += spectrum->I[i][0]*spectrum->O[i].weight; */
-/*       I[1] += spectrum->I[i][1]*spectrum->O[i].weight; */
-/*     } */
-/*   } */
-
-/*   // TODO: realloc spectrum */
-
-/*   return new_size; */
-/* } */
-
 /** 
  * usage: print usage information
  * 
@@ -405,17 +328,13 @@ int main (int argc, char** argv) {
   int regular = 0, broadening = 0, sum = 0;
   double decay;
   double accuracy;
-  /* lebedev * lebedev_grid; */
   epr_spectrum spectrum;
   FILE * input_spectrum_file;
-  /* FILE * lebedev_file; */
   FILE * output_file;
   char input_spectrum_path [256];
-  /* char lebedev_file_path [256]; */
   char output_path [256];
 
   memset (input_spectrum_path, 0, 256);
-  /* memset (lebedev_file_path, 0, 256); */
   memset (output_path, 0, 256);
 
   static struct option options [] = {
@@ -480,11 +399,6 @@ int main (int argc, char** argv) {
     printf ("Error parsing input spectrum, no data points found.\n");
     return -1;
   }
-
-  /* /\* sum over all orientations for each B value, using the */
-  /*    Lebedev weights provided with the spectrum *\/ */
-  /* if (sum) */
-  /*   sum_orientations(&spectrum); */
 
   /* generate equidistant grid if regular flag is set */
   if (regular)
