@@ -60,6 +60,12 @@ public:
    * generate spin system for this experiment
    */
   Spins spinSystem() const;
+  
+  /**
+   * reduce the number of considered nuclei to <cutoffcount> nuclei
+   * depending on the Tensor norm of the A matrix
+   */
+  void reduceNuclei(int cutoffcount);
 
   // nuclei in the experiment
   // guaranteed sort order by Nucleus.twoJ (ascending)

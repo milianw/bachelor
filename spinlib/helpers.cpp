@@ -33,7 +33,7 @@
 
 using namespace std;
 
-Experiment getExperiment(const string& orcaInput, int protons, int nitrogens)
+Experiment getExperiment(const string& orcaInput, int cutoffcount, int protons, int nitrogens)
 {
   if (!orcaInput.empty()) {
     OrcaParser parser(orcaInput);

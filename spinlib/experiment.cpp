@@ -103,6 +103,20 @@ Spins Experiment::spinSystem() const
   return s;
 }
 
+void Experiment::reduceNuclei(int cutoffcount)
+{
+  fp lowestnorm = 0.;
+  int i;
+  
+  //LOGIC:
+  
+  //1, loop over all nuclei
+  //2. determine norm for i-th nucleus
+  //3. compare norm with <lowestnorm>
+  //3a. if lower, assign value to <lowestnorm>
+  //3b. else continue
+}
+
 Vector3c Experiment::staticBField(const fp B) const
 {
   if (getenv("USE_LABOR_Z")) {
