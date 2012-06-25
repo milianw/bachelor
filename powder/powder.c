@@ -221,8 +221,8 @@ int create_regular_grid (epr_spectrum * spectrum, double accuracy) {
       }
 
       for (i = 0; i < spectrum->size; i++) {
-      	j = (int) floor ((spectrum->B[i][0] - B_min) / accuracy);
-      	if (!isnan(spectrum->I[i][0]))
+	j = (int) floor ((spectrum->B[i][0] - B_min) / accuracy);
+	if (!isnan(spectrum->I[i][0]))
 	  new_spectrum.I[j][0] += spectrum->I[i][0] * spectrum->O[i].weight;
 	if (!isnan(spectrum->I[i][1]))
 	  new_spectrum.I[j][1] += spectrum->I[i][1] * spectrum->O[i].weight;
