@@ -37,9 +37,7 @@ Experiment getExperiment(const string& orcaInput, int cutoffcount, int protons, 
 {
   if (!orcaInput.empty()) {
     OrcaParser parser(orcaInput);
-    Experiment exp(parser.nuclei());
-    if (cutoffcount > 0)
-      exp.reduceNuclei(cutoffcount);
+    Experiment exp(parser.nuclei(), cutoffcount);
     exp.setGTensor(parser.electronGMatrix());
     return exp;
   } else {

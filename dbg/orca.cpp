@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
     cout << endl;
   }
 
-  Experiment exp(parser.nuclei());
+  Experiment exp(parser.nuclei(), 0);
   cout << "peak mem consumption per node for this orca file approx " << guessPeakMemConsumption(exp) << endl;
 
   return 0;

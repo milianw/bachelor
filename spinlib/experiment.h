@@ -43,7 +43,7 @@ public:
    * static B Field direction defaults to [0 0 1], i.E. only in z-Direction
    * mwFreqGHz defaults to zero
    */
-  explicit Experiment(const std::vector<Nucleus>& nuclei);
+  explicit Experiment(const std::vector<Nucleus>& nuclei, int cutoffcount);
 
   /**
    * generate experiment with dummy data
@@ -60,16 +60,10 @@ public:
    * generate spin system for this experiment
    */
   Spins spinSystem() const;
-  
-  /**
-   * reduce the number of considered nuclei to <cutoffcount> nuclei
-   * depending on the Tensor norm of the A matrix
-   */
-  void reduceNuclei(int cutoffcount);
 
   // nuclei in the experiment
   // guaranteed sort order by Nucleus.twoJ (ascending)
-  std::vector<Nucleus> nuclei;
+  const std::vector<Nucleus> nuclei;
   // dimensionality of the experiment, basically this is:
   // \Pi_k (2J_k + 1)
   // in our case: 2^protons * 3^nitrogens

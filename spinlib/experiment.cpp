@@ -49,14 +49,26 @@ bool sortNuclei_cmp(const Nucleus& l, const Nucleus& r)
   return l.twoJ <= r.twoJ;
 }
 
-vector<Nucleus> sortNuclei(vector<Nucleus> nuclei)
+bool reduceNuclei_cmp (const Nucleus & l, const Nucleus & r) {
+  return l.A.norm() <= r.A.norm();
+}
+
+vector<Nucleus> sortNuclei(vector<Nucleus> nuclei, int cutoffcount)
 {
+  /**
+   * reduce the number of considered nuclei to <cutoffcount> nuclei
+   * depending on the Tensor norm of the A matrix
+   */
+  if (cutoffcount > 0) {
+    sort(nuclei.begin(), nuclei.end(), reduceNuclei_cmp);
+    nuclei.erase(nuclei.begin(), nuclei.end() - cutoffcount);
+  }
   sort(nuclei.begin(), nuclei.end(), sortNuclei_cmp);
   return nuclei;
 }
 
-Experiment::Experiment(const vector<Nucleus>& nuclei_)
-: nuclei(sortNuclei(nuclei_))
+Experiment::Experiment(const vector<Nucleus>& nuclei_, int cutoffcount)
+: nuclei(sortNuclei(nuclei_, cutoffcount))
 , dimension(dimensionForNuclei(nuclei))
 , mwFreqGHz(0)
 {
@@ -74,7 +86,7 @@ Experiment Experiment::generateDummy(int protons, int nitrogens)
   for(int i = 0; i < nitrogens; ++i) {
     nuclei.push_back(Nucleus("14N", 2, 14, A, Constants::g_14N, Vector3::Zero(), Matrix3::Zero()));
   }
-  return Experiment(nuclei);
+  return Experiment(nuclei, 0);
 }
 
 Spins Experiment::spinSystem() const
@@ -101,16 +113,6 @@ Spins Experiment::spinSystem() const
     throw "spin system initialization error";
   }
   return s;
-}
-
-bool reduceNuclei_cmp (const Nucleus & l, const Nucleus & r) {
-  return l.A.norm() <= r.A.norm();
-}
-
-void Experiment::reduceNuclei(int cutoffcount)
-{
-  sort(nuclei.begin(), nuclei.end(), reduceNuclei_cmp);
-  nuclei.erase(nuclei.begin(), nuclei.end() - cutoffcount);
 }
 
 Vector3c Experiment::staticBField(const fp B) const
