@@ -103,18 +103,15 @@ Spins Experiment::spinSystem() const
   return s;
 }
 
+bool reduceNuclei_cmp (Nucleus const & l, Nucleus const & r) {
+  return l.A.norm() <= r.A.norm();
+}
+
 void Experiment::reduceNuclei(int cutoffcount)
 {
-  fp lowestnorm = 0.;
-  int i;
-  
-  //LOGIC:
-  
-  //1, loop over all nuclei
-  //2. determine norm for i-th nucleus
-  //3. compare norm with <lowestnorm>
-  //3a. if lower, assign value to <lowestnorm>
-  //3b. else continue
+  sort(nuclei.begin(), nuclei.end(), reduceNuclei_cmp);
+
+  nuclei.erase(nuclei.begin(), nuclei.end() - cutoffcount);
 }
 
 Vector3c Experiment::staticBField(const fp B) const
