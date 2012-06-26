@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
     orcaFile = argv[1];
   }
 
-  Experiment exp = getExperiment(orcaFile, spinHalf, spinOne);
+  Experiment exp = getExperiment(orcaFile, 0, spinHalf, spinOne);
   printExperiment(cout, exp);
   SpinHamiltonian H(B, exp);
   cout << "B-field:" << exp.staticBField(B).transpose() << endl;
