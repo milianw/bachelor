@@ -103,14 +103,13 @@ Spins Experiment::spinSystem() const
   return s;
 }
 
-bool reduceNuclei_cmp (Nucleus const & l, Nucleus const & r) {
+bool reduceNuclei_cmp (const Nucleus & l, const Nucleus & r) {
   return l.A.norm() <= r.A.norm();
 }
 
 void Experiment::reduceNuclei(int cutoffcount)
 {
   sort(nuclei.begin(), nuclei.end(), reduceNuclei_cmp);
-
   nuclei.erase(nuclei.begin(), nuclei.end() - cutoffcount);
 }
 

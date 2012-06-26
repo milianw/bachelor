@@ -69,7 +69,7 @@ public:
 
   // nuclei in the experiment
   // guaranteed sort order by Nucleus.twoJ (ascending)
-  const std::vector<Nucleus> nuclei;
+  std::vector<Nucleus> nuclei;
   // dimensionality of the experiment, basically this is:
   // \Pi_k (2J_k + 1)
   // in our case: 2^protons * 3^nitrogens

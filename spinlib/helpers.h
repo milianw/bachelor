@@ -29,7 +29,7 @@
 
 class Experiment;
 
-Experiment getExperiment(const string& orcaInput, int cutoffcount, int protons, int nitrogens);
+Experiment getExperiment(const std::string& orcaInput, int cutoffcount, int protons, int nitrogens);
 
 std::string formatSize(long long unsigned int size);
 
