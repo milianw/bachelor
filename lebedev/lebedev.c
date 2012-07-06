@@ -235,7 +235,7 @@ int cartesian_to_lebedev (cartesian ** in, lebedev ** out, int npoints) {
  */
 void usage(char * cmdname)
 {
-  printf("Usage: %s --input-file [input file] --output-file [output file] --to-cartesian --to-lebedev --debug.\n\n\
+  printf("Usage: %s --input-file, -i [input file] --output-file, -o [output file] --to-cartesian, -c --to-lebedev, -l --debug, -d.\n\n\
           Where:\n\
           \n\
           input-file - read input coordinate data from [input file]\n\
