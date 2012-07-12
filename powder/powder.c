@@ -310,7 +310,7 @@ int broaden_spectrum (epr_spectrum * spectrum, double decay) {
  * 
  * @return 
  */
-int average_multiple_spectra() {
+int average_multiple_spectra(FILE ** input_spectra_files, epr_spectrum * averaged) {
 
   /*
    TODO:
@@ -347,7 +347,7 @@ void usage(char * cmdname)
 
 int main (int argc, char** argv) {
 
-  int i, c, option_index;
+  int i, c, option_index, spectrum_file_index;
   /* option flags for regular, broadening, average; default = 0 => OFF */
   int regular = 0, broadening = 0, average = 0;
   double decay;
@@ -357,8 +357,9 @@ int main (int argc, char** argv) {
   DIR * output_directory;
   struct dirent * input_directory_entry;
   struct dirent * output_directory_entry;
-  FILE * input_spectrum_file;
-  FILE * output_spectrum_file;
+  FILE ** input_spectrum_files;
+  FILE ** output_spectrum_files;
+  FILE * averaged_spectrum_file;
   char input_directory_path [256];
   char input_file_path [512];
   char output_directory_path [256];
@@ -432,6 +433,8 @@ int main (int argc, char** argv) {
     return 0;
   }
 
+  spectrum_file_index = 0;
+
   /* main loop for reading and processing input spectra */
   while ((input_directory_entry = readdir (input_directory)) != NULL) {
     
@@ -441,18 +444,18 @@ int main (int argc, char** argv) {
     strncpy (output_file_path, output_directory_path, 256);
     strncat (output_file_path, input_directory_entry->d_name, 512);
 
-    if (!(input_spectrum_file = fopen (input_file_path, "r"))) {
+    if (!(input_spectrum_files[spectrum_file_index] = fopen (input_file_path, "r"))) {
       printf ("Error opening input spectrum file %s, skipping.\n", input_directory_entry->d_name);
       continue;
     }
 
     /* read input EPR spectrum into memory */
-    if (!(read_input_epr_spectrum (input_spectrum_file, &spectrum) > 0)) {
+    if (!(read_input_epr_spectrum (input_spectrum_files[spectrum_file_index], &spectrum) > 0)) {
       printf ("Error parsing input spectrum file %s, no data points found. Skipping.\n", input_directory_entry->d_name);
       continue;
     }
 
-    if (!(output_spectrum_file = fopen (output_file_path, "w"))) {
+    if (!(output_spectrum_files[spectrum_file_index] = fopen (output_file_path, "w"))) {
       printf ("Error opening output spectrum file %s, skipping.\n", input_directory_entry->d_name);
       continue;
     }
@@ -466,20 +469,34 @@ int main (int argc, char** argv) {
     
     /* output new spectrum to stdout/output_file */
     for (i = 0; i < spectrum.size; i++)
-      fprintf (output_spectrum_file, "%lg %lg %lg %lg %lg %lg\n", spectrum.B[i][0], spectrum.I[i][0], spectrum.O[i].x, spectrum.O[i].y, spectrum.O[i].z, spectrum.O[i].weight);
+      fprintf (output_spectrum_files[spectrum_file_index], "%lg %lg %lg %lg %lg %lg\n", spectrum.B[i][0], spectrum.I[i][0], spectrum.O[i].x, spectrum.O[i].y, spectrum.O[i].z, spectrum.O[i].weight);
     
     /* free memory for EPR spectrum */
     dealloc_epr_spectrum (&spectrum);
 
-    fclose (input_spectrum_file);
-    fclose (output_spectrum_file);
+    spectrum_file_index++;
   }
 
-  if(average)
-    while ((output_directory_entry = readdir (output_directory)) != NULL) {
+  if(average) {
+    average_multiple_spectra(output_spectrum_files, &spectrum);
 
-
+    strncpy (output_file_path, output_directory_path, 256);
+    strncat (output_file_path, "averaged-spectrum.data", 512);
+    if (!(averaged_spectrum_file = fopen (output_file_path, "w"))) {
+      printf ("Error opening output file for averaged spectrum.");
+      return -1;
     }
+
+    for (i = 0; i < spectrum.size; i++)
+      fprintf (averaged_spectrum_file, "%lg %lg %lg %lg %lg %lg\n", spectrum.B[i][0], spectrum.I[i][0], spectrum.O[i].x, spectrum.O[i].y, spectrum.O[i].z, spectrum.O[i].weight);
+  }
+    
+
+  /* close all input and output spectrum files */
+  for (i = spectrum_file_index; i >= 0; i--) {
+    fclose (input_spectrum_files[i]);
+    fclose (output_spectrum_files[i]);
+  }
 
   return 0;
 }
