@@ -353,13 +353,21 @@ int main (int argc, char** argv) {
   double decay;
   double accuracy;
   epr_spectrum spectrum;
+  DIR * input_directory;
+  DIR * output_directory;
+  struct dirent * input_directory_entry;
+  struct dirent * output_directory_entry;
   FILE * input_spectrum_file;
   FILE * output_file;
-  char input_spectrum_path [256];
-  char output_path [256];
+  char input_directory_path [256];
+  char input_file_path [512];
+  char output_directory_path [256];
+  char output_file_path [512];
 
-  memset (input_spectrum_path, 0, 256);
-  memset (output_path, 0, 256);
+  memset (input_directory_path, 0, 256);
+  memset (input_file_path, 0, 512);
+  memset (output_directory_path, 0, 256);
+  memset (output_file_path, 0, 512);
 
   static struct option options [] = {
     {"input-directory", required_argument, NULL, 'i'},
@@ -377,11 +385,11 @@ int main (int argc, char** argv) {
     switch (c) {
 
     case 'i':
-      strncpy (input_spectrum_path, optarg, 255);
+      strncpy (input_directory_path, optarg, 255);
       break;
 
     case 'o':
-      strncpy (output_path, optarg, 255);
+      strncpy (output_directory_path, optarg, 255);
       break;
 
     case 'r':
@@ -408,37 +416,54 @@ int main (int argc, char** argv) {
     }
   }
 
-  //TODO: iterate over all files in the input directory, not just one input file
-
-  /* open input files for EPR spectrum and Lebedev grid data, determine file for output or use stdout */
-  if (!(input_spectrum_file = fopen (input_spectrum_path, "r"))) {
-    printf ("Error opening file for input or no input file specified.\n");
+  /* try to open input directory containing the EPR spectrum data */
+  if (!(input_directory = opendir (input_directory_path))) {
+    printf ("Error opening directory for input or no input directory specified.\n");
     usage(argv[0]);
     return 0;
   }
 
-  if (!(output_file = fopen (output_path, "w")))
-    output_file = stdout;
-
-  /* read input files for EPR spectrum and Lebedev grid data */
-  if (!(read_input_epr_spectrum (input_spectrum_file, &spectrum) > 0)) {
-    printf ("Error parsing input spectrum, no data points found.\n");
-    return -1;
+  /* try to open output directory; this directory will also be used
+   * as the input directory for the averaging process, if applicable
+   */
+  if (!(output_directory = opendir (output_directory_path))) {
+    printf ("Error opening directory for output or no input directory specified.\n");
+    usage(argv[0]);
+    return 0;
   }
 
-  /* generate equidistant grid if regular flag is set */
-  if (regular)
-    create_regular_grid (&spectrum, accuracy);
+  /* main loop for reading and processing input spectra */
+  while ((input_directory_entry = readdir (input_directory)) != NULL) {
+    
+    /* read input files for EPR spectrum and Lebedev grid data */
+    if (!(read_input_epr_spectrum (input_spectrum_file, &spectrum) > 0)) {
+      printf ("Error parsing input spectrum, no data points found.\n");
+      return -1;
+    }
+    
+    /* generate equidistant grid if regular flag is set */
+    if (regular)
+      create_regular_grid (&spectrum, accuracy);
+    
+    if (broadening)
+      broaden_spectrum (&spectrum, decay);
+    
+    /* output new spectrum to stdout/output_file */
+    for (i = 0; i < spectrum.size; i++)
+      fprintf (output_file, "%lg %lg %lg %lg %lg %lg\n", spectrum.B[i][0], spectrum.I[i][0], spectrum.O[i].x, spectrum.O[i].y, spectrum.O[i].z, spectrum.O[i].weight);
+    
+    /* free memory for EPR spectrum */
+    dealloc_epr_spectrum (&spectrum);
+  }
 
-  if (broadening)
-    broaden_spectrum (&spectrum, decay);
+  if(average)
+    while ((output_directory_entry = readdir (output_directory)) != NULL) {
 
-  /* output new spectrum to stdout/output_file */
-  for (i = 0; i < spectrum.size; i++)
-    fprintf (output_file, "%lg %lg %lg %lg %lg %lg\n", spectrum.B[i][0], spectrum.I[i][0], spectrum.O[i].x, spectrum.O[i].y, spectrum.O[i].z, spectrum.O[i].weight);
 
-  /* free memory for EPR spectrum */
-  dealloc_epr_spectrum (&spectrum);
+    }
+
+  if (!(output_file = fopen (output_path, "w")))
+    output_file = stdout;
 
   return 0;
 }
