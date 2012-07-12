@@ -310,13 +310,27 @@ int broaden_spectrum (epr_spectrum * spectrum, double decay) {
  * 
  * @return 
  */
-int average_multiple_spectra(FILE ** input_spectra_files, epr_spectrum * averaged) {
+int average_multiple_spectra(FILE ** input_spectra_files, int spectrum_count, epr_spectrum * averaged_spectrum) {
+
+  int averaged_size;
+  int line_count;
+  int i;
+
+  averaged_size = 0;
+
+  for (i = 0; i < spectrum_count; i++) {
+    if (averaged_size < (line_count = determine_line_count(input_spectra_files[i])))
+      averaged_size = line_count;
+  }
+
+  if (!alloc_epr_spectrum(averaged_spectrum, averaged_size))
+      return -1;
 
   /*
    TODO:
 
-   1. determine size of largest input spectrum -> MAX_SIZE
-   2. alloc size of output spectrum array with MAX_SIZE
+   1. determine size of largest input spectrum -> MAX_SIZE->done
+   2. alloc size of output spectrum array with MAX_SIZE->done
    3. find lowest value for B by reading first line of all
       spectra
    4. read next line of all spectra, sum over intensities
@@ -478,7 +492,7 @@ int main (int argc, char** argv) {
   }
 
   if(average) {
-    average_multiple_spectra(output_spectrum_files, &spectrum);
+    average_multiple_spectra(output_spectrum_files, spectrum_file_index + 1, &spectrum);
 
     strncpy (output_file_path, output_directory_path, 256);
     strncat (output_file_path, "averaged-spectrum.data", 512);
