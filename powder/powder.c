@@ -26,6 +26,7 @@
 #include <math.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <dirent.h>
 
 static int debug = 0;
 
@@ -304,6 +305,28 @@ int broaden_spectrum (epr_spectrum * spectrum, double decay) {
 }
 
 /** 
+ * average_multiple_spectra - average over multiple spectra
+ * 
+ * 
+ * @return 
+ */
+int average_multiple_spectra() {
+
+  /*
+   TODO:
+
+   1. determine size of largest input spectrum -> MAX_SIZE
+   2. alloc size of output spectrum array with MAX_SIZE
+   3. find lowest value for B by reading first line of all
+      spectra
+   4. read next line of all spectra, sum over intensities
+      write value to output (setting x,y,z,w = 0)
+   5. goto 4.
+  */
+  return 0;
+}
+
+/** 
  * usage: print usage information
  * 
  * @param cmdname - pointer to a string containing the name of the binary (argv[0])
@@ -311,23 +334,22 @@ int broaden_spectrum (epr_spectrum * spectrum, double decay) {
 void usage(char * cmdname)
 {
   /* printf("Usage: %s --fill --input-spectrum [spectrum file] --output-file [output file] --lebedev-average [lebedev file] --broadening [decay constant] --debug.\n\n\ */
-  printf("Usage: %s --regular, -r [accuracy] --input-spectrum, -i [spectrum file] --output-file, -o [output file] --broadening, -b [decay constant] --debug, -d.\n\n\
+  printf("Usage: %s --regular, -r [accuracy] --input-directory, -i [input spectrum directory] --output-directory, -o [output spectrum directory] --broadening, -b [decay constant] --average, -a --debug, -d.\n\n\
           Where:\n\
           \n\
           regular - insert additional data points with [accuracy] to EPR to create a regular grid\n\
-          input-spectrum - input file with EPR spectrum data\n\
-          output-file - write output to [output file]\n\
+          input-directory - directory containing input EPR spectra\n\
+          output-directory - directory for the output EPR spectra\n\
           broadening - perform line broadening through FFT using the supplied [decay constant]\n\
+          average - perform average over all processed spectra\n\
           debug - output extended debug data\n\n", cmdname);
-
-          /* lebedev-average - perform Lebedev average with Lebedev data from [lebedev file]\n\ */
 }
 
 int main (int argc, char** argv) {
 
   int i, c, option_index;
-  /* option flags for regular, broadening, sum; default = 0 => OFF */
-  int regular = 0, broadening = 0, sum = 0;
+  /* option flags for regular, broadening, average; default = 0 => OFF */
+  int regular = 0, broadening = 0, average = 0;
   double decay;
   double accuracy;
   epr_spectrum spectrum;
@@ -340,17 +362,17 @@ int main (int argc, char** argv) {
   memset (output_path, 0, 256);
 
   static struct option options [] = {
-    {"input-spectrum", required_argument, NULL, 'i'},
-    {"output-file", required_argument, NULL, 'o'},
+    {"input-directory", required_argument, NULL, 'i'},
+    {"output-directory", required_argument, NULL, 'o'},
     {"regular", required_argument, NULL, 'r'},
     {"broadening", required_argument, NULL, 'b'},
-    /* {"sum-orientations", no_argument, NULL, 's'}, */
+    {"average", no_argument, NULL, 'a'},
     {"debug", no_argument, NULL, 'd'},
     {0, 0, 0, 0}
   };
 
   /* parse command line options using getopt_long */
-  while ((c = getopt_long(argc, argv, "i:o:r:b:d", options, &option_index)) != -1) {
+  while ((c = getopt_long(argc, argv, "i:o:r:b:ad", options, &option_index)) != -1) {
 
     switch (c) {
 
@@ -367,13 +389,13 @@ int main (int argc, char** argv) {
       accuracy = atof (optarg);
       break;
 
-    case 's':
-      sum = 1;
-      break;
-
     case 'b':
       broadening = 1;
       decay = atof (optarg);
+      break;
+
+    case 'a':
+      average = 1;
       break;
 
     case 'd':
@@ -385,6 +407,8 @@ int main (int argc, char** argv) {
       return 0;
     }
   }
+
+  //TODO: iterate over all files in the input directory, not just one input file
 
   /* open input files for EPR spectrum and Lebedev grid data, determine file for output or use stdout */
   if (!(input_spectrum_file = fopen (input_spectrum_path, "r"))) {
