@@ -358,7 +358,7 @@ int main (int argc, char** argv) {
   struct dirent * input_directory_entry;
   struct dirent * output_directory_entry;
   FILE * input_spectrum_file;
-  FILE * output_file;
+  FILE * output_spectrum_file;
   char input_directory_path [256];
   char input_file_path [512];
   char output_directory_path [256];
@@ -452,8 +452,10 @@ int main (int argc, char** argv) {
       continue;
     }
 
-    if (!(output_file = fopen (output_path, "w")))
-      output_file = stdout;
+    if (!(output_spectrum_file = fopen (output_file_path, "w"))) {
+      printf ("Error opening output spectrum file %s, skipping.\n", input_directory_entry->d_name);
+      continue;
+    }
     
     /* generate equidistant grid if regular flag is set */
     if (regular)
@@ -464,10 +466,13 @@ int main (int argc, char** argv) {
     
     /* output new spectrum to stdout/output_file */
     for (i = 0; i < spectrum.size; i++)
-      fprintf (output_file, "%lg %lg %lg %lg %lg %lg\n", spectrum.B[i][0], spectrum.I[i][0], spectrum.O[i].x, spectrum.O[i].y, spectrum.O[i].z, spectrum.O[i].weight);
+      fprintf (output_spectrum_file, "%lg %lg %lg %lg %lg %lg\n", spectrum.B[i][0], spectrum.I[i][0], spectrum.O[i].x, spectrum.O[i].y, spectrum.O[i].z, spectrum.O[i].weight);
     
     /* free memory for EPR spectrum */
     dealloc_epr_spectrum (&spectrum);
+
+    fclose (input_spectrum_file);
+    fclose (output_spectrum_file);
   }
 
   if(average)
@@ -475,9 +480,6 @@ int main (int argc, char** argv) {
 
 
     }
-
-  if (!(output_file = fopen (output_path, "w")))
-    output_file = stdout;
 
   return 0;
 }
