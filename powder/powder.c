@@ -307,6 +307,9 @@ int broaden_spectrum (epr_spectrum * spectrum, double decay) {
 /** 
  * average_multiple_spectra - average over multiple spectra
  * 
+ * @param input_spectra_files - array with file handles of spectra to be averaged
+ * @param spectrum_count - number of spectra to be averaged
+ * @param averaged_spectrum - pointer to epr_spectrum for the averaged spectrum
  * 
  * @return 
  */
