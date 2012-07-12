@@ -435,11 +435,25 @@ int main (int argc, char** argv) {
   /* main loop for reading and processing input spectra */
   while ((input_directory_entry = readdir (input_directory)) != NULL) {
     
-    /* read input files for EPR spectrum and Lebedev grid data */
-    if (!(read_input_epr_spectrum (input_spectrum_file, &spectrum) > 0)) {
-      printf ("Error parsing input spectrum, no data points found.\n");
-      return -1;
+    strncpy (input_file_path, input_directory_path, 256);
+    strncat (input_file_path, input_directory_entry->d_name, 512);
+
+    strncpy (output_file_path, output_directory_path, 256);
+    strncat (output_file_path, input_directory_entry->d_name, 512);
+
+    if (!(input_spectrum_file = fopen (input_file_path, "r"))) {
+      printf ("Error opening input spectrum file %s, skipping.\n", input_directory_entry->d_name);
+      continue;
     }
+
+    /* read input EPR spectrum into memory */
+    if (!(read_input_epr_spectrum (input_spectrum_file, &spectrum) > 0)) {
+      printf ("Error parsing input spectrum file %s, no data points found. Skipping.\n", input_directory_entry->d_name);
+      continue;
+    }
+
+    if (!(output_file = fopen (output_path, "w")))
+      output_file = stdout;
     
     /* generate equidistant grid if regular flag is set */
     if (regular)
