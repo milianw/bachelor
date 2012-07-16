@@ -337,6 +337,7 @@ int average_multiple_spectra(FILE ** input_spectra_files, int spectrum_count, ep
       if (sscanf(buffer, "%lg %lg %lg %lg %lg %lg[^\n]\n", &B, &I, &O.x, &O.y, &O.z, &O.weight) == 6) {
 	averaged_spectrum->B[j][0] = B;
 	averaged_spectrum->I[j][0] = (i == 0) ? I : (I + averaged_spectrum->I[j][0]);
+	j++;
       }
     }
   }
