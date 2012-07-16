@@ -52,10 +52,11 @@ typedef struct s_epr_spectrum {
  * 
  * @param spectrum - pointer to the EPR spectrum struct which is to be allocated
  * @param size - size of the EPR spectrum (number of data points)
+ * @param have_orientations - set whether allocate memory for orientation data
  * 
  * @return - returns size of EPR spectrum if successful, zero otherwise
  */
-int alloc_epr_spectrum (epr_spectrum * spectrum, int size) {
+int alloc_epr_spectrum (epr_spectrum * spectrum, int size, int have_orientations) {
 
   if (!spectrum)
     return 0;
@@ -68,11 +69,15 @@ int alloc_epr_spectrum (epr_spectrum * spectrum, int size) {
     return 0;
   }
 
-  if (!(spectrum->O = (orientation *) malloc (sizeof(orientation) * size))) {
-    fftw_free (spectrum->B);
-    fftw_free (spectrum->I);
-    return 0;
+  if (have_orientations) {
+    if (!(spectrum->O = (orientation *) malloc (sizeof(orientation) * size))) {
+      fftw_free (spectrum->B);
+      fftw_free (spectrum->I);
+      return 0;
+    }
   }
+  else
+    spectrum->O = NULL;
 
   spectrum->size = size;
 
@@ -152,7 +157,7 @@ int read_input_epr_spectrum (FILE * spectrum_file, epr_spectrum * spectrum) {
 
   /* determine size of EPR spectrum array to be allocated */
   if ((lines = determine_line_count (spectrum_file)) > 0) {
-    if (!alloc_epr_spectrum (spectrum, lines))
+    if (!alloc_epr_spectrum (spectrum, lines, 1))
       return 0;
   }
   else
@@ -210,7 +215,7 @@ int create_uniform_grid (epr_spectrum * spectrum, double accuracy) {
 
     new_size = (int) ((B_max - B_min) / accuracy) + 1;
 
-    if (!alloc_epr_spectrum(&new_spectrum, new_size))
+    if (!alloc_epr_spectrum(&new_spectrum, new_size, 1))
       return 0;
     else {
       /* fill B field values of spectrum */
@@ -324,7 +329,7 @@ int average_multiple_spectra(FILE ** input_spectra_files, int spectrum_count, ep
 
   averaged_size = determine_line_count(input_spectra_files[0]);
 
-  if (!alloc_epr_spectrum(averaged_spectrum, averaged_size))
+  if (!alloc_epr_spectrum(averaged_spectrum, averaged_size, 0))
       return 0;
 
   for (i = 0; i < spectrum_count; i++) {
@@ -332,11 +337,7 @@ int average_multiple_spectra(FILE ** input_spectra_files, int spectrum_count, ep
     while(fgets(buffer, sizeof(buffer), input_spectra_files[i])) {
       if (sscanf(buffer, "%lg %lg %lg %lg %lg %lg[^\n]\n", &B, &I, &O.x, &O.y, &O.z, &O.weight) == 6) {
 	averaged_spectrum->B[j][0] = B;
-	averaged_spectrum->I[j][0] = I;
-	averaged_spectrum->O[j].x = O.x;
-	averaged_spectrum->O[j].y = O.y;
-	averaged_spectrum->O[j].z = O.z;
-	averaged_spectrum->O[j].weight += O.weight;
+	averaged_spectrum->I[j][0] = (i == 0) ? I : (I + averaged_spectrum->I[j][0]);
       }
     }
   }
