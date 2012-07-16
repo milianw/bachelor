@@ -411,7 +411,7 @@ int main (int argc, char** argv) {
   static struct option options [] = {
     {"input-directory", required_argument, NULL, 'i'},
     {"output-directory", required_argument, NULL, 'o'},
-    {"uniform", required_argument, NULL, 'r'},
+    {"uniform", required_argument, NULL, 'u'},
     {"broadening", required_argument, NULL, 'b'},
     {"average", no_argument, NULL, 'a'},
     {"debug", no_argument, NULL, 'd'},
@@ -419,7 +419,7 @@ int main (int argc, char** argv) {
   };
 
   /* parse command line options using getopt_long */
-  while ((c = getopt_long(argc, argv, "i:o:r:b:ad", options, &option_index)) != -1) {
+  while ((c = getopt_long(argc, argv, "i:o:u:b:ad", options, &option_index)) != -1) {
 
     switch (c) {
 
@@ -431,7 +431,7 @@ int main (int argc, char** argv) {
       strncpy (output_directory_path, optarg, 255);
       break;
 
-    case 'r':
+    case 'u':
       uniform = 1;
       accuracy = atof (optarg);
       break;
