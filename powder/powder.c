@@ -522,8 +522,6 @@ int main (int argc, char** argv) {
   }
 
   if(average) {
-    average_multiple_spectra(output_spectrum_files, spectrum_file_count, &spectrum);
-
     strncpy (output_file_path, output_directory_path, 256);
     strncat (output_file_path, "averaged-spectrum.data", 512);
     if (!(averaged_spectrum_file = fopen (output_file_path, "w"))) {
@@ -531,10 +529,13 @@ int main (int argc, char** argv) {
       return -1;
     }
 
+    average_multiple_spectra(output_spectrum_files, spectrum_file_count, &spectrum);
+
     for (i = 0; i < spectrum.size; i++)
       fprintf (averaged_spectrum_file, "%lg %lg %lg %lg %lg %lg\n", spectrum.B[i][0], spectrum.I[i][0], spectrum.O[i].x, spectrum.O[i].y, spectrum.O[i].z, spectrum.O[i].weight);
+
+    dealloc_epr_spectrum (&spectrum);
   }
-    
 
   /* close all input and output spectrum files */
   for (i = spectrum_file_index; i >= 0; i--) {
