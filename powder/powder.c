@@ -159,7 +159,7 @@ int read_input_epr_spectrum (FILE * spectrum_file, epr_spectrum * spectrum) {
     return 0;
 
   if(debug)
-    printf ("The Lebedev file has %d lines\n", lines);
+    printf ("The read spectrum file has %d lines\n", lines);
 
   /* parse EPR spectrum input file */
   while(fgets(buffer, sizeof(buffer), spectrum_file)) {
