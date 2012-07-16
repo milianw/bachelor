@@ -322,7 +322,7 @@ int average_multiple_spectra(FILE ** input_spectra_files, int spectrum_count, ep
   double B, I;
   orientation O;
 
-  averaged_size = determine_line_count(input_spectra_files[i]);
+  averaged_size = determine_line_count(input_spectra_files[0]);
 
   if (!alloc_epr_spectrum(averaged_spectrum, averaged_size))
       return 0;
@@ -341,48 +341,6 @@ int average_multiple_spectra(FILE ** input_spectra_files, int spectrum_count, ep
     }
   }
 
-  /* char buffer [256]; */
-  /* fftw_complex B, I, B_init; */
-  /* orientation O; */
-
-  /* averaged_size = 0; */
-  /* B[0] = 0.; */
-  /* B[1] = 0.; */
-  /* B_init[0] = DBL_MAX; */
-  /* B_init[1] = DBL_MAX; */
-
-  /* /\* find the size of the largest spectrum and use that size to initialize */
-  /*    the spectrum for the averaged spectrum *\/ */
-  /* for (i = 0; i < spectrum_count; i++) { */
-  /*   if (averaged_size < (line_count = determine_line_count(input_spectra_files[i]))) */
-  /*     averaged_size = line_count; */
-  /* } */
-
-  /* if (!alloc_epr_spectrum(averaged_spectrum, averaged_size)) */
-  /*     return 0; */
-  
-  /* for (i = 0; i < spectrum_count; i++) { */
-  /*   if(fgets(buffer, sizeof(buffer), input_spectra_files[i])) { */
-  /*     if (sscanf(buffer, "%lg %lg %lg %lg %lg %lg[^\n]\n", &B[0], &I[0], &O.x, &O.y, &O.z, &O.weight) == 6) { */
-  /* 	if (B[0] < B_init[0]) */
-  /* 	  B_init[0] = B[0]; */
-  /* 	rewind (input_spectra_files[i]); */
-  /* 	if (debug) */
-  /* 	  printf ("B: %lg I: %lg x: %lg y: %lg z: %lg weight: %lg\n", B[0], I[0], O.x, O.y, O.z, O.weight); */
-  /*     } */
-  /*   } */
-  /* } */
-  /*
-   TODO:
-
-   1. determine size of largest input spectrum -> MAX_SIZE->done
-   2. alloc size of output spectrum array with MAX_SIZE->done
-   3. find lowest value for B by reading first line of all
-      spectra
-   4. read next line of all spectra, sum over intensities
-      write value to output (setting x,y,z,w = 0)
-   5. goto 4.
-  */
   return 0;
 }
 
