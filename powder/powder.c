@@ -174,7 +174,7 @@ int read_input_epr_spectrum (FILE * spectrum_file, epr_spectrum * spectrum) {
 }
 
 /** 
- * create_regular_grid: create regular grid with equidistant B field values
+ * create_uniform_grid: create uniform grid with equidistant B field values
  * 
  * @param spectrum - pointer to an array with spectrum data which will be replaced with a new array,
  *                   the memory for the input array will be deallocated
@@ -182,7 +182,7 @@ int read_input_epr_spectrum (FILE * spectrum_file, epr_spectrum * spectrum) {
  * 
  * @return - returns the size of the new, intercalated array, zero otherwise
  */
-int create_regular_grid (epr_spectrum * spectrum, double accuracy) {
+int create_uniform_grid (epr_spectrum * spectrum, double accuracy) {
 
   int i, j;
   int new_size;
@@ -338,6 +338,7 @@ int average_multiple_spectra(FILE ** input_spectra_files, int spectrum_count, ep
 	averaged_spectrum->O[j].z = O.z;
 	averaged_spectrum->O[j].weight += O.weight;
       }
+    }
   }
 
   /* char buffer [256]; */
@@ -393,10 +394,10 @@ int average_multiple_spectra(FILE ** input_spectra_files, int spectrum_count, ep
 void usage(char * cmdname)
 {
   /* printf("Usage: %s --fill --input-spectrum [spectrum file] --output-file [output file] --lebedev-average [lebedev file] --broadening [decay constant] --debug.\n\n\ */
-  printf("Usage: %s --regular, -r [accuracy] --input-directory, -i [input spectrum directory] --output-directory, -o [output spectrum directory] --broadening, -b [decay constant] --average, -a --debug, -d.\n\n\
+  printf("Usage: %s --uniform, -u [accuracy] --input-directory, -i [input spectrum directory] --output-directory, -o [output spectrum directory] --broadening, -b [decay constant] --average, -a --debug, -d.\n\n\
           Where:\n\
           \n\
-          regular - insert additional data points with [accuracy] to EPR to create a regular grid\n\
+          uniform - insert additional data points with [accuracy] to EPR to create a uniform grid\n\
           input-directory - directory containing input EPR spectra\n\
           output-directory - directory for the output EPR spectra\n\
           broadening - perform line broadening through FFT using the supplied [decay constant]\n\
