@@ -386,8 +386,8 @@ void usage(char * cmdname)
 int main (int argc, char** argv) {
 
   int i, c, option_index, spectrum_file_index;
-  /* option flags for regular, broadening, average; default = 0 => OFF */
-  int regular = 0, broadening = 0, average = 0;
+  /* option flags for uniform, broadening, average; default = 0 => OFF */
+  int uniform = 0, broadening = 0, average = 0;
   double decay;
   double accuracy;
   epr_spectrum spectrum;
@@ -411,7 +411,7 @@ int main (int argc, char** argv) {
   static struct option options [] = {
     {"input-directory", required_argument, NULL, 'i'},
     {"output-directory", required_argument, NULL, 'o'},
-    {"regular", required_argument, NULL, 'r'},
+    {"uniform", required_argument, NULL, 'r'},
     {"broadening", required_argument, NULL, 'b'},
     {"average", no_argument, NULL, 'a'},
     {"debug", no_argument, NULL, 'd'},
@@ -432,7 +432,7 @@ int main (int argc, char** argv) {
       break;
 
     case 'r':
-      regular = 1;
+      uniform = 1;
       accuracy = atof (optarg);
       break;
 
@@ -455,12 +455,12 @@ int main (int argc, char** argv) {
     }
   }
 
-  if (average && !regular) {
+  if (average && !uniform) {
     printf ("Error: Averaging over multiple spectra requires all grids to be of uniform size. Abort.\n");
     return 0;
   }
 
-  if (broadening && !regular) {
+  if (broadening && !uniform) {
     printf ("Error: Broadening spectra requires all grids to be of uniform size. Abort.\n");
     return 0;
   }
@@ -508,9 +508,9 @@ int main (int argc, char** argv) {
       continue;
     }
     
-    /* generate equidistant grid if regular flag is set */
-    if (regular)
-      create_regular_grid (&spectrum, accuracy);
+    /* generate equidistant grid if uniform flag is set */
+    if (uniform)
+      create_uniform_grid (&spectrum, accuracy);
     
     if (broadening)
       broaden_spectrum (&spectrum, decay);
