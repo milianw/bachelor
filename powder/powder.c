@@ -455,6 +455,16 @@ int main (int argc, char** argv) {
     }
   }
 
+  if (average && !regular) {
+    printf ("Error: Averaging over multiple spectra requires all grids to be of uniform size. Abort.\n");
+    return 0;
+  }
+
+  if (broadening && !regular) {
+    printf ("Error: Broadening spectra requires all grids to be of uniform size. Abort.\n");
+    return 0;
+  }
+
   /* try to open input directory containing the EPR spectrum data */
   if (!(input_directory = opendir (input_directory_path))) {
     printf ("Error opening directory for input or no input directory specified.\n");
