@@ -522,7 +522,7 @@ int main (int argc, char** argv) {
   }
 
   if(average) {
-    average_multiple_spectra(output_spectrum_files, spectrum_file_index + 1, &spectrum);
+    average_multiple_spectra(output_spectrum_files, spectrum_file_count, &spectrum);
 
     strncpy (output_file_path, output_directory_path, 256);
     strncat (output_file_path, "averaged-spectrum.data", 512);
