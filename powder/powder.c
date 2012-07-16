@@ -366,7 +366,7 @@ void usage(char * cmdname)
 
 int main (int argc, char** argv) {
 
-  int i, c, option_index, spectrum_file_index;
+  int i, c, option_index, spectrum_file_index, spectrum_file_count;
   /* option flags for uniform, broadening, average; default = 0 => OFF */
   int uniform = 0, broadening = 0, average = 0;
   double decay;
@@ -463,9 +463,24 @@ int main (int argc, char** argv) {
   }
 
   spectrum_file_index = 0;
+  spectrum_file_count = 0;
+
+  /* determine number of input spectrum files in directory
+   * and allocate appropriate amount of memory for FILE handlers
+   */
+
+  while ((input_directory_entry = readdir (input_directory))) {
+    if (input_directory_entry->d_type == DT_REG)
+      spectrum_file_count++;
+  }
+
+  rewinddir (input_directory);
+
+  input_spectrum_files = malloc (spectrum_file_count * sizeof (FILE *));
+  output_spectrum_files = malloc (spectrum_file_count * sizeof (FILE *));
 
   /* main loop for reading and processing input spectra */
-  while ((input_directory_entry = readdir (input_directory)) != NULL) {
+  while ((input_directory_entry = readdir (input_directory)) != NULL && input_directory_entry->d_type == DT_REG) {
     
     strncpy (input_file_path, input_directory_path, 256);
     strncat (input_file_path, input_directory_entry->d_name, 512);
@@ -526,6 +541,9 @@ int main (int argc, char** argv) {
     fclose (input_spectrum_files[i]);
     fclose (output_spectrum_files[i]);
   }
+
+  free(input_spectrum_files);
+  free(output_spectrum_files);
 
   return 0;
 }
