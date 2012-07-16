@@ -342,7 +342,7 @@ int average_multiple_spectra(FILE ** input_spectra_files, int spectrum_count, ep
     }
   }
 
-  return 0;
+  return averaged_size;
 }
 
 /** 
