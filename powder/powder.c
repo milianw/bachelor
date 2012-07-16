@@ -27,7 +27,6 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <dirent.h>
-#include <float.h>
 
 static int debug = 0;
 
