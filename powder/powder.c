@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <dirent.h>
+#include <float.h>
 
 static int debug = 0;
 
@@ -311,24 +312,44 @@ int broaden_spectrum (epr_spectrum * spectrum, double decay) {
  * @param spectrum_count - number of spectra to be averaged
  * @param averaged_spectrum - pointer to epr_spectrum for the averaged spectrum
  * 
- * @return 
+ * @return - returns the size of the averaged sprectrum, zero otherwise
  */
 int average_multiple_spectra(FILE ** input_spectra_files, int spectrum_count, epr_spectrum * averaged_spectrum) {
 
   int averaged_size;
   int line_count;
   int i;
+  char buffer [256];
+  fftw_complex B, I, B_init;
+  orientation O;
 
   averaged_size = 0;
+  B[0] = 0.;
+  B[1] = 0.;
+  B_init[0] = DBL_MAX;
+  B_init[1] = DBL_MAX;
 
+  /* find the size of the largest spectrum and use that size to initialize
+     the spectrum for the averaged spectrum */
   for (i = 0; i < spectrum_count; i++) {
     if (averaged_size < (line_count = determine_line_count(input_spectra_files[i])))
       averaged_size = line_count;
   }
 
   if (!alloc_epr_spectrum(averaged_spectrum, averaged_size))
-      return -1;
-
+      return 0;
+  
+  for (i = 0; i < spectrum_count; i++) {
+    if(fgets(buffer, sizeof(buffer), input_spectra_files[i])) {
+      if (sscanf(buffer, "%lg %lg %lg %lg %lg %lg[^\n]\n", &B[0], &I[0], &O.x, &O.y, &O.z, &O.weight) == 6) {
+	if (B[0] < B_init[0])
+	  B_init[0] = B[0];
+	rewind (input_spectra_files[i]);
+	if (debug)
+	  printf ("B: %lg I: %lg x: %lg y: %lg z: %lg weight: %lg\n", B[0], I[0], O.x, O.y, O.z, O.weight);
+      }
+    }
+  }
   /*
    TODO:
 
