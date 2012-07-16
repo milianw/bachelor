@@ -483,10 +483,10 @@ int main (int argc, char** argv) {
   while ((input_directory_entry = readdir (input_directory)) != NULL && input_directory_entry->d_type == DT_REG) {
     
     strncpy (input_file_path, input_directory_path, 256);
-    strncat (input_file_path, input_directory_entry->d_name, 512);
+    strncat (input_file_path, input_directory_entry->d_name, 256);
 
     strncpy (output_file_path, output_directory_path, 256);
-    strncat (output_file_path, input_directory_entry->d_name, 512);
+    strncat (output_file_path, input_directory_entry->d_name, 256);
 
     if (!(input_spectrum_files[spectrum_file_index] = fopen (input_file_path, "r"))) {
       printf ("Error opening input spectrum file %s, skipping.\n", input_directory_entry->d_name);
