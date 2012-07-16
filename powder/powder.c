@@ -124,6 +124,11 @@ unsigned int determine_line_count (FILE * datafile) {
   else
     return 0;
 
+  /* the file has to be rewound to the beginning before it can
+     be used for further reading in
+  */
+  rewind (datafile);
+
   return lines;
 }
 
@@ -155,11 +160,6 @@ int read_input_epr_spectrum (FILE * spectrum_file, epr_spectrum * spectrum) {
 
   if(debug)
     printf ("The Lebedev file has %d lines\n", lines);
-
-  /* the file has to be rewound to the beginning, since it is currently standing
-     at the end from the previous call to determine_line_count
-  */
-  rewind (spectrum_file);
 
   /* parse EPR spectrum input file */
   while(fgets(buffer, sizeof(buffer), spectrum_file)) {
