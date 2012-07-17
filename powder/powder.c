@@ -539,6 +539,9 @@ int main (int argc, char** argv) {
 
     average_multiple_spectra(output_spectrum_files, spectrum_file_count, &spectrum);
 
+    if (debug)
+      printf ("The size of the averaged spectrum is: %i\n", spectrum.size);
+
     for (i = 0; i < spectrum.size; i++)
       fprintf (averaged_spectrum_file, "%lg %lg %lg %lg %lg %lg\n", spectrum.B[i][0], spectrum.I[i][0], spectrum.O[i].x, spectrum.O[i].y, spectrum.O[i].z, spectrum.O[i].weight);
 
