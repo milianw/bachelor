@@ -500,7 +500,7 @@ int main (int argc, char** argv) {
 	continue;
       }
 
-      if (!(output_spectrum_files[spectrum_file_index] = fopen (output_file_path, "w"))) {
+      if (!(output_spectrum_files[spectrum_file_index] = fopen (output_file_path, "w+"))) {
 	printf ("Error opening output spectrum file %s, skipping.\n", input_directory_entry->d_name);
 	continue;
       }
@@ -518,6 +518,12 @@ int main (int argc, char** argv) {
       
       /* free memory for EPR spectrum */
       dealloc_epr_spectrum (&spectrum);
+
+      /* rewind output files so they can be used with average_multiple_spectra */
+      rewind(output_spectrum_files[spectrum_file_index]);
+
+      if (debug)
+	printf ("The line count of %i is: %i\n", (int) output_spectrum_files[spectrum_file_index], determine_line_count (output_spectrum_files[spectrum_file_index]));
       
       spectrum_file_index++;
     }
