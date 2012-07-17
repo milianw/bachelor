@@ -469,7 +469,7 @@ int main (int argc, char** argv) {
    * and allocate appropriate amount of memory for FILE handlers
    */
 
-  while ((input_directory_entry = readdir (input_directory))) {
+  while (input_directory_entry = readdir (input_directory)) {
     if (input_directory_entry->d_type == DT_REG)
       spectrum_file_count++;
   }
@@ -480,45 +480,47 @@ int main (int argc, char** argv) {
   output_spectrum_files = malloc (spectrum_file_count * sizeof (FILE *));
 
   /* main loop for reading and processing input spectra */
-  while ((input_directory_entry = readdir (input_directory)) != NULL && input_directory_entry->d_type == DT_REG) {
+  while (input_directory_entry = readdir (input_directory)) {
     
-    strncpy (input_file_path, input_directory_path, 256);
-    strncat (input_file_path, input_directory_entry->d_name, 256);
+    if (input_directory_entry->d_type == DT_REG) {
+      strncpy (input_file_path, input_directory_path, 256);
+      strncat (input_file_path, input_directory_entry->d_name, 256);
+      
+      strncpy (output_file_path, output_directory_path, 256);
+      strncat (output_file_path, input_directory_entry->d_name, 256);
+      
+      if (!(input_spectrum_files[spectrum_file_index] = fopen (input_file_path, "r"))) {
+	printf ("Error opening input spectrum file %s, skipping.\n", input_directory_entry->d_name);
+	continue;
+      }
+      
+      /* read input EPR spectrum into memory */
+      if (!(read_input_epr_spectrum (input_spectrum_files[spectrum_file_index], &spectrum) > 0)) {
+	printf ("Error parsing input spectrum file %s, no data points found. Skipping.\n", input_directory_entry->d_name);
+	continue;
+      }
 
-    strncpy (output_file_path, output_directory_path, 256);
-    strncat (output_file_path, input_directory_entry->d_name, 256);
-
-    if (!(input_spectrum_files[spectrum_file_index] = fopen (input_file_path, "r"))) {
-      printf ("Error opening input spectrum file %s, skipping.\n", input_directory_entry->d_name);
-      continue;
+      if (!(output_spectrum_files[spectrum_file_index] = fopen (output_file_path, "w"))) {
+	printf ("Error opening output spectrum file %s, skipping.\n", input_directory_entry->d_name);
+	continue;
+      }
+      
+      /* generate equidistant grid if uniform flag is set */
+      if (uniform)
+	create_uniform_grid (&spectrum, accuracy);
+      
+      if (broadening)
+	broaden_spectrum (&spectrum, decay);
+      
+      /* output new spectrum to stdout/output_file */
+      for (i = 0; i < spectrum.size; i++)
+	fprintf (output_spectrum_files[spectrum_file_index], "%lg %lg %lg %lg %lg %lg\n", spectrum.B[i][0], spectrum.I[i][0], spectrum.O[i].x, spectrum.O[i].y, spectrum.O[i].z, spectrum.O[i].weight);
+      
+      /* free memory for EPR spectrum */
+      dealloc_epr_spectrum (&spectrum);
+      
+      spectrum_file_index++;
     }
-
-    /* read input EPR spectrum into memory */
-    if (!(read_input_epr_spectrum (input_spectrum_files[spectrum_file_index], &spectrum) > 0)) {
-      printf ("Error parsing input spectrum file %s, no data points found. Skipping.\n", input_directory_entry->d_name);
-      continue;
-    }
-
-    if (!(output_spectrum_files[spectrum_file_index] = fopen (output_file_path, "w"))) {
-      printf ("Error opening output spectrum file %s, skipping.\n", input_directory_entry->d_name);
-      continue;
-    }
-    
-    /* generate equidistant grid if uniform flag is set */
-    if (uniform)
-      create_uniform_grid (&spectrum, accuracy);
-    
-    if (broadening)
-      broaden_spectrum (&spectrum, decay);
-    
-    /* output new spectrum to stdout/output_file */
-    for (i = 0; i < spectrum.size; i++)
-      fprintf (output_spectrum_files[spectrum_file_index], "%lg %lg %lg %lg %lg %lg\n", spectrum.B[i][0], spectrum.I[i][0], spectrum.O[i].x, spectrum.O[i].y, spectrum.O[i].z, spectrum.O[i].weight);
-    
-    /* free memory for EPR spectrum */
-    dealloc_epr_spectrum (&spectrum);
-
-    spectrum_file_index++;
   }
 
   if(average) {
