@@ -540,7 +540,7 @@ int main (int argc, char** argv) {
   }
 
   /* close all input and output spectrum files */
-  for (i = spectrum_file_index; i >= 0; i--) {
+  for (i = 0; i < spectrum_file_count; i++) {
     fclose (input_spectrum_files[i]);
     fclose (output_spectrum_files[i]);
   }
