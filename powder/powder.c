@@ -319,23 +319,23 @@ int broaden_spectrum (epr_spectrum * spectrum, double decay) {
  * 
  * @return - returns size of the averaged spectrum on success, zero in case of error
  */
-int average_multiple_spectra(epr_spectrum ** input_spectra, epr_spectrum * averaged_spectrum, int spectrum_count, double accuracy) {
+int average_multiple_spectra(epr_spectrum * input_spectra, epr_spectrum * averaged_spectrum, int spectrum_count, double accuracy) {
 
   int averaged_size;
   double B_min, B_max;
   int i, j, k;
 
-  B_min = input_spectra[0]->B[0][0];
-  B_max = input_spectra[0]->B[input_spectra[0]->size - 1][0];
+  B_min = input_spectra[0].B[0][0];
+  B_max = input_spectra[0].B[input_spectra[0].size - 1][0];
 
   /* find minimum and maximum B field for all input spectra */
 
   for (i = 1; i < spectrum_count; i++) {
-    if (input_spectra[i]->B[0][0] < B_min)
-      B_min = input_spectra[i]->B[0][0] < B_min;
+    if (input_spectra[i].B[0][0] < B_min)
+      B_min = input_spectra[i].B[0][0] < B_min;
 
-    if (input_spectra[0]->B[input_spectra[0]->size - 1][0] > B_max)
-      B_max = input_spectra[0]->B[input_spectra[0]->size - 1][0];
+    if (input_spectra[0].B[input_spectra[0].size - 1][0] > B_max)
+      B_max = input_spectra[0].B[input_spectra[0].size - 1][0];
   }
 
   /* allocate spectrum large enough to accomodate the range of
@@ -354,12 +354,12 @@ int average_multiple_spectra(epr_spectrum ** input_spectra, epr_spectrum * avera
     }
     
     for (i = 0; i < spectrum_count; i++)
-      for (j = 0; j < input_spectra[i]->size; j++) {
-	k = (int) floor ((input_spectra[i]->B[j][0] - B_min) / accuracy);
+      for (j = 0; j < input_spectra[i].size; j++) {
+	k = (int) floor ((input_spectra[i].B[j][0] - B_min) / accuracy);
 	//if (!isnan(input_spectra[j]->I[i][0]))
-	averaged_spectrum->I[k][0] += input_spectra[i]->I[j][0];
+	averaged_spectrum->I[k][0] += input_spectra[i].I[j][0];
 	//if (!isnan(input_spectra[j]->I[i][1]))
-	averaged_spectrum->I[k][1] += input_spectra[i]->I[j][1];
+	averaged_spectrum->I[k][1] += input_spectra[i].I[j][1];
       }
   }
   
@@ -555,7 +555,7 @@ int main (int argc, char** argv) {
       return -1;
     }
 
-    if (!average_multiple_spectra(&input_spectra, &averaged_spectrum, spectrum_count, accuracy))
+    if (!average_multiple_spectra(input_spectra, &averaged_spectrum, spectrum_count, accuracy))
       printf ("Error averaging input spectra.\n");
     else {
       if (debug)
