@@ -535,11 +535,11 @@ int main (int argc, char** argv) {
 	broaden_spectrum (&input_spectra[spectrum_index], decay);
       
       /* output new spectrum to stdout/output_file */
-      for (i = 0; i < input_spectra[spectrum_count].size; i++)
+      for (i = 0; i < input_spectra[spectrum_index].size; i++)
 	fprintf (output_spectrum_file, "%lg %lg %lg %lg %lg %lg\n", input_spectra[spectrum_index].B[i][0], input_spectra[spectrum_index].I[i][0], input_spectra[spectrum_index].O[i].x, input_spectra[spectrum_index].O[i].y, input_spectra[spectrum_index].O[i].z, input_spectra[spectrum_index].O[i].weight);
 
       if (debug)
-	printf ("The line count of %s is: %i\n", output_file_path, determine_line_count (output_spectrum_file));
+	printf ("The line count of %s is: %i\n", output_file_path, input_spectra[spectrum_index].size);
       
       fclose (input_spectrum_file);
       fclose (output_spectrum_file);
