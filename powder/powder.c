@@ -428,7 +428,7 @@ int main (int argc, char** argv) {
   };
 
   /* parse command line options using getopt_long */
-  while ((c = getopt_long(argc, argv, "i:o:u:b:ad", options, &option_index)) != -1) {
+  while ((c = getopt_long(argc, argv, "i:o:u:b:a:d", options, &option_index)) != -1) {
 
     switch (c) {
 
@@ -551,7 +551,8 @@ int main (int argc, char** argv) {
 	printf ("The line count of %s is: %i\n", output_file_path, input_spectra[spectrum_index].size);
       
       fclose (input_spectrum_file);
-      fclose (output_spectrum_file);
+      if (output)
+	fclose (output_spectrum_file);
       spectrum_index++;
     }
   }
