@@ -312,36 +312,36 @@ int broaden_spectrum (epr_spectrum * spectrum, double decay) {
 /** 
  * average_multiple_spectra - average over multiple spectra
  * 
- * @param input_spectra_files - array with file handles of spectra to be averaged
- * @param spectrum_count - number of spectra to be averaged
- * @param averaged_spectrum - pointer to epr_spectrum for the averaged spectrum
- * @param accuracy - accuracy of the uniform grids of the input spectra
+ * @param input_spectra 
+ * @param averaged_spectrum 
+ * @param spectrum_count 
+ * @param accuracy 
  * 
- * @return - returns the size of the averaged sprectrum, zero otherwise
+ * @return 
  */
-int average_multiple_spectra(FILE ** input_spectra_files, int spectrum_count, epr_spectrum * averaged_spectrum, double accuracy) {
+int average_multiple_spectra(epr_spectrum ** input_spectra, epr_spectrum * averaged_spectrum, int spectrum_count, double accuracy) {
 
   int averaged_size;
-  int i, j;
-  char buffer[256];
-  double B, I;
-  orientation O;
+  /* int i, j; */
+  /* char buffer[256]; */
+  /* double B, I; */
+  /* orientation O; */
 
-  averaged_size = determine_line_count(input_spectra_files[0]);
+  /* averaged_size = determine_line_count(input_spectra_files[0]); */
 
-  if (!alloc_epr_spectrum(averaged_spectrum, averaged_size, 0))
-      return 0;
+  /* if (!alloc_epr_spectrum(averaged_spectrum, averaged_size, 0)) */
+  /*     return 0; */
 
-  for (i = 0; i < spectrum_count; i++) {
-    for (j = 0; j < averaged_size; j++) {
-      if (fgets(buffer, sizeof(buffer), input_spectra_files[i])) {
-	if (sscanf(buffer, "%lg %lg %lg %lg %lg %lg[^\n]\n", &B, &I, &O.x, &O.y, &O.z, &O.weight) == 6) {
-	  averaged_spectrum->B[j][0] = B;
-	  averaged_spectrum->I[j][0] = (i == 0) ? I : (I + averaged_spectrum->I[j][0]);
-	}
-      }
-    }
-  }
+  /* for (i = 0; i < spectrum_count; i++) { */
+  /*   for (j = 0; j < averaged_size; j++) { */
+  /*     if (fgets(buffer, sizeof(buffer), input_spectra_files[i])) { */
+  /* 	if (sscanf(buffer, "%lg %lg %lg %lg %lg %lg[^\n]\n", &B, &I, &O.x, &O.y, &O.z, &O.weight) == 6) { */
+  /* 	  averaged_spectrum->B[j][0] = B; */
+  /* 	  averaged_spectrum->I[j][0] = (i == 0) ? I : (I + averaged_spectrum->I[j][0]); */
+  /* 	} */
+  /*     } */
+  /*   } */
+  /* } */
 
   return averaged_size;
 }
@@ -367,18 +367,19 @@ void usage(char * cmdname)
 
 int main (int argc, char** argv) {
 
-  int i, c, option_index, spectrum_file_index, spectrum_file_count;
+  int i, c, option_index, spectrum_count, spectrum_index;
   /* option flags for uniform, broadening, average; default = 0 => OFF */
   int uniform = 0, broadening = 0, average = 0;
   double decay;
   double accuracy;
-  epr_spectrum spectrum;
+  epr_spectrum * input_spectra;
+  epr_spectrum averaged_spectrum;
   DIR * input_directory;
   DIR * output_directory;
   struct dirent * input_directory_entry;
   struct dirent * output_directory_entry;
-  FILE ** input_spectrum_files;
-  FILE ** output_spectrum_files;
+  FILE * input_spectrum_file;
+  FILE * output_spectrum_file;
   FILE * averaged_spectrum_file;
   char input_directory_path [256];
   char input_file_path [512];
@@ -463,8 +464,8 @@ int main (int argc, char** argv) {
     return 0;
   }
 
-  spectrum_file_index = 0;
-  spectrum_file_count = 0;
+  spectrum_count = 0;
+  spectrum_index = 0;
 
   /* determine number of input spectrum files in directory
    * and allocate appropriate amount of memory for FILE handlers
@@ -472,13 +473,13 @@ int main (int argc, char** argv) {
 
   while (input_directory_entry = readdir (input_directory)) {
     if (input_directory_entry->d_type == DT_REG)
-      spectrum_file_count++;
+      spectrum_count++;
   }
 
   rewinddir (input_directory);
 
-  input_spectrum_files = malloc (spectrum_file_count * sizeof (FILE *));
-  output_spectrum_files = malloc (spectrum_file_count * sizeof (FILE *));
+  /* allocate memory for array to hold the input spectra structs */
+  input_spectra = malloc (spectrum_count * sizeof (epr_spectrum));
 
   /* main loop for reading and processing input spectra */
   while (input_directory_entry = readdir (input_directory)) {
@@ -490,43 +491,39 @@ int main (int argc, char** argv) {
       strncpy (output_file_path, output_directory_path, 256);
       strncat (output_file_path, input_directory_entry->d_name, 256);
       
-      if (!(input_spectrum_files[spectrum_file_index] = fopen (input_file_path, "r"))) {
+      if (!(input_spectrum_file = fopen (input_file_path, "r"))) {
 	printf ("Error opening input spectrum file %s, skipping.\n", input_directory_entry->d_name);
 	continue;
       }
       
       /* read input EPR spectrum into memory */
-      if (!(read_input_epr_spectrum (input_spectrum_files[spectrum_file_index], &spectrum) > 0)) {
+      if (!(read_input_epr_spectrum (input_spectrum_file, &input_spectra[spectrum_index]) > 0)) {
 	printf ("Error parsing input spectrum file %s, no data points found. Skipping.\n", input_directory_entry->d_name);
 	continue;
       }
 
-      if (!(output_spectrum_files[spectrum_file_index] = fopen (output_file_path, "w+"))) {
+      if (!(output_spectrum_file = fopen (output_file_path, "w"))) {
 	printf ("Error opening output spectrum file %s, skipping.\n", input_directory_entry->d_name);
 	continue;
       }
       
       /* generate equidistant grid if uniform flag is set */
       if (uniform)
-	create_uniform_grid (&spectrum, accuracy);
+	create_uniform_grid (&input_spectra[spectrum_index], accuracy);
       
       if (broadening)
-	broaden_spectrum (&spectrum, decay);
+	broaden_spectrum (&input_spectra[spectrum_index], decay);
       
       /* output new spectrum to stdout/output_file */
-      for (i = 0; i < spectrum.size; i++)
-	fprintf (output_spectrum_files[spectrum_file_index], "%lg %lg %lg %lg %lg %lg\n", spectrum.B[i][0], spectrum.I[i][0], spectrum.O[i].x, spectrum.O[i].y, spectrum.O[i].z, spectrum.O[i].weight);
-      
-      /* free memory for EPR spectrum */
-      dealloc_epr_spectrum (&spectrum);
-
-      /* rewind output files so they can be used with average_multiple_spectra */
-      rewind(output_spectrum_files[spectrum_file_index]);
+      for (i = 0; i < input_spectra[spectrum_count].size; i++)
+	fprintf (output_spectrum_file, "%lg %lg %lg %lg %lg %lg\n", input_spectra[spectrum_index].B[i][0], input_spectra[spectrum_index].I[i][0], input_spectra[spectrum_index].O[i].x, input_spectra[spectrum_index].O[i].y, input_spectra[spectrum_index].O[i].z, input_spectra[spectrum_index].O[i].weight);
 
       if (debug)
-	printf ("The line count of %i is: %i\n", (int) output_spectrum_files[spectrum_file_index], determine_line_count (output_spectrum_files[spectrum_file_index]));
+	printf ("The line count of %s is: %i\n", output_file_path, determine_line_count (output_spectrum_file));
       
-      spectrum_file_index++;
+      fclose (input_spectrum_file);
+      fclose (output_spectrum_file);
+      spectrum_index++;
     }
   }
 
@@ -538,25 +535,19 @@ int main (int argc, char** argv) {
       return -1;
     }
 
-    average_multiple_spectra(output_spectrum_files, spectrum_file_count, &spectrum, accuracy);
+    average_multiple_spectra(&input_spectra, &averaged_spectrum, spectrum_count, accuracy);
 
     if (debug)
-      printf ("The size of the averaged spectrum is: %i\n", spectrum.size);
+      printf ("The size of the averaged spectrum is: %i\n", averaged_spectrum.size);
 
-    for (i = 0; i < spectrum.size; i++)
-      fprintf (averaged_spectrum_file, "%lg %lg\n", spectrum.B[i][0], spectrum.I[i][0]);
+    for (i = 0; i < averaged_spectrum.size; i++)
+      fprintf (averaged_spectrum_file, "%lg %lg\n", averaged_spectrum.B[i][0], averaged_spectrum.I[i][0]);
 
-    dealloc_epr_spectrum (&spectrum);
+    dealloc_epr_spectrum (&averaged_spectrum);
   }
 
-  /* close all input and output spectrum files */
-  for (i = 0; i < spectrum_file_count; i++) {
-    fclose (input_spectrum_files[i]);
-    fclose (output_spectrum_files[i]);
-  }
-
-  free(input_spectrum_files);
-  free(output_spectrum_files);
+  for (i = 0; i < spectrum_count; i++)
+    dealloc_epr_spectrum (&input_spectra[i]);
 
   return 0;
 }
