@@ -332,7 +332,7 @@ int average_multiple_spectra(epr_spectrum * input_spectra, epr_spectrum * averag
 
   for (i = 1; i < spectrum_count; i++) {
     if (input_spectra[i].B[0][0] < B_min)
-      B_min = input_spectra[i].B[0][0] < B_min;
+      B_min = input_spectra[i].B[0][0];
 
     if (input_spectra[0].B[input_spectra[0].size - 1][0] > B_max)
       B_max = input_spectra[0].B[input_spectra[0].size - 1][0];
