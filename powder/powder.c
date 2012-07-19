@@ -116,14 +116,14 @@ unsigned int determine_line_count (FILE * datafile) {
 
   unsigned int lines;
   char buffer [256];
-  double tmp;
+  double tmp1, tmp2, tmp3, tmp4, tmp5, tmp6;
 
   lines = 0;
 
   if (datafile)
     while(fgets(buffer, sizeof(buffer), datafile)) {
       if(buffer[0] && buffer[strlen(buffer)-1] == '\n')
-	if (sscanf (buffer, "%lg %lg %lg %lg %lg %lg[^\n]\n", &tmp) == 6) {
+	if (sscanf (buffer, "%lg %lg %lg %lg %lg %lg[^\n]\n", &tmp1, &tmp2, &tmp3, &tmp4, &tmp5, &tmp6) == 6) {
 	  lines++;
 	  buffer[0] = '\0';
 	}
@@ -175,10 +175,6 @@ int read_input_epr_spectrum (FILE * spectrum_file, epr_spectrum * spectrum) {
 	printf ("i: %d B: %lg I: %lg x: %lg y: %lg z: %lg weight: %lg\n", i, spectrum->B[i][0], spectrum->I[i][0], spectrum->O[i].x, spectrum->O[i].y, spectrum->O[i].z, spectrum->O[i].weight);
       i++;
       buffer[0] = '\0';
-    }
-    else {
-      printf ("Error parsing line %i. Abort.\n", i);
-      return 0;
     }
   }
 
