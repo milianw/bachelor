@@ -315,10 +315,11 @@ int broaden_spectrum (epr_spectrum * spectrum, double decay) {
  * @param input_spectra_files - array with file handles of spectra to be averaged
  * @param spectrum_count - number of spectra to be averaged
  * @param averaged_spectrum - pointer to epr_spectrum for the averaged spectrum
+ * @param accuracy - accuracy of the uniform grids of the input spectra
  * 
  * @return - returns the size of the averaged sprectrum, zero otherwise
  */
-int average_multiple_spectra(FILE ** input_spectra_files, int spectrum_count, epr_spectrum * averaged_spectrum) {
+int average_multiple_spectra(FILE ** input_spectra_files, int spectrum_count, epr_spectrum * averaged_spectrum, double accuracy) {
 
   int averaged_size;
   int i, j;
@@ -537,7 +538,7 @@ int main (int argc, char** argv) {
       return -1;
     }
 
-    average_multiple_spectra(output_spectrum_files, spectrum_file_count, &spectrum);
+    average_multiple_spectra(output_spectrum_files, spectrum_file_count, &spectrum, accuracy);
 
     if (debug)
       printf ("The size of the averaged spectrum is: %i\n", spectrum.size);
