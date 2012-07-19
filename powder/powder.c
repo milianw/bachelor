@@ -393,7 +393,7 @@ int main (int argc, char** argv) {
 
   int i, c, option_index, spectrum_count, spectrum_index;
   /* option flags for uniform, broadening, average; default = 0 => OFF */
-  int uniform = 0, broadening = 0, average = 0;
+  int uniform = 0, broadening = 0, average = 0, output = 0;
   double decay;
   double accuracy;
   epr_spectrum * input_spectra;
@@ -409,18 +409,20 @@ int main (int argc, char** argv) {
   char input_file_path [512];
   char output_directory_path [256];
   char output_file_path [512];
+  char average_file_path [256];
 
   memset (input_directory_path, 0, 256);
   memset (input_file_path, 0, 512);
   memset (output_directory_path, 0, 256);
   memset (output_file_path, 0, 512);
+  memset (average_file_path, 0, 256);
 
   static struct option options [] = {
     {"input-directory", required_argument, NULL, 'i'},
     {"output-directory", required_argument, NULL, 'o'},
     {"uniform", required_argument, NULL, 'u'},
     {"broadening", required_argument, NULL, 'b'},
-    {"average", no_argument, NULL, 'a'},
+    {"average", required_argument, NULL, 'a'},
     {"debug", no_argument, NULL, 'd'},
     {0, 0, 0, 0}
   };
@@ -435,6 +437,7 @@ int main (int argc, char** argv) {
       break;
 
     case 'o':
+      output = 1;
       strncpy (output_directory_path, optarg, 255);
       break;
 
@@ -450,6 +453,7 @@ int main (int argc, char** argv) {
 
     case 'a':
       average = 1;
+      strncpy (average_file_path, optarg, 255);
       break;
 
     case 'd':
@@ -482,7 +486,7 @@ int main (int argc, char** argv) {
   /* try to open output directory; this directory will also be used
    * as the input directory for the averaging process, if applicable
    */
-  if (!(output_directory = opendir (output_directory_path))) {
+  if (output && !(output_directory = opendir (output_directory_path))) {
     printf ("Error opening directory for output or no input directory specified.\n");
     usage(argv[0]);
     return 0;
@@ -526,7 +530,7 @@ int main (int argc, char** argv) {
 	continue;
       }
 
-      if (!(output_spectrum_file = fopen (output_file_path, "w"))) {
+      if (output && !(output_spectrum_file = fopen (output_file_path, "w"))) {
 	printf ("Error opening output spectrum file %s, skipping.\n", input_directory_entry->d_name);
 	continue;
       }
@@ -539,8 +543,9 @@ int main (int argc, char** argv) {
 	broaden_spectrum (&input_spectra[spectrum_index], decay);
       
       /* output new spectrum to stdout/output_file */
-      for (i = 0; i < input_spectra[spectrum_index].size; i++)
-	fprintf (output_spectrum_file, "%lg %lg %lg %lg %lg %lg\n", input_spectra[spectrum_index].B[i][0], input_spectra[spectrum_index].I[i][0], input_spectra[spectrum_index].O[i].x, input_spectra[spectrum_index].O[i].y, input_spectra[spectrum_index].O[i].z, input_spectra[spectrum_index].O[i].weight);
+      if (output)
+	for (i = 0; i < input_spectra[spectrum_index].size; i++)
+	  fprintf (output_spectrum_file, "%lg %lg %lg %lg %lg %lg\n", input_spectra[spectrum_index].B[i][0], input_spectra[spectrum_index].I[i][0], input_spectra[spectrum_index].O[i].x, input_spectra[spectrum_index].O[i].y, input_spectra[spectrum_index].O[i].z, input_spectra[spectrum_index].O[i].weight);
 
       if (debug)
 	printf ("The line count of %s is: %i\n", output_file_path, input_spectra[spectrum_index].size);
@@ -552,10 +557,10 @@ int main (int argc, char** argv) {
   }
 
   if(average) {
-    strncpy (output_file_path, output_directory_path, 256);
-    strncat (output_file_path, "averaged-spectrum.data", 512);
-    if (!(averaged_spectrum_file = fopen (output_file_path, "w"))) {
-      printf ("Error opening output file for averaged spectrum.");
+    //strncpy (output_file_path, output_directory_path, 256);
+    //strncat (output_file_path, "averaged-spectrum.data", 512);
+    if (!(averaged_spectrum_file = fopen (average_file_path, "w"))) {
+      printf ("Error opening output file for averaged spectrum. Abort.");
       return -1;
     }
 
