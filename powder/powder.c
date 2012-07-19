@@ -312,18 +312,18 @@ int broaden_spectrum (epr_spectrum * spectrum, double decay) {
 /** 
  * average_multiple_spectra - average over multiple spectra
  * 
- * @param input_spectra 
- * @param averaged_spectrum 
- * @param spectrum_count 
- * @param accuracy 
+ * @param input_spectra - an array containing pointers to EPR spectra
+ * @param averaged_spectrum - pointer to the averaged output spectrum
+ * @param spectrum_count - number of spectra in the input spectrum array
+ * @param accuracy - accuracy of the uniform grid of the input spectra
  * 
- * @return 
+ * @return - returns size of the averaged spectrum on success, zero in case of error
  */
 int average_multiple_spectra(epr_spectrum ** input_spectra, epr_spectrum * averaged_spectrum, int spectrum_count, double accuracy) {
 
   int averaged_size;
   double B_min, B_max;
-  int i, j;
+  int i, j, k;
 
   B_min = input_spectra[0]->B[0][0];
   B_max = input_spectra[0]->B[input_spectra[0]->size - 1][0];
@@ -346,10 +346,23 @@ int average_multiple_spectra(epr_spectrum ** input_spectra, epr_spectrum * avera
   if (!alloc_epr_spectrum(averaged_spectrum, averaged_size, 0))
     return 0;
   else {
-    for (i = 0; i < averaged_spectrum->size; i++)
-      ;
+    for (i = 0; i < averaged_spectrum->size; i++) {
+      averaged_spectrum->B[i][0] = B_min + i * accuracy;
+      averaged_spectrum->B[i][1] = 0;
+      averaged_spectrum->I[i][0] = 0;
+      averaged_spectrum->I[i][1] = 0;
+    }
+    
+    for (i = 0; i < spectrum_count; i++)
+      for (j = 0; j < input_spectra[i]->size; j++) {
+	k = (int) floor ((input_spectra[i]->B[j][0] - B_min) / accuracy);
+	//if (!isnan(input_spectra[j]->I[i][0]))
+	averaged_spectrum->I[k][0] += input_spectra[i]->I[j][0];
+	//if (!isnan(input_spectra[j]->I[i][1]))
+	averaged_spectrum->I[k][1] += input_spectra[i]->I[j][1];
+      }
   }
-
+  
   return averaged_size;
 }
 
@@ -542,13 +555,15 @@ int main (int argc, char** argv) {
       return -1;
     }
 
-    average_multiple_spectra(&input_spectra, &averaged_spectrum, spectrum_count, accuracy);
-
-    if (debug)
-      printf ("The size of the averaged spectrum is: %i\n", averaged_spectrum.size);
-
-    for (i = 0; i < averaged_spectrum.size; i++)
-      fprintf (averaged_spectrum_file, "%lg %lg\n", averaged_spectrum.B[i][0], averaged_spectrum.I[i][0]);
+    if (!average_multiple_spectra(&input_spectra, &averaged_spectrum, spectrum_count, accuracy))
+      printf ("Error averaging input spectra.\n");
+    else {
+      if (debug)
+	printf ("The size of the averaged spectrum is: %i\n", averaged_spectrum.size);
+      
+      for (i = 0; i < averaged_spectrum.size; i++)
+	fprintf (averaged_spectrum_file, "%lg %lg\n", averaged_spectrum.B[i][0], averaged_spectrum.I[i][0]);
+    }
 
     dealloc_epr_spectrum (&averaged_spectrum);
   }
