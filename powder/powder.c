@@ -123,7 +123,10 @@ unsigned int determine_line_count (FILE * datafile) {
   if (datafile)
     while(fgets(buffer, sizeof(buffer), datafile)) {
       if(buffer[0] && buffer[strlen(buffer)-1] == '\n')
-	if (sscanf (buffer, "%lg", &tmp) == 1) lines++;
+	if (sscanf (buffer, "%lg", &tmp) == 1) {
+	  lines++;
+	  buffer[0] = '\0';
+	}
     }
   else
     return 0;
@@ -171,6 +174,7 @@ int read_input_epr_spectrum (FILE * spectrum_file, epr_spectrum * spectrum) {
       if (debug)
 	printf ("i: %d B: %lg I: %lg x: %lg y: %lg z: %lg weight: %lg\n", i, spectrum->B[i][0], spectrum->I[i][0], spectrum->O[i].x, spectrum->O[i].y, spectrum->O[i].z, spectrum->O[i].weight);
       i++;
+      buffer[0] = '\0';
     }
   }
 
@@ -204,8 +208,8 @@ int create_uniform_grid (epr_spectrum * spectrum, double accuracy) {
     /* find minimum and maximum field values */
 
     for (i = 0; i < spectrum->size; i++) {
-      if (spectrum->B[i][0] < B_min)
-        B_min = spectrum->B[i][0];
+      /* if (spectrum->B[i][0] < B_min) */
+      /*   B_min = spectrum->B[i][0]; */
       if (spectrum->B[i][0] > B_max)
         B_max = spectrum->B[i][0];
     }
