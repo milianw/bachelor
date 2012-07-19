@@ -322,26 +322,33 @@ int broaden_spectrum (epr_spectrum * spectrum, double decay) {
 int average_multiple_spectra(epr_spectrum ** input_spectra, epr_spectrum * averaged_spectrum, int spectrum_count, double accuracy) {
 
   int averaged_size;
-  /* int i, j; */
-  /* char buffer[256]; */
-  /* double B, I; */
-  /* orientation O; */
+  double B_min, B_max;
+  int i, j;
 
-  /* averaged_size = determine_line_count(input_spectra_files[0]); */
+  B_min = input_spectra[0]->B[0][0];
+  B_max = input_spectra[0]->B[input_spectra[0]->size - 1][0];
 
-  /* if (!alloc_epr_spectrum(averaged_spectrum, averaged_size, 0)) */
-  /*     return 0; */
+  /* find minimum and maximum B field for all input spectra */
 
-  /* for (i = 0; i < spectrum_count; i++) { */
-  /*   for (j = 0; j < averaged_size; j++) { */
-  /*     if (fgets(buffer, sizeof(buffer), input_spectra_files[i])) { */
-  /* 	if (sscanf(buffer, "%lg %lg %lg %lg %lg %lg[^\n]\n", &B, &I, &O.x, &O.y, &O.z, &O.weight) == 6) { */
-  /* 	  averaged_spectrum->B[j][0] = B; */
-  /* 	  averaged_spectrum->I[j][0] = (i == 0) ? I : (I + averaged_spectrum->I[j][0]); */
-  /* 	} */
-  /*     } */
-  /*   } */
-  /* } */
+  for (i = 1; i < spectrum_count; i++) {
+    if (input_spectra[i]->B[0][0] < B_min)
+      B_min = input_spectra[i]->B[0][0] < B_min;
+
+    if (input_spectra[0]->B[input_spectra[0]->size - 1][0] > B_max)
+      B_max = input_spectra[0]->B[input_spectra[0]->size - 1][0];
+  }
+
+  /* allocate spectrum large enough to accomodate the range of
+     all input spectra */
+
+  averaged_size = (int) ((B_max - B_min) / accuracy) + 1;
+
+  if (!alloc_epr_spectrum(averaged_spectrum, averaged_size, 0))
+    return 0;
+  else {
+    for (i = 0; i < averaged_spectrum->size; i++)
+      ;
+  }
 
   return averaged_size;
 }
