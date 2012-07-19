@@ -106,7 +106,7 @@ void dealloc_epr_spectrum (epr_spectrum * spectrum) {
 }
 
 /** 
- * determine_line_count: read number of lines containing at least one double value in a text file
+ * determine_line_count: read number of lines containing a valid line in a spectrum file
  * 
  * @param datafile - file handle of the data file to be line-counted
  * 
@@ -123,7 +123,7 @@ unsigned int determine_line_count (FILE * datafile) {
   if (datafile)
     while(fgets(buffer, sizeof(buffer), datafile)) {
       if(buffer[0] && buffer[strlen(buffer)-1] == '\n')
-	if (sscanf (buffer, "%lg", &tmp) == 1) {
+	if (sscanf (buffer, "%lg %lg %lg %lg %lg %lg[^\n]\n", &tmp) == 6) {
 	  lines++;
 	  buffer[0] = '\0';
 	}
@@ -176,9 +176,13 @@ int read_input_epr_spectrum (FILE * spectrum_file, epr_spectrum * spectrum) {
       i++;
       buffer[0] = '\0';
     }
+    else {
+      printf ("Error parsing line %i. Abort.\n", i);
+      return 0;
+    }
   }
 
-  return lines;
+  return i;
 }
 
 /** 
