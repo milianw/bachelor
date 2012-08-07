@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="1052.3622"
+   height="744.09448"
+   id="svg3050"
+   version="1.1"
+   inkscape:version="0.48.3.1 r9886"
+   sodipodi:docname="hsmpi_scheme.svg">
+  <defs
+     id="defs3052" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.7"
+     inkscape:cx="795.48759"
+     inkscape:cy="269.59952"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1678"
+     inkscape:window-height="1029"
+     inkscape:window-x="0"
+     inkscape:window-y="19"
+     inkscape:window-maximized="0" />
+  <metadata
+     id="metadata3055">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-308.2677)">
+    <text
+       xml:space="preserve"
+       style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+       x="466.29526"
+       y="339.96552"
+       id="text3058"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3060"
+         x="466.29526"
+         y="339.96552">hs-mpi</tspan></text>
+    <g
+       id="g4318">
+      <text
+         sodipodi:linespacing="125%"
+         id="text3191"
+         y="364.01843"
+         x="757.91302"
+         style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         xml:space="preserve"><tspan
+           y="364.01843"
+           x="757.91302"
+           id="tspan3193"
+           sodipodi:role="line">orientations file</tspan><tspan
+           id="tspan3195"
+           y="389.01843"
+           x="757.91302"
+           sodipodi:role="line">(x,y,z)</tspan></text>
+      <g
+         id="g4251">
+        <text
+           xml:space="preserve"
+           style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+           x="317.32568"
+           y="376.50867"
+           id="text2993"
+           sodipodi:linespacing="125%"><tspan
+             sodipodi:role="line"
+             x="317.32568"
+             y="376.50867"
+             id="tspan3005">ORCA output (g, A tensors)</tspan></text>
+        <g
+           id="g4827"
+           transform="translate(258.44723,155.79594)">
+          <path
+             style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#ff0000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:3;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans"
+             d="m 188.5625,479.4375 0,3 52.875,0 0,-3 -52.875,0 z"
+             id="path3037"
+             inkscape:connector-curvature="0" />
+          <path
+             d="m 235.65184,477.30325 9.83329,3.61595 -9.83329,3.61595 c 1.57095,-2.13486 1.5619,-5.05571 0,-7.2319 z"
+             style="fill:#ff0000;fill-rule:evenodd;stroke:#ff0000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+             id="path4823"
+             inkscape:connector-curvature="0" />
+        </g>
+        <text
+           xml:space="preserve"
+           style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+           x="389.63806"
+           y="490.27124"
+           id="text3136"
+           sodipodi:linespacing="125%"><tspan
+             sodipodi:role="line"
+             id="tspan3138"
+             x="389.63806"
+             y="490.27124">ORCA parser</tspan></text>
+        <g
+           transform="matrix(0,1,-1,0,933.11793,206.83837)"
+           id="g4837">
+          <path
+             style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#ff0000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:3;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans"
+             d="m 188.5625,479.4375 0,3 52.875,0 0,-3 -52.875,0 z"
+             id="path4839"
+             inkscape:connector-curvature="0" />
+          <path
+             d="m 235.65184,477.30325 9.83329,3.61595 -9.83329,3.61595 c 1.57095,-2.13486 1.5619,-5.05571 0,-7.2319 z"
+             style="fill:#ff0000;fill-rule:evenodd;stroke:#ff0000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+             id="path4841"
+             inkscape:connector-curvature="0" />
+        </g>
+        <text
+           xml:space="preserve"
+           style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+           x="116.48444"
+           y="465.44702"
+           id="text3164"
+           sodipodi:linespacing="125%"><tspan
+             sodipodi:role="line"
+             id="tspan3166"
+             x="116.48444"
+             y="465.44702">cut-off count</tspan><tspan
+             sodipodi:role="line"
+             x="116.48444"
+             y="490.44702"
+             id="tspan3168">(take only N</tspan><tspan
+             sodipodi:role="line"
+             x="116.48444"
+             y="515.44702"
+             id="tspan3170">highest A couplings)</tspan></text>
+        <g
+           id="g3201"
+           transform="matrix(0,1,-1,0,1314.5464,206.83837)">
+          <path
+             inkscape:connector-curvature="0"
+             id="path3203"
+             d="m 188.5625,479.4375 0,3 52.875,0 0,-3 -52.875,0 z"
+             style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#ff0000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:3;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans" />
+          <path
+             inkscape:connector-curvature="0"
+             id="path3205"
+             style="fill:#ff0000;fill-rule:evenodd;stroke:#ff0000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+             d="m 235.65184,477.30325 9.83329,3.61595 -9.83329,3.61595 c 1.57095,-2.13486 1.5619,-5.05571 0,-7.2319 z" />
+        </g>
+        <g
+           transform="translate(107.01866,4.010241)"
+           id="g3207">
+          <path
+             inkscape:connector-curvature="0"
+             id="path3209"
+             d="m 188.5625,479.4375 0,3 52.875,0 0,-3 -52.875,0 z"
+             style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#ff0000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:3;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans" />
+          <path
+             inkscape:connector-curvature="0"
+             id="path3211"
+             style="fill:#ff0000;fill-rule:evenodd;stroke:#ff0000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+             d="m 235.65184,477.30325 9.83329,3.61595 -9.83329,3.61595 c 1.57095,-2.13486 1.5619,-5.05571 0,-7.2319 z" />
+        </g>
+        <text
+           xml:space="preserve"
+           style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+           x="735.05585"
+           y="490.44702"
+           id="text3213"
+           sodipodi:linespacing="125%"><tspan
+             sodipodi:role="line"
+             id="tspan3215"
+             x="735.05585"
+             y="490.44702">orientations parser</tspan></text>
+        <text
+           xml:space="preserve"
+           style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+           x="186.48444"
+           y="629.73273"
+           id="text3217"
+           sodipodi:linespacing="125%"><tspan
+             sodipodi:role="line"
+             id="tspan3219"
+             x="186.48444"
+             y="629.73273">B field range and steps,</tspan><tspan
+             sodipodi:role="line"
+             x="186.48444"
+             y="654.73273"
+             id="tspan3458">radio frequency</tspan></text>
+        <g
+           transform="translate(317.50159,-38.064927)"
+           id="g5906">
+          <g
+             id="g5897">
+            <path
+               inkscape:connector-curvature="0"
+               id="path5699"
+               d="m 453.28125,561.25 -80,70.6875 2,2.25 80,-70.6875 -2,-2.25 z"
+               style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:3;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans" />
+          </g>
+          <path
+             d="m 381.01827,631.97068 -9.7624,3.80319 4.97282,-9.2217 c 0.23685,2.63996 2.17807,4.82242 4.78958,5.41851 z"
+             style="fill:#ff0000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round"
+             id="path5893"
+             inkscape:connector-curvature="0" />
+        </g>
+        <g
+           id="g3450"
+           transform="matrix(-1,0,0,1,884.03872,-38.064927)">
+          <g
+             id="g3452">
+            <path
+               style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:3;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans"
+               d="m 453.28125,561.25 -80,70.6875 2,2.25 80,-70.6875 -2,-2.25 z"
+               id="path3454"
+               inkscape:connector-curvature="0" />
+          </g>
+          <path
+             inkscape:connector-curvature="0"
+             id="path3456"
+             style="fill:#ff0000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round"
+             d="m 381.01827,631.97068 -9.7624,3.80319 4.97282,-9.2217 c 0.23685,2.63996 2.17807,4.82242 4.78958,5.41851 z" />
+        </g>
+        <g
+           id="g4227">
+          <text
+             sodipodi:linespacing="125%"
+             id="text3197"
+             y="641.70514"
+             x="533.38403"
+             style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+             xml:space="preserve"><tspan
+               style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Courier;-inkscape-font-specification:Courier"
+               y="641.70514"
+               x="533.38403"
+               id="tspan3199"
+               sodipodi:role="line">class Experiment</tspan></text>
+          <text
+             sodipodi:linespacing="125%"
+             id="text3115"
+             y="734.41101"
+             x="532.02771"
+             style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+             xml:space="preserve"><tspan
+               y="734.41101"
+               x="532.02771"
+               id="tspan3117"
+               sodipodi:role="line">bisect B field range</tspan></text>
+          <g
+             transform="matrix(0,1,-1,0,1110.3346,465.62422)"
+             id="g3157">
+            <path
+               style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#ff0000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:3;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans"
+               d="m 188.5625,479.4375 0,3 52.875,0 0,-3 -52.875,0 z"
+               id="path3159"
+               inkscape:connector-curvature="0" />
+            <path
+               d="m 235.65184,477.30325 9.83329,3.61595 -9.83329,3.61595 c 1.57095,-2.13486 1.5619,-5.05571 0,-7.2319 z"
+               style="fill:#ff0000;fill-rule:evenodd;stroke:#ff0000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+               id="path3161"
+               inkscape:connector-curvature="0" />
+          </g>
+          <g
+             id="g3163"
+             transform="matrix(0,1,-1,0,1110.3346,557.80253)">
+            <path
+               inkscape:connector-curvature="0"
+               id="path3165"
+               d="m 188.5625,479.4375 0,3 52.875,0 0,-3 -52.875,0 z"
+               style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#ff0000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:3;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans" />
+            <path
+               inkscape:connector-curvature="0"
+               id="path3167"
+               style="fill:#ff0000;fill-rule:evenodd;stroke:#ff0000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+               d="m 235.65184,477.30325 9.83329,3.61595 -9.83329,3.61595 c 1.57095,-2.13486 1.5619,-5.05571 0,-7.2319 z" />
+          </g>
+          <text
+             sodipodi:linespacing="125%"
+             id="text3169"
+             y="826.58936"
+             x="464.34708"
+             style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+             xml:space="preserve"><tspan
+               y="826.58936"
+               x="464.34708"
+               id="tspan3171"
+               sodipodi:role="line">find roots to get resonance fields</tspan></text>
+          <g
+             transform="matrix(0,1,-1,0,1110.3346,649.98083)"
+             id="g3173">
+            <path
+               style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#ff0000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:3;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans"
+               d="m 188.5625,479.4375 0,3 52.875,0 0,-3 -52.875,0 z"
+               id="path3175"
+               inkscape:connector-curvature="0" />
+            <path
+               d="m 235.65184,477.30325 9.83329,3.61595 -9.83329,3.61595 c 1.57095,-2.13486 1.5619,-5.05571 0,-7.2319 z"
+               style="fill:#ff0000;fill-rule:evenodd;stroke:#ff0000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+               id="path3177"
+               inkscape:connector-curvature="0" />
+          </g>
+          <text
+             sodipodi:linespacing="125%"
+             id="text3179"
+             y="918.76764"
+             x="466.34415"
+             style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+             xml:space="preserve"><tspan
+               y="918.76764"
+               x="466.34415"
+               id="tspan3181"
+               sodipodi:role="line">diagonalize full spin Hamiltonian</tspan></text>
+          <g
+             transform="matrix(0,1,-1,0,1110.3346,742.15913)"
+             id="g3183">
+            <path
+               style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#ff0000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:3;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans"
+               d="m 188.5625,479.4375 0,3 52.875,0 0,-3 -52.875,0 z"
+               id="path3185"
+               inkscape:connector-curvature="0" />
+            <path
+               d="m 235.65184,477.30325 9.83329,3.61595 -9.83329,3.61595 c 1.57095,-2.13486 1.5619,-5.05571 0,-7.2319 z"
+               style="fill:#ff0000;fill-rule:evenodd;stroke:#ff0000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+               id="path3187"
+               inkscape:connector-curvature="0" />
+          </g>
+          <text
+             sodipodi:linespacing="125%"
+             id="text3303"
+             y="1010.9459"
+             x="424.26407"
+             style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+             xml:space="preserve"><tspan
+               y="1010.9459"
+               x="424.26407"
+               id="tspan3305"
+               sodipodi:role="line">calculate for intensity for resonance field</tspan></text>
+        </g>
+        <text
+           xml:space="preserve"
+           style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+           x="765.69562"
+           y="576.58032"
+           id="text3425"
+           sodipodi:linespacing="125%"><tspan
+             sodipodi:role="line"
+             id="tspan3427"
+             x="765.69562"
+             y="576.58032">N orientations</tspan></text>
+        <g
+           id="g4219">
+          <path
+             transform="translate(0,308.2677)"
+             inkscape:connector-curvature="0"
+             id="path4205"
+             d="m 896.51039,420.84567 0,278.8021"
+             style="fill:none;stroke:#ff0000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none" />
+          <g
+             transform="translate(0,0.11551)"
+             id="g4215">
+            <path
+               style="fill:none;stroke:#ff0000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+               d="m 868.64453,730.45002 29.29443,0"
+               id="path4207"
+               inkscape:connector-curvature="0" />
+            <path
+               inkscape:connector-curvature="0"
+               id="path4209"
+               d="m 868.70318,1006.3478 29.29443,0"
+               style="fill:none;stroke:#ff0000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
+          </g>
+          <text
+             sodipodi:linespacing="125%"
+             id="text4211"
+             y="874.03198"
+             x="920.75403"
+             style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+             xml:space="preserve"><tspan
+               y="874.03198"
+               x="920.75403"
+               id="tspan4213"
+               sodipodi:role="line">N MPI jobs</tspan></text>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>
