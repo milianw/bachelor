@@ -26,8 +26,15 @@
 #include <unistd.h>
 #include <getopt.h>
 
+/* global variable to toggle debugging,
+ * can be set through command line option
+ */
 static int debug = 0;
 
+/* struct to hold polar coordinates
+ * for Lebedev grid data (read in
+ * Lebedev data files
+ */
 typedef struct s_lebedev {
 
   double phi;
@@ -35,6 +42,10 @@ typedef struct s_lebedev {
   double weight;
 } lebedev;
 
+/* struct to hold cartesian coordinates,
+ * used as input data for the actual
+ * spin matrix diagonolization software "hs"
+ */
 typedef struct s_cartesian {
 
   double x;
@@ -58,6 +69,9 @@ unsigned int determine_line_count (FILE * datafile) {
 
   lines = 0;
 
+  /* count every line which contains at least one
+   * floating point number of the type 'long double'
+   */
   if (datafile)
     while(fgets(buffer, sizeof(buffer), datafile)) {
       if(buffer[0] && buffer[strlen(buffer)-1] == '\n')
@@ -104,7 +118,9 @@ int read_lebedev_data (FILE * lebedev_file, lebedev ** lebedev_data) {
 
   /* parse Lebedev grid data from file, use exponential form for floating point data if applicable */
   while(fgets(buffer, sizeof(buffer), lebedev_file)) {
+    /* a valid Lebedev data file contains 3 floating point number per line: phi, theta and the weighting */
     if (sscanf(buffer, "%lf %lf %lf[^\n]\n", &(* lebedev_data)[i].phi, &(* lebedev_data)[i].theta, &(* lebedev_data)[i].weight) == 3) {
+      /* if the global debug variable is set, write the last parsed line to stdout */
       if (debug)
 	printf ("i: %d phi: %.15lf theta: %.15lf weight: %.15lf\n", i, (* lebedev_data)[i].phi, (* lebedev_data)[i].theta, (* lebedev_data)[i].weight);
       i++;
@@ -115,7 +131,7 @@ int read_lebedev_data (FILE * lebedev_file, lebedev ** lebedev_data) {
 }
 
 /** 
- * read_cartesian_data: read Lebedev grid data from file into an array of struct lebedev_grid
+ * read_cartesian_data: read cartesian grid data from file into an array of struct cartesian_data
  * 
  * @param cartesian_file - file handle to the data file containing the cartesian data
  * @param cartesian_data - uninitialized pointer to an array which will be allocated and filled with cartesian data
@@ -131,7 +147,7 @@ int read_cartesian_data (FILE * cartesian_file, cartesian ** cartesian_data) {
   lines = 0;
   i = 0;
 
-  /* determine size of Lebedev array to be allocated */
+  /* determine size of cartesian data array to be allocated */
   if ((lines = determine_line_count (cartesian_file)) > 0) {
     if (!(*cartesian_data = malloc (sizeof(cartesian)*lines)))
       return 0;
@@ -147,9 +163,11 @@ int read_cartesian_data (FILE * cartesian_file, cartesian ** cartesian_data) {
   */
   rewind (cartesian_file);
 
-  /* parse Lebedev grid data from file, use exponential form for floating point data if applicable */
+  /* parse cartesian grid data from file, use exponential form for floating point data if applicable */
   while(fgets(buffer, sizeof(buffer), cartesian_file)) {
+    /* a valid cartesian data file contains 4 floating point number per line: x, y, z and the weighting */
     if (sscanf(buffer, "%lf %lf %lf[^\n]\n", &(* cartesian_data)[i].x, &(* cartesian_data)[i].y, &(* cartesian_data)[i].z, &(* cartesian_data)[i].weight) == 4) {
+      /* if the global debug variable is set, write the last parsed line to stdout */
       if (debug)
 	printf ("i: %d x: %.15lf y: %.15lf z: %.15lf weight: %.15lf\n", i, (* cartesian_data)[i].x, (* cartesian_data)[i].y, (* cartesian_data)[i].z, (* cartesian_data)[i].weight);
       i++;
@@ -179,6 +197,9 @@ int lebedev_to_cartesian (lebedev ** in, cartesian ** out, int npoints) {
   else
     return 0;
   
+  /* just apply the common rules for coordinate transformation,
+   * here: calculate x, y, z from phi and theta
+   */
   for (i = 0; i < npoints; i++) {
 
     (* out)[i].x = sin ((* in)[i].theta) * cos ((* in)[i].phi);
@@ -210,6 +231,9 @@ int cartesian_to_lebedev (cartesian ** in, lebedev ** out, int npoints) {
   else
     return 0;
   
+  /* just apply the common rules for coordinate transformation,
+   * here: calculate phi and theta from x, y, z
+   */
   for (i = 0; i < npoints; i++) {
 
     if (((* in)[i].x) > 0)
