@@ -50,6 +50,7 @@ int main(int argc, char* argv[]) {
     ("protons,p", po::value<int>()->default_value(0), "number of protons in system")
     ("nitrogens,n", po::value<int>()->default_value(0), "number of nitrogens in system")
     ("system,s", po::value<string>()->default_value(string()), "ORCA data file describing the system")
+    ("cutoffcount,c", po::value<int>()->default_value(0), "consider only the N highest HFC couplings")
     ("from,f", po::value<fp>()->default_value(0), "minimum B range in Tesla")
     ("to,t", po::value<fp>()->default_value(0), "maximum B range in Tesla")
     ("mwFreq,m", po::value<fp>()->required(), "micro wave frequency in GHz")
@@ -77,7 +78,7 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  Experiment exp = getExperiment(vm["system"].as<string>(), vm["protons"].as<int>(), vm["nitrogens"].as<int>());
+  Experiment exp = getExperiment(vm["system"].as<string>(), vm["cutoffcount"].as<int>(), vm["protons"].as<int>(), vm["nitrogens"].as<int>());
   if (exp.nuclei.empty()) {
     cerr << "either protons, nitrogens or system must be set" << endl;
     return 1;
@@ -125,7 +126,7 @@ int main(int argc, char* argv[]) {
     string outputDir = vm["outputDir"].as<string>();
     if (outputDir.empty()) {
       // fallback to current work dir
-      outputDir = fs::current_path().directory_string();
+      outputDir = fs::current_path().string();
     }
 
     // append info about the experiment
@@ -135,7 +136,7 @@ int main(int argc, char* argv[]) {
 
     // make sure the path exists
     fs::path oPath(outputDir);
-    outputDir = fs::system_complete(oPath).directory_string();
+    outputDir = fs::system_complete(oPath).string();
     if (!fs::exists(oPath) && !fs::create_directories(oPath)) {
       cerr << "could not create output path: " << oPath << endl;
       world.abort(2);

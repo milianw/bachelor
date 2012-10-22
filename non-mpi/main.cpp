@@ -71,6 +71,7 @@ void usage() {
        << "  -o, --output DIR  \tOutput file path, each run creates a folder from timestamp" << endl
        << "                    \tand in there one file per thread gets created" << endl
        << "  -s, --system FILE \tOrca input file to use for system setup" << endl
+       << "  -c, --cutoffcount N \tConsider only the N highest HFC couplings" << endl
        << "  -h, --help        \tDisplay help" << endl
        ;
 }
@@ -92,6 +93,7 @@ int main(int argc, char* argv[])
 
   int nProtons = 0;
   int nNitrogens = 0;
+  int nCutoff = 0;
   QString outputPath;
   QString orcaInput;
 
@@ -170,13 +172,21 @@ int main(int argc, char* argv[])
         } else {
           mode = Error;
           break;
+	}
+      } else if (arg == "--cutoffcount" || arg == "-c") {
+        if ((it+1) != end) {
+          ++it;
+          nCutoff = it->toInt();
+        } else {
+          mode = Error;
+          break;
         }
       }
       ++it;
     }
   }
 
-  Experiment exp = getExperiment(orcaInput.toStdString(), nProtons, nNitrogens);
+  Experiment exp = getExperiment(orcaInput.toStdString(), nCutoff, nProtons, nNitrogens);
 
   ENSURE(!exp.nuclei.empty(), "nitrogens/protons/system")
 

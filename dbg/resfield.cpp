@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
     orcaFile = argv[1];
   }
 
-  Experiment exp = getExperiment(orcaFile, spinHalf, spinOne);
+  Experiment exp = getExperiment(orcaFile, 0, spinHalf, spinOne);
   exp.mwFreqGHz = 9.5;
 
   ResonanceField f(exp);

@@ -33,11 +33,11 @@
 
 using namespace std;
 
-Experiment getExperiment(const string& orcaInput, int protons, int nitrogens)
+Experiment getExperiment(const string& orcaInput, int cutoffcount, int protons, int nitrogens)
 {
   if (!orcaInput.empty()) {
     OrcaParser parser(orcaInput);
-    Experiment exp(parser.nuclei());
+    Experiment exp(parser.nuclei(), cutoffcount);
     exp.setGTensor(parser.electronGMatrix());
     return exp;
   } else {

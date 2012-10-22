@@ -43,7 +43,7 @@ public:
    * static B Field direction defaults to [0 0 1], i.E. only in z-Direction
    * mwFreqGHz defaults to zero
    */
-  explicit Experiment(const std::vector<Nucleus>& nuclei);
+  explicit Experiment(const std::vector<Nucleus>& nuclei, int cutoffcount);
 
   /**
    * generate experiment with dummy data

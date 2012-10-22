@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
     orcaFile = argv[1];
   }
 
-  Experiment exp = getExperiment(orcaFile, spinHalf, spinOne);
+  Experiment exp = getExperiment(orcaFile, 0, spinHalf, spinOne);
 
   cout << "[Exp, Opt] = setupEasy();" << endl;
   cout << "Sys = struct();" << endl;
