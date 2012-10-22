@@ -30,6 +30,9 @@
 
 static int debug = 0;
 
+/* struct to hold orientation (x,y,z)
+ * of a spin plus its weighting
+ */
 typedef struct s_orientation {
 
   double x;
@@ -38,6 +41,12 @@ typedef struct s_orientation {
   double weight;
 } orientation;
 
+/* struct to hold a complete EPR
+ * spectrum including B field, intensity,
+ * orientation (using s_orientation);
+ * since the size of the spectrum is dynamic,
+ * the array size is stored in 'size'
+ */
 typedef struct s_epr_spectrum {
 
   fftw_complex * B; /* pointer to an array of B field values */
@@ -60,14 +69,29 @@ int alloc_epr_spectrum (epr_spectrum * spectrum, int size, int have_orientations
   if (!spectrum)
     return 0;
 
+  /* fftw provides its own function to allocate data for complex numbers,
+   * so we use this one rather than the plain libc malloc; fftw_malloc
+   * makes sure that the array boundaries are SIMD-aligned (MMX, SSE etc)
+   * which increases performance on SIMD-enabled systems; complex numbers
+   * for the B field were chosen for new particular reason, the imaginary
+   * part is currently always set to zero
+   */
   if (!(spectrum->B = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * size)))
     return 0;
 
+  /* allocate array for the intensities the same way we do it for the B field,
+   * in the case of the intensity we are actually using both the real and imaginary
+   * part of the complex numbers
+   */
   if (!(spectrum->I = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * size))) {
     fftw_free (spectrum->B);
     return 0;
   }
 
+  /* allocate memory for the orientations only when explicitly requested; this
+   * is useful for EPR spectra where we've already summed over all orientations
+   * and don't need to keep track of the orientation of a single spin anymore
+   */
   if (have_orientations) {
     if (!(spectrum->O = (orientation *) malloc (sizeof(orientation) * size))) {
       fftw_free (spectrum->B);
@@ -78,6 +102,11 @@ int alloc_epr_spectrum (epr_spectrum * spectrum, int size, int have_orientations
   else
     spectrum->O = NULL;
 
+  /* return the size of the allocated EPR spectrum,
+   * zero otherwise (see above); this way we have
+   * a useful return code to test the success of this
+   * function call
+   */
   spectrum->size = size;
 
   return size;
